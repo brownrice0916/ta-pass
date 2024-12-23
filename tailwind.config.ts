@@ -9,8 +9,24 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
+        background: "#FFFFFF",
         foreground: "var(--foreground)",
+        primary: {
+          DEFAULT: "#0066FF",
+          foreground: "#FFFFFF",
+        },
+        secondary: {
+          DEFAULT: "#6B21A8",
+          foreground: "#FFFFFF",
+        },
+        muted: {
+          DEFAULT: "#F3F4F6",
+          foreground: "#6B7280",
+        },
+      },
+      spacing: {
+        "safe-top": "env(safe-area-inset-top)",
+        "safe-bottom": "env(safe-area-inset-bottom)",
       },
     },
   },
