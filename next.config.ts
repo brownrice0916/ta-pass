@@ -13,6 +13,9 @@ const nextConfig = {
 }
 
 module.exports = {
+  images: {
+    domains: ['api.dicebear.com'],
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },

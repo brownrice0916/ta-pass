@@ -1,0 +1,10 @@
+{
+    "build": {
+        "env": {
+            "DATABASE_URL": "postgresql://hwanghyeonmi:1234@localhost:5432/mydb?schema=public"
+        },
+        "commands": [
+            "npx prisma generate"
+        ]
+    }
+}
