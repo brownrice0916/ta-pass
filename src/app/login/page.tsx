@@ -1,18 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import AuthLayout from "@/components/layout/AuthLayout";
 import { useRouter } from "next/navigation";
+import { signIn, useSession } from "next-auth/react";
 
 export default function LoginPage() {
+  const { data: session } = useSession();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (session) {
+      router.push("/");
+    }
+  }, [session, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,28 +28,21 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const response = await fetch("/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "로그인에 실패했습니다.");
-      }
-
-      if (data.success) {
-        // 로그인 성공 시 메인 페이지로 이동
-        router.push("/");
+      if (result?.ok) {
+        // 로그인 성공
+        router.push("/"); // 메인 페이지로 리다이렉트
       } else {
-        setError(data.error || "로그인에 실패했습니다.");
+        // 로그인 실패
+        setError(result?.error || "로그인에 실패했습니다.");
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (error) {
+      setError("로그인 중 오류가 발생했습니다.");
     } finally {
       setIsLoading(false);
     }

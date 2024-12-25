@@ -1,51 +1,38 @@
 // components/header.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { MainNav } from "@/components/main-nav";
+import { useSession } from "next-auth/react";
 
 export function Header() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
+  const { data: session, status } = useSession();
 
-  useEffect(() => {
-    // 로그인 상태 확인
-    const checkAuth = async () => {
-      try {
-        const response = await fetch("/api/auth/me", {
-          method: "GET",
-          credentials: "include", // 쿠키를 포함해서 요청
-        });
-        const data = await response.json();
-        console.log(data);
-        setIsLoggedIn(data.isLoggedIn);
-        if (data.user) {
-          setUser(data.user);
-        }
-      } catch (error) {
-        console.error("인증 확인 오류:", error);
-        setIsLoggedIn(false);
-      }
-    };
-
-    checkAuth();
-  }, []);
+  // 랜덤 아바타 URL 생성 (PNG 형식으로 변경)
+  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${session?.user?.email || 'default'}`;
 
   return (
     <header className="sticky top-0 z-50 bg-primary p-4 flex items-center gap-4">
       <MainNav />
       <h1 className="text-xl font-bold text-primary-foreground">TA PASS</h1>
       <div className="ml-auto">
-        {isLoggedIn ? (
-          <Image
-            src="/placeholder.svg"
-            alt="Profile"
-            width={32}
-            height={32}
-            className="rounded-full"
-          />
+        {status === "authenticated" && session?.user ? (
+          <div className="flex items-center gap-2">
+            {session.user.name && (
+              <span className="text-primary-foreground">
+                {session.user.name}
+              </span>
+            )}
+            <Image
+              src={avatarUrl}
+              alt="Profile"
+              width={32}
+              height={32}
+              className="rounded-full bg-white"
+            />
+          </div>
         ) : (
           <Link
             href="/login"

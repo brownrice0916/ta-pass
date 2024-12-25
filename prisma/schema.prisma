@@ -16,9 +16,22 @@ model User {
   name          String
   country       String   @default("")
   gender        String   @default("")
-  birthYear     Sytring   @default("")
+  birthYear     String   @default("")
   birthMonth    String   @default("")
   birthDay      String   @default("")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model Restaurant {
+  id        String   @id @default(cuid())
+  name      String
+  address   String
+  latitude  Float
+  longitude Float
+  category  String?
+  rating    Float?   @default(0)
+  images    String[] // 이미지 URL 배열
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

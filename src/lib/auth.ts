@@ -6,11 +6,12 @@ import { User as MyUser } from "@/lib/types"; // Your custom User type
 
 // Extend the next-auth User type
 declare module "next-auth" {
-  interface User {
-    id: string; // Add the id field to the User object
-    email: string;
-    name?: string | null;
-    image?: string | null;
+  interface Session {
+    user: {
+      id: string;
+      email: string;
+      name?: string | null;
+    }
   }
 }
 
@@ -46,31 +47,46 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   session: {
-    strategy: "jwt", // 세션 전략 설정
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60,
   },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id; // You can safely access user.id now
+        token.id = user.id;
         token.email = user.email;
         token.name = user.name;
       }
       return token;
     },
     async session({ session, token }) {
-      console.log("token", token);
-      if (token) {
-        session.user = session.user || {};
-
-        session.user.email = token.email;
-        session.user.name = token.name;
+      if (token && session.user) {
+        session.user.id = token.id as string;  // id 추가
+        session.user.email = token.email as string;
+        session.user.name = token.name as string;
       }
       return session;
     },
   },
   pages: {
-    signIn: "/login", // 로그인 페이지 설정
+    signIn: "/login",
+    error: "/auth/error",
   },
+  // 로깅 관련 설정 추가
+  logger: {
+    error: (code, metadata) => {
+      console.error(code, metadata)
+    },
+    warn: (code) => {
+      console.warn(code)
+    },
+    debug: (code, metadata) => {
+      console.debug(code, metadata)
+    },
+  },
+  // 디버그 모드 비활성화
+  debug: false,
+  secret: process.env.NEXTAUTH_SECRET
 };
 
 export default NextAuth(authOptions);
