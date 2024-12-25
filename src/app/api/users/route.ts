@@ -21,6 +21,7 @@ export async function POST(request: Request) {
       data: {
         email: data.email,
         name: data.name,
+        password: data.password,
       },
     });
     return NextResponse.json(user);

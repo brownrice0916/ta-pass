@@ -1,7 +1,6 @@
 // components/header.tsx
 "use client";
 
-import { useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { MainNav } from "@/components/main-nav";

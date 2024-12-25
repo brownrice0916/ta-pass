@@ -13,7 +13,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { GoogleMap, LoadScript, Marker, Autocomplete } from "@react-google-maps/api";
-import Image from "next/image";
+
 
 interface Restaurant {
     id: string;
@@ -60,6 +60,7 @@ export default function RestaurantsPage() {
                     fetchNearbyRestaurants(latitude, longitude);
                 },
                 (error) => {
+                    console.log(error);
                     setError("위치 정보를 가져올 수 없습니다.");
                     setLoading(false);
                 }
@@ -110,7 +111,7 @@ export default function RestaurantsPage() {
         }
     };
 
-    const handleMapClick = (e: google.maps.MouseEvent) => {
+    const handleMapClick = (e: google.maps.MapMouseEvent) => {
         if (e.latLng) {
             const lat = e.latLng.lat();
             const lng = e.latLng.lng();
@@ -129,7 +130,7 @@ export default function RestaurantsPage() {
     const handlePlaceSelect = () => {
         if (autocompleteRef.current) {
             const place = autocompleteRef.current.getPlace();
-            if (place.geometry) {
+            if (place && place.geometry && place.geometry.location) {
                 const lat = place.geometry.location.lat();
                 const lng = place.geometry.location.lng();
                 setNewRestaurant(prev => ({

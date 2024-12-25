@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TabsList, TabsTrigger, Tabs } from "@radix-ui/react-tabs";
 import AuthLayout from "@/components/layout/AuthLayout";
 
 export default function SignUpPage() {
@@ -31,7 +29,6 @@ export default function SignUpPage() {
 
   // app/signup/page.tsx의 handleSubmit 함수를 수정
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const handleEmailCheck = async () => {
     try {
@@ -54,11 +51,11 @@ export default function SignUpPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
+
 
     try {
       // confirmPassword를 제외한 필요한 데이터만 추출
-      const { confirmPassword, ...signupData } = formData;
+      const { ...signupData } = formData;
       console.log("전송하는 데이터:", signupData);
 
       const response = await fetch("/api/signup", {
@@ -66,6 +63,7 @@ export default function SignUpPage() {
         headers: {
           "Content-Type": "application/json",
         },
+
         body: JSON.stringify(signupData), // confirmPassword가 제외된 데이터
       });
 
@@ -86,7 +84,7 @@ export default function SignUpPage() {
 
       router.push("/signup/complete");
     } catch (err: any) {
-      setError(err.message);
+
       alert(err.message);
     } finally {
       setIsLoading(false);

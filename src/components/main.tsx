@@ -1,10 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Home, Compass, Bookmark, User } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { MainNav } from "./main-nav";
+import { Search } from "lucide-react";
+
 
 export default function Main() {
   return (
