@@ -6,10 +6,10 @@ import {
   Sheet,
   SheetContent,
   SheetTrigger,
-  SheetHeader,
-  SheetTitle,
 } from "@/components/ui/sheet";
 import { useState } from "react";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { DialogTitle } from "@radix-ui/react-dialog";
 
 export function MainNav() {
   const [open, setOpen] = useState(false);
@@ -18,7 +18,6 @@ export function MainNav() {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <button className="text-primary-foreground">
-          <span className="sr-only">Menu</span>
           <svg
             className="w-6 h-6"
             fill="none"
@@ -35,106 +34,103 @@ export function MainNav() {
         </button>
       </SheetTrigger>
       <SheetContent>
-        <SheetHeader>
-          <SheetTitle>Menu</SheetTitle>
-        </SheetHeader>
-        <div className="h-full overflow-y-auto">
-          <div className="flex justify-end border-b p-4">
-            <button onClick={() => setOpen(false)}>
-              <X className="w-6 h-6 text-primary" />
-            </button>
+        {/* 상단 X 버튼 */}
+
+
+        <div className="h-full overflow-y-auto p-4 space-y-6">
+          {/* 접근성 컴포넌트 추가 */}
+          <DialogTitle>
+            <VisuallyHidden>
+              <h2>Main Navigation</h2> {/* 접근성을 위한 숨김 처리 */}
+            </VisuallyHidden>
+          </DialogTitle>
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold text-primary">
+              Stays & Pass
+            </h2>
+            <div className="space-y-2">
+              <Link
+                href="/about-pass"
+                className="block text-primary hover:underline"
+              >
+                About Pass
+              </Link>
+              <Link
+                href="/reservation"
+                className="block text-primary hover:underline"
+              >
+                Reservation
+              </Link>
+            </div>
           </div>
 
-          <div className="p-4 space-y-6">
-            {/* Stays & Pass */}
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-primary">
-                Stays & Pass
-              </h2>
-              <div className="space-y-2">
-                <Link
-                  href="/about-pass"
-                  className="block text-primary hover:underline"
-                >
-                  About Pass
-                </Link>
-                <Link
-                  href="/reservation"
-                  className="block text-primary hover:underline"
-                >
-                  Reservation
-                </Link>
-              </div>
-            </div>
-
-            {/* Shopping */}
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-primary">Shopping</h2>
-              <div className="space-y-2">
-                <Link
-                  href="/fashion"
-                  className="block text-primary hover:underline"
-                >
-                  Fashion
-                </Link>
-                <Link
-                  href="/beauty"
-                  className="block text-primary hover:underline"
-                >
-                  Beauty
-                </Link>
-                <Link
-                  href="/activities"
-                  className="block text-primary hover:underline"
-                >
-                  Activities
-                </Link>
-                <Link
-                  href="/food"
-                  className="block text-primary hover:underline"
-                >
-                  Food
-                </Link>
-              </div>
-            </div>
-
-            {/* Single Links */}
-            <Link
-              href="/partnership"
-              className="block text-lg font-semibold text-primary hover:underline"
-            >
-              Partnership
-            </Link>
-
-            <Link
-              href="/review"
-              className="block text-lg font-semibold text-primary hover:underline"
-            >
-              Review
-            </Link>
-
-            <Link
-              href="/k-trends"
-              className="block text-lg font-semibold text-primary hover:underline"
-            >
-              K-Trends
-            </Link>
-
-            {/* Footer Links */}
-            <div className="pt-6 space-y-3">
+          {/* Shopping */}
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold text-primary">Shopping</h2>
+            <div className="space-y-2">
               <Link
-                href="/support"
-                className="block text-lg font-semibold text-primary hover:underline"
+                href="/fashion"
+                className="block text-primary hover:underline"
               >
-                Customer Support
+                Fashion
               </Link>
               <Link
-                href="/contact"
-                className="block text-lg font-semibold text-primary hover:underline"
+                href="/beauty"
+                className="block text-primary hover:underline"
               >
-                Contact
+                Beauty
+              </Link>
+              <Link
+                href="/activities"
+                className="block text-primary hover:underline"
+              >
+                Activities
+              </Link>
+              <Link
+                href="/food"
+                className="block text-primary hover:underline"
+              >
+                Food
               </Link>
             </div>
+          </div>
+
+          {/* Single Links */}
+          <Link
+            href="/partnership"
+            className="block text-lg font-semibold text-primary hover:underline"
+          >
+            Partnership
+          </Link>
+
+          <Link
+            href="/review"
+            className="block text-lg font-semibold text-primary hover:underline"
+          >
+            Review
+          </Link>
+
+          <Link
+            href="/k-trends"
+            className="block text-lg font-semibold text-primary hover:underline"
+          >
+            K-Trends
+          </Link>
+
+          {/* Footer Links */}
+          <div className="pt-6 space-y-3">
+            <Link
+              href="/support"
+              className="block text-lg font-semibold text-primary hover:underline"
+            >
+              Customer Support
+            </Link>
+            <Link
+              href="/contact"
+              className="block text-lg font-semibold text-primary hover:underline"
+            >
+              Contact
+            </Link>
           </div>
         </div>
       </SheetContent>

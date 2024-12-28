@@ -18,20 +18,22 @@ export function Header() {
       <h1 className="text-xl font-bold text-primary-foreground">TA PASS</h1>
       <div className="ml-auto">
         {status === "authenticated" && session?.user ? (
-          <div className="flex items-center gap-2">
-            {session.user.name && (
-              <span className="text-primary-foreground">
-                {session.user.name}
-              </span>
-            )}
-            <Image
-              src={avatarUrl}
-              alt="Profile"
-              width={32}
-              height={32}
-              className="rounded-full bg-white"
-            />
-          </div>
+          <Link href="/mypage" className="text-primary-foreground hover:underline">
+            <div className="flex items-center gap-2">
+              {session.user.name && (
+                <span className="text-primary-foreground">
+                  {session.user.name}
+                </span>
+              )}
+              <Image
+                src={avatarUrl}
+                alt="Profile"
+                width={32}
+                height={32}
+                className="rounded-full bg-white"
+              />
+            </div>
+          </Link>
         ) : (
           <Link
             href="/login"
