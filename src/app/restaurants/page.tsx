@@ -146,6 +146,7 @@ export default function RestaurantsPage() {
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error}</div>;
+    console.log("API Key:", process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY);
 
     return (
         <LoadScript googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''} libraries={['places']}>
