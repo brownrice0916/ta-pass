@@ -57,6 +57,7 @@ export default function RestaurantDetail() {
                 if (!response.ok) throw new Error('Failed to fetch restaurant');
                 const data = await response.json();
                 setRestaurant(data);
+                // setRestaurant(data[0]);
             } catch (error) {
                 console.error('Error:', error);
             } finally {
