@@ -8,15 +8,20 @@ const nextConfig = {
         port: '',
         pathname: '/7.x/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'maps.googleapis.com',
+        port: '',
+        pathname: '/**',
+      }
     ],
   },
-}
-
-module.exports = {
-  images: {
-    domains: ['api.dicebear.com'],
+  env: {
+    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
   },
   eslint: {
     ignoreDuringBuilds: true,
   },
 };
+
+module.exports = nextConfig;
