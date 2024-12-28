@@ -1,6 +1,5 @@
 {
     "version": 2,
-    "buildCommand": "prisma generate && next build",
     "builds": [
         {
             "src": "package.json",
@@ -8,8 +7,6 @@
         }
     ],
     "env": {
-        "DATABASE_URL": "postgres://neondb_owner:zdiP8VLsN3Te@ep-bitter-dust-a5udj2f2-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require",
-        "NEXTAUTH_SECRET": "ejh7AteGwi+CUMML/5SEf92jDL/J6LXihKNcTx5TGc0=",
-        "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyAjn-2qCsLydgLur5RJNGAEGGEIcaZWS3w"
+        "DATABASE_URL": "postgres://neondb_owner:zdiP8VLsN3Te@ep-bitter-dust-a5udj2f2-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require"
     }
 }
