@@ -24,11 +24,11 @@ const MyPage = () => {
                         </a>
                     </div>
                     <div className="ml-auto">
-                        <img
+                        {/* <img
                             src="/path-to-profile-image.png"
                             alt="Profile"
                             className="w-16 h-16 rounded-full"
-                        />
+                        /> */}
                     </div>
                 </div>
 
@@ -36,7 +36,7 @@ const MyPage = () => {
                 <div className="flex w-full gap-4 mb-6">
                     <div className="flex-1 bg-blue-500 text-white p-6 rounded-lg shadow-md text-center">
                         <h3 className="text-lg">나의 방문</h3>
-                        <p className="text-4xl font-bold">32</p>
+                        <p className="text-4xl font-bold">{ }</p>
                     </div>
                     <div className="flex-1 bg-blue-500 text-white p-6 rounded-lg shadow-md text-center">
                         <h3 className="text-lg">나의 리뷰</h3>

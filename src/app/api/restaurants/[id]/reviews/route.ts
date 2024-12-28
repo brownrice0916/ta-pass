@@ -1,11 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(
-    request: NextRequest,
-    { params }: { params: { id: string } }
-) {
-    const id = params.id;
+export async function GET(request: NextRequest) {
+    const url = new URL(request.url);
+    const id = url.pathname.split('/')[3];  // Extract the `id` from the URL
 
     if (!id) {
         return NextResponse.json({ error: "Restaurant ID is required" }, { status: 400 });

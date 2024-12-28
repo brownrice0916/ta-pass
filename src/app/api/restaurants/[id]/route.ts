@@ -1,11 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(
-    request: NextRequest,
-    { params }: { params: { id: string } }
-) {
-    const id = params.id;
+export async function GET(request: NextRequest) {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id'); // id를 쿼리 파라미터에서 가져옵니다.
 
     if (!id) {
         return NextResponse.json({ error: "Restaurant ID is required" }, { status: 400 });
@@ -28,4 +26,3 @@ export async function GET(
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
-

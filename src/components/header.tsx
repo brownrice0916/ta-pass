@@ -13,7 +13,7 @@ export function Header() {
   const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${session?.user?.email || 'default'}`;
 
   return (
-    <header className="sticky top-0 z-50 bg-primary p-4 flex items-center gap-4">
+    <header className="sticky top-0 z-50 bg-primary p-4 flex items-center gap-4 w-[393px] mx-auto">
       <MainNav />
       <h1 className="text-xl font-bold text-primary-foreground">TA PASS</h1>
       <div className="ml-auto">

@@ -15,7 +15,7 @@ export default function ClientLayout({
         <SessionProvider>
             <GoogleMapsProvider>
                 <Header />
-                {children}
+                <div className="w-[393px] mx-auto">{children}</div>
                 {/* Bottom Navigation */}
                 <div className="fixed bottom-0 left-0 right-0 flex justify-center bg-background">
                     <nav className="w-full max-w-[393px] bg-white border-t flex justify-around p-4">
@@ -29,10 +29,10 @@ export default function ClientLayout({
                             <span className="text-xs mt-1">Explore</span>
                         </Link>
 
-                        <button className="flex flex-col items-center">
+                        <Link href='/' className="flex flex-col items-center">
                             <Home className="w-6 h-6" />
                             <span className="text-xs mt-1">Home</span>
-                        </button>
+                        </Link>
                         <button className="flex flex-col items-center">
                             <Bookmark className="w-6 h-6" />
                             <span className="text-xs mt-1">Saved</span>

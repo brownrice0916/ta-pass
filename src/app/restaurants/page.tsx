@@ -225,7 +225,7 @@ export default function RestaurantsPage() {
                 </GoogleMap>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="">
                 {restaurants.map((restaurant) => (
                     <Card
                         key={restaurant.id}
