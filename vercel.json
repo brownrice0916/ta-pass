@@ -1,7 +1,7 @@
 {
     "build": {
         "env": {
-            "DATABASE_URL": "postgresql://hwanghyeonmi:1234@localhost:5432/mydb?schema=public"
+            "DATABASE_URL": "postgres://neondb_owner:zdiP8VLsN3Te@ep-bitter-dust-a5udj2f2-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require"
         },
         "commands": [
             "npx prisma generate"
