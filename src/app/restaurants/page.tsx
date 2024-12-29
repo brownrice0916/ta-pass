@@ -211,7 +211,7 @@ export default function RestaurantsPage() {
     if (error) return <div>Error: {error}</div>;
 
     return (
-        <div className="container mx-auto py-2">
+        <div className="container mx-auto py-2 pb-16">
             <div className="flex justify-end mb-6">
                 <Dialog open={isOpen} onOpenChange={setIsOpen}>
                     <DialogTrigger asChild>
@@ -231,6 +231,7 @@ export default function RestaurantsPage() {
                                         카테고리 선택
                                     </label>
                                     <Select
+
                                         value={selectedCategory}
                                         onValueChange={(value) => {
                                             setSelectedCategory(value);
@@ -253,6 +254,7 @@ export default function RestaurantsPage() {
                                         <SelectContent>
                                             {CATEGORIES.map((category) => (
                                                 <SelectItem
+                                                    className="bg-white"
                                                     key={category.value}
                                                     value={category.value}
                                                 >
