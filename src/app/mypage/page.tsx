@@ -1,11 +1,13 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import React from "react";
 
 
 const MyPage = () => {
     const { data: session, status } = useSession();
+    const router = useRouter();
 
     return (
         <div className="flex flex-col min-h-screen bg-gray-100">
@@ -61,14 +63,17 @@ const MyPage = () => {
                 </div>
 
                 {/* Logout Button */}
-                <button className="mt-6 bg-blue-600 text-white py-2 px-6 rounded-lg shadow-md">
+                <button onClick={async () => {
+                    await signOut();
+                    router.push('/');
+                }} className="mt-6 bg-blue-600 text-white py-2 px-6 rounded-lg shadow-md">
                     로그아웃
                 </button>
             </div>
 
             {/* Bottom Navigation */}
 
-        </div>
+        </div >
     );
 };
 
