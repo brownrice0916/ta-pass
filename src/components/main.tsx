@@ -2,6 +2,7 @@
 
 import { Search } from "lucide-react";
 
+import { Input } from "@/components/ui/input";
 
 export default function Main() {
   return (
@@ -12,7 +13,7 @@ export default function Main() {
         {/* Search Bar */}
         <div className="p-4">
           <div className="relative">
-            <input
+            <Input
               type="search"
               placeholder="Stay, shop, and save—where to?"
               className="w-full pl-4 pr-10 py-2 border rounded-lg"
