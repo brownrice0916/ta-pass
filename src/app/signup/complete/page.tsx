@@ -1,11 +1,23 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function SignUpCompletePage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
+
+  // 로딩 상태 처리 (옵션)
+  if (status === "loading") {
+    return <div>로딩 중...</div>;
+  }
+
+  // 로그인되지 않은 경우 처리 (옵션)
+  if (!session?.user) {
+    return <div>로그인 정보가 없습니다.</div>;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -15,7 +27,8 @@ export default function SignUpCompletePage() {
             <CardContent className="pt-6 text-center space-y-6">
               <div className="space-y-2">
                 <h2 className="text-2xl font-bold">안녕하세요</h2>
-                <h3 className="text-xl font-bold">린자오밍!</h3>
+                {/* 유저 이름 출력 */}
+                <h3 className="text-xl font-bold">{session.user.name}!</h3>
                 <p className="text-muted-foreground">
                   회원가입이 완료되었습니다
                 </p>

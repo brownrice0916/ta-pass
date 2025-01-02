@@ -247,7 +247,7 @@ export default function RestaurantsPage() {
 
             <div className="mb-4 relative">
                 <div className="absolute top-1 left-1 right-1 z-10 space-y-4">
-                    <div className="bg-transparent rounded-lg p-1">
+                    <div className="rounded-lg p-1">
                         <div className="flex p-1 bg-white rounded-md items-center space-x-2 mb-4">
 
                             <Select
