@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { put } from "@vercel/blob";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+
 
 export async function GET(request: NextRequest) {
     const url = new URL(request.url);
@@ -56,3 +60,4 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
+

@@ -3,20 +3,12 @@
 import { useEffect, useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
 import { GoogleMap, InfoWindow, Marker } from "@react-google-maps/api";
 import { useRouter } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { MapPin } from 'lucide-react';
 import Image from "next/image";
+
 
 const CATEGORIES = [
     { id: 'all', label: 'All', value: 'all' },
@@ -26,6 +18,13 @@ const CATEGORIES = [
     { id: 'activities', label: 'Activities', value: 'activities', types: ['gym', 'park', 'amusement_park'] },
     { id: 'culture', label: 'Culture', value: 'culture', types: ['museum', 'art_gallery', 'movie_theater'] },
     { id: 'food', label: 'Food', value: 'food', types: ['restaurant', 'cafe'] }
+];
+
+const LOCATIONS = [
+    { id: 'current', label: '현재 위치', value: 'current', coordinates: null },
+    { id: 'hongdae', label: '홍대', value: 'hongdae', coordinates: { lat: 37.5578, lng: 126.9254 } },
+    { id: 'gangnam', label: '강남', value: 'gangnam', coordinates: { lat: 37.4979, lng: 127.0276 } },
+    { id: 'myeongdong', label: '명동', value: 'myeongdong', coordinates: { lat: 37.5637, lng: 126.9838 } }
 ];
 
 interface Restaurant {
@@ -72,6 +71,53 @@ export default function RestaurantsPage() {
 
     const [selectedMarker, setSelectedMarker] = useState<Restaurant | null>(null);
 
+    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+    const [showUserLocationInfo, setShowUserLocationInfo] = useState(false);
+
+    const [selectedLocation, setSelectedLocation] = useState('current');
+
+    const handleLocationChange = (value: string) => {
+        setSelectedLocation(value);
+        if (value === 'current') {
+            if (userLocation) {
+                setCenter(userLocation);
+                fetchNearbyRestaurants(userLocation.lat, userLocation.lng);
+            } else {
+                setLoading(true);
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+                        const location = { lat: latitude, lng: longitude };
+                        setUserLocation(location);
+                        setCenter(location);
+                        fetchNearbyRestaurants(latitude, longitude);
+                        setLoading(false);
+                    },
+                    (error) => {
+                        console.log(error);
+                        setError("위치 정보를 가져올 수 없습니다.");
+                        setLoading(false);
+                    }
+                );
+            }
+        } else {
+            const location = LOCATIONS.find(loc => loc.value === value);
+            if (location?.coordinates) {
+                setCenter(location.coordinates);
+                fetchNearbyRestaurants(location.coordinates.lat, location.coordinates.lng);
+            }
+        }
+    };
+
+    const mapRef = useRef<google.maps.Map | null>(null);
+    const handleCenterOnUser = () => {
+        if (userLocation && mapRef.current) {
+            mapRef.current.panTo(userLocation);
+            mapRef.current.setZoom(15);
+            setSelectedLocation('current');
+            fetchNearbyRestaurants(userLocation.lat, userLocation.lng);
+        }
+    };
 
     useEffect(() => {
         let filtered = restaurants;
@@ -98,7 +144,9 @@ export default function RestaurantsPage() {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const { latitude, longitude } = position.coords;
-                    setCenter({ lat: latitude, lng: longitude });
+                    const location = { lat: latitude, lng: longitude };
+                    setCenter(location);
+                    setUserLocation(location);
                     fetchNearbyRestaurants(latitude, longitude);
                 },
                 (error) => {
@@ -112,7 +160,15 @@ export default function RestaurantsPage() {
 
     const handleMarkerClick = (restaurant: Restaurant) => {
         setSelectedMarker(restaurant);
+        setShowUserLocationInfo(false);
     };
+
+
+    const handleUserLocationClick = () => {
+        setShowUserLocationInfo(true);
+        setSelectedMarker(null);
+    };
+
 
 
     const initAutocomplete = () => {
@@ -158,48 +214,18 @@ export default function RestaurantsPage() {
         }
     }, [selectedCategory, isOpen]);
 
-    const handleAddSelectedRestaurant = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            const response = await fetch("/api/restaurants", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(newRestaurant),
-            });
 
-            if (!response.ok) throw new Error("Failed to add restaurant");
-
-            const addedRestaurant = await response.json();
-            setRestaurants((prev) => [...prev, addedRestaurant]);
-            setIsOpen(false);
-
-            if (inputRef.current) {
-                inputRef.current.value = "";
-            }
-
-            setNewRestaurant({
-                name: "",
-                address: "",
-                category: "",
-                latitude: center.lat,
-                longitude: center.lng,
-                rating: 0,
-            });
-        } catch (err) {
-            console.error("Error adding restaurant:", err);
-        }
-    };
 
     const fetchNearbyRestaurants = async (latitude: number, longitude: number) => {
         try {
+            // setLoading(true);
             const response = await fetch(
                 `/api/restaurants?latitude=${latitude}&longitude=${longitude}&radius=1`
             );
             if (!response.ok) throw new Error("Failed to fetch restaurants");
             const data = await response.json();
             setRestaurants(data);
+            console.log("data", data)
         } catch (err) {
             setError(err instanceof Error ? err.message : "An error occurred");
         } finally {
@@ -212,96 +238,11 @@ export default function RestaurantsPage() {
 
     return (
         <div className="container mx-auto py-2 pb-16">
-            <div className="flex justify-end mb-6">
-                <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                    <DialogTrigger asChild>
-                        <Button>장소 추가</Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
-                        <DialogHeader>
-                            <DialogTitle>새로운 장소 추가</DialogTitle>
-                            <DialogDescription>
-                                카테고리를 선택하고 장소를 검색하세요
-                            </DialogDescription>
-                        </DialogHeader>
-                        <form onSubmit={handleAddSelectedRestaurant} className="space-y-4">
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">
-                                        카테고리 선택
-                                    </label>
-                                    <Select
 
-                                        value={selectedCategory}
-                                        onValueChange={(value) => {
-                                            setSelectedCategory(value);
-                                            if (inputRef.current) {
-                                                inputRef.current.value = '';
-                                            }
-                                            setNewRestaurant({
-                                                name: "",
-                                                address: "",
-                                                category: value,
-                                                latitude: center.lat,
-                                                longitude: center.lng,
-                                                rating: 0,
-                                            });
-                                        }}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="카테고리 선택" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {CATEGORIES.map((category) => (
-                                                <SelectItem
-                                                    className="bg-white"
-                                                    key={category.value}
-                                                    value={category.value}
-                                                >
-                                                    {category.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">
-                                        장소 검색
-                                    </label>
-                                    <Input
-                                        ref={inputRef}
-                                        type="text"
-                                        placeholder="장소 이름이나 주소를 검색하세요"
-                                    />
-                                </div>
-                            </div>
-                            {newRestaurant.name && (
-                                <div className="space-y-2">
-                                    <p className="text-sm font-medium">선택된 장소 정보:</p>
-                                    <div className="text-sm">
-                                        <p><strong>이름:</strong> {newRestaurant.name}</p>
-                                        <p><strong>주소:</strong> {newRestaurant.address}</p>
-                                        <p><strong>카테고리:</strong> {
-                                            CATEGORIES.find(cat => cat.value === newRestaurant.category)?.label ||
-                                            newRestaurant.category || '정보 없음'
-                                        }</p>
-                                        <p><strong>위도:</strong> {newRestaurant.latitude.toFixed(6)}</p>
-                                        <p><strong>경도:</strong> {newRestaurant.longitude.toFixed(6)}</p>
-                                        <p><strong>평점:</strong> {newRestaurant.rating.toFixed(1)}</p>
-                                    </div>
-                                </div>
-                            )}
-                            <div className="pt-4 flex justify-end gap-2">
-                                <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
-                                    취소
-                                </Button>
-                                <Button type="submit" disabled={!newRestaurant.name}>
-                                    추가
-                                </Button>
-                            </div>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+            <div className="flex justify-end mb-6">
+                <Button onClick={() => router.push('/restaurants/post')}>
+                    장소 추가
+                </Button>
             </div>
 
             <div className="mb-4 relative">
@@ -309,18 +250,24 @@ export default function RestaurantsPage() {
                     <div className="bg-transparent rounded-lg p-1">
                         <div className="flex p-1 bg-white rounded-md items-center space-x-2 mb-4">
 
-                            {/* <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-400">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                <circle cx="12" cy="10" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg> */}
-                            <Search />
-                            <Input
-                                type="text"
-                                placeholder="Stay, shop, and save—where to?"
-                                className="w-full"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
+                            <Select
+                                value={selectedLocation}
+                                onValueChange={handleLocationChange}
+                            >
+                                <SelectTrigger className="w-full border-0 focus:ring-0">
+                                    <SelectValue placeholder="위치 선택" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {LOCATIONS.map((location) => (
+                                        <SelectItem
+                                            key={location.value}
+                                            value={location.value}
+                                        >
+                                            {location.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="flex gap-1 overflow-x-auto pb-1 -mb-1 bg-gray">
                             {CATEGORIES.map((category) => (
@@ -348,9 +295,37 @@ export default function RestaurantsPage() {
                         scaleControl: false,
                         streetViewControl: false,
                         rotateControl: false,
-                        fullscreenControl: false
+                        fullscreenControl: false,
+                        clickableIcons: false
                     }}
                 >
+                    {userLocation && (
+                        <>
+                            <Marker
+                                position={userLocation}
+                                icon={{
+                                    path: google.maps.SymbolPath.CIRCLE,
+                                    fillColor: "#4f46e5",
+                                    fillOpacity: 1,
+                                    strokeColor: "#ffffff",
+                                    strokeWeight: 2,
+                                    scale: 8,
+                                }}
+                                title="내 위치"
+                                onClick={handleUserLocationClick}
+                            />
+                            {showUserLocationInfo && (
+                                <InfoWindow
+                                    position={userLocation}
+                                    onCloseClick={() => setShowUserLocationInfo(false)}
+                                >
+                                    <div className="p-2">
+                                        <h3 className="font-semibold">현재 위치</h3>
+                                    </div>
+                                </InfoWindow>
+                            )}
+                        </>
+                    )}
                     {filteredRestaurants.map((restaurant) => (
                         <Marker
                             onClick={() => handleMarkerClick(restaurant)}
@@ -387,6 +362,14 @@ export default function RestaurantsPage() {
                         </div>
                     </InfoWindow>}
                 </GoogleMap>
+                <Button
+                    onClick={handleCenterOnUser}
+                    variant="outline"
+                    size="icon"
+                    className="bg-white shadow-lg hover:bg-gray-100"
+                >
+                    <MapPin className="h-5 w-5 text-indigo-600" />
+                </Button>
 
             </div>
 
@@ -394,44 +377,57 @@ export default function RestaurantsPage() {
                 {filteredRestaurants.map((restaurant) => (
                     <Card
                         key={restaurant.id}
-                        className="overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-200 border border-gray-200"
+                        className="mb-4 overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-200 border border-gray-200"
                         onClick={() => router.push(`/restaurants/${restaurant.id}`)}
                     >
-                        {restaurant.images && restaurant.images.length > 0 && (
-                            <div className="aspect-square relative">
-                                <Image
-                                    src={restaurant.images[0]}
-                                    alt={restaurant.name}
-                                    fill
-                                    className="object-cover"
-                                />
+                        <div className="p-4">
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold">
+                                    {restaurant.name.charAt(0)}
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-lg">
+                                        {restaurant.name}
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground">
+                                        {CATEGORIES.find(cat => cat.value === restaurant.category)?.label || '기타'}
+                                    </p>
+                                </div>
                             </div>
-                        )}
-                        <div className="p-4 space-y-2">
-                            <div className="space-y-1">
-                                <h3 className="font-semibold text-base line-clamp-1">
-                                    {restaurant.name}
-                                </h3>
-                                <p className="text-sm text-muted-foreground line-clamp-1">
-                                    {restaurant.address}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                    {CATEGORIES.find(cat => cat.value === restaurant.category)?.label || '기타'}
-                                </p>
+
+                            <div className="text-sm text-muted-foreground mb-3">
+                                <p className="line-clamp-1">{restaurant.address}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                    {restaurant.distance && (
+                                        <span>
+                                            {restaurant.distance.toFixed(2)}km
+                                        </span>
+                                    )}
+                                    {restaurant.rating && (
+                                        <div className="flex items-center text-yellow-500">
+                                            <span className="mr-1">★</span>
+                                            <span>{restaurant.rating.toFixed(1)}</span>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                            <div className="flex items-center justify-between pt-2 text-sm">
-                                {restaurant.distance && (
-                                    <span className="text-muted-foreground">
-                                        {restaurant.distance.toFixed(2)}km
-                                    </span>
-                                )}
-                                {restaurant.rating && (
-                                    <div className="flex items-center text-yellow-500">
-                                        <span className="mr-1">★</span>
-                                        <span>{restaurant.rating.toFixed(1)}</span>
-                                    </div>
-                                )}
-                            </div>
+                            {restaurant.images && restaurant.images.length > 0 && (
+                                <div className="grid grid-cols-2 gap-0.5">
+                                    {restaurant.images.slice(0, 4).map((image, index) => (
+                                        <div
+                                            key={image}
+                                            className={`relative aspect-square overflow-hidden `}
+                                        >
+                                            <Image
+                                                src={image}
+                                                alt={`${restaurant.name} ${index + 1}`}
+                                                fill
+                                                className="object-cover"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </Card>
                 ))}
@@ -439,3 +435,4 @@ export default function RestaurantsPage() {
         </div>
     );
 }
+

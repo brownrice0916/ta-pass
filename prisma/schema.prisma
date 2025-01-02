@@ -48,4 +48,5 @@ model Review {
   userId      Int         // String에서 Int로 변경
   restaurant  Restaurant  @relation(fields: [restaurantId], references: [id])
   restaurantId String
+  images       String[] // Add this line
 }

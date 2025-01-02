@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    domains: [
+      '3uauddgaumtivfns.public.blob.vercel-storage.com'  // Vercel Blob 스토리지 도메인
+    ],
     remotePatterns: [
       {
         protocol: 'https',
