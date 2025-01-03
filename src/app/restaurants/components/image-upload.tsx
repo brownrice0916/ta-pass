@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { Upload, X } from "lucide-react";
 import Image from "next/image";
 

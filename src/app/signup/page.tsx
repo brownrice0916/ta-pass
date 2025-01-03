@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import AuthLayout from "@/components/layout/AuthLayout";
+import { signIn } from "next-auth/react";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -52,7 +53,6 @@ export default function SignUpPage() {
     e.preventDefault();
     setIsLoading(true);
 
-
     try {
       // confirmPassword를 제외한 필요한 데이터만 추출
       const { ...signupData } = formData;
@@ -81,10 +81,19 @@ export default function SignUpPage() {
       if (!response.ok) {
         throw new Error(data.error || "회원가입에 실패했습니다.");
       }
+      const result = await signIn("credentials", {
+        email: signupData.email,
+        password: signupData.password,
+        redirect: false,
+      });
 
-      router.push("/signup/complete");
+      if (result?.ok) {
+        router.push("/signup/complete");
+        router.refresh(); // 세션 상태를 새로고침
+      } else {
+        router.push("/login");
+      }
     } catch (err: any) {
-
       alert(err.message);
     } finally {
       setIsLoading(false);

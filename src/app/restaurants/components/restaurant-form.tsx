@@ -26,30 +26,33 @@ import { MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
 import ImageUpload from "./image-upload";
 import { CATEGORIES } from "@/lib/constants";
+import { Textarea } from "@/components/ui/textarea";
 
 const formSchema = z.object({
   category: z.string().min(1, "카테고리를 선택해주세요"),
   name: z.string().min(1, "장소 이름을 입력해주세요"),
+  description: z.string().min(1, "간단한 설명을 입력해주세요"),
+  about: z.string().optional(),
   address: z.string().min(1, "주소를 입력해주세요"),
   latitude: z.number(),
   longitude: z.number(),
   rating: z.number().min(0).max(5),
-  images: z
-    .array(z.instanceof(File))
-    .min(1, "최소 1개의 이미지를 업로드해주세요"),
+  specialOfferType: z.enum(["none", "gift", "discount"]).optional(),
+  specialOfferText: z.string().optional(),
+  images: z.array(z.union([z.instanceof(File), z.string()])).optional(),
 });
 
 export type FormValues = z.infer<typeof formSchema>;
 
 interface RestaurantFormProps {
-  initialData?: Partial<FormValues>;
-  onSubmit: (data: FormValues) => Promise<void>;
+  initialData?: Partial<FormValues> & { id?: string };
+  // onSubmit: (data: FormValues) => Promise<void>;
   submitButtonText: string;
 }
 
 export default function RestaurantForm({
   initialData,
-  onSubmit,
+  // onSubmit,
   submitButtonText,
 }: RestaurantFormProps) {
   const router = useRouter();
@@ -59,21 +62,27 @@ export default function RestaurantForm({
   );
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const isEditMode = !!initialData;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      category: initialData?.category || "",
-      name: initialData?.name || "",
-      address: initialData?.address || "",
-      latitude: initialData?.latitude || 0,
-      longitude: initialData?.longitude || 0,
-      rating: initialData?.rating || 0,
-      images: initialData?.images || [],
+      category: initialData?.category ?? "",
+      name: initialData?.name ?? "",
+      description: initialData?.description ?? "",
+      about: initialData?.about ?? "",
+      address: initialData?.address ?? "",
+      latitude: initialData?.latitude ?? 0,
+      longitude: initialData?.longitude ?? 0,
+      rating: initialData?.rating ?? 0,
+      specialOfferType: initialData?.specialOfferType ?? "none",
+      specialOfferText: initialData?.specialOfferText ?? "",
+      images: initialData?.images ?? [], // 이미지도 빈 배열로 초기화
     },
   });
 
   const { control, setValue, watch } = form;
+  const specialOfferType = watch("specialOfferType");
 
   const initAutocomplete = () => {
     if (autocompleteRef.current) {
@@ -120,11 +129,55 @@ export default function RestaurantForm({
 
     try {
       setLoading(true);
-      await onSubmit(values);
+      const formData = new FormData();
+
+      // 모든 데이터를 포함하여 전송
+      const submitData = {
+        name: values.name,
+        address: values.address,
+        category: values.category,
+        description: values.description,
+        about: values.about || "",
+        specialOfferType: values.specialOfferType || "none",
+        specialOfferText: values.specialOfferText || "",
+        latitude: values.latitude,
+        longitude: values.longitude,
+        rating: values.rating,
+      };
+
+      formData.append("data", JSON.stringify(submitData));
+
+      // 이미지 처리: File과 URL 문자열을 구분하여 처리
+      if (values.images?.length) {
+        values.images.forEach((image) => {
+          if (image instanceof File) {
+            formData.append("images", image);
+          } else if (typeof image === "string") {
+            formData.append("images", image);
+          }
+        });
+      }
+
+      const url = isEditMode
+        ? `/api/restaurants/${initialData.id}`
+        : "/api/restaurants";
+
+      const response = await fetch(url, {
+        method: isEditMode ? "PUT" : "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to ${isEditMode ? "update" : "add"} restaurant`
+        );
+      }
+
       router.push("/restaurants");
       router.refresh();
     } catch (error) {
       console.error("Error submitting form:", error);
+      alert(`Failed to ${isEditMode ? "update" : "add"} restaurant`);
     } finally {
       setLoading(false);
     }
@@ -134,11 +187,11 @@ export default function RestaurantForm({
     <Card className="p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-2">
-          레스토랑 정보 {initialData ? "수정" : "추가"}
+          스토어 정보 {initialData ? "수정" : "추가"}
         </h1>
         <p className="text-muted-foreground">
           {initialData
-            ? "레스토랑 정보를 수정하고 저장하세요"
+            ? "스토어 정보를 수정하고 저장하세요"
             : "카테고리를 선택하고 장소를 검색하여 추가하세요"}
         </p>
       </div>
@@ -158,13 +211,18 @@ export default function RestaurantForm({
                     if (inputRef.current) {
                       inputRef.current.value = "";
                     }
+                    // form reset 부분도 수정
                     form.reset({
                       name: "",
+                      description: "",
+                      about: "",
                       address: "",
                       category: value,
                       latitude: 0,
                       longitude: 0,
                       rating: 0,
+                      specialOfferType: "none",
+                      specialOfferText: "",
                       images: [],
                     });
                   }}
@@ -216,6 +274,85 @@ export default function RestaurantForm({
             )}
           />
 
+          <FormField
+            control={control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>간단 설명</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="예: 홍대 사진 맛집, 효창동 만두 맛집"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={control}
+            name="about"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>서비스 소개</FormLabel>
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    placeholder="레스토랑 서비스 소개를 입력하세요"
+                    className="h-32"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={control}
+            name="specialOfferType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>특별 혜택 유형</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="특별 혜택 유형을 선택하세요" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="none">없음</SelectItem>
+                    <SelectItem value="gift">Extra Gift</SelectItem>
+                    <SelectItem value="discount">Discount</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {specialOfferType && specialOfferType !== "none" && (
+            <FormField
+              control={control}
+              name="specialOfferText"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>혜택 내용</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder={
+                        specialOfferType === "gift"
+                          ? "예: 무료 고메기, 무료 포장비닐, 무료 QR CODE"
+                          : "예: 오전 11시까지 방문 시 전 메뉴 30% 할인혜택"
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
           <Controller
             name="images"
             control={control}
@@ -225,7 +362,7 @@ export default function RestaurantForm({
                 <FormControl>
                   <ImageUpload
                     onChange={onChange}
-                    value={value}
+                    value={value || []} // Provide a default value of an empty array
                     error={error}
                   />
                 </FormControl>

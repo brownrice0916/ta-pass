@@ -63,13 +63,11 @@ export async function PUT(request: Request) {
     const placeData = JSON.parse(placeDataStr);
 
     // Process images: keep existing URLs and upload new files
-    const imageUrls = await Promise.all(
+    const processedImageUrls = await Promise.all(
       imageFiles.map(async (image) => {
         if (typeof image === "string") {
-          // If it's already a URL, keep it as is
           return image;
         } else if (image instanceof File) {
-          // If it's a new file, upload it
           const filename = `${Date.now()}_${image.name.replace(
             /[^a-zA-Z0-9.]/g,
             ""
@@ -79,7 +77,13 @@ export async function PUT(request: Request) {
           });
           return blob.url;
         }
+        return null;
       })
+    );
+
+    // Filter out null values and convert to string array
+    const imageUrls = processedImageUrls.filter(
+      (url): url is string => url !== null
     );
 
     // Update restaurant with new data and image URLs
@@ -89,10 +93,14 @@ export async function PUT(request: Request) {
         name: placeData.name,
         address: placeData.address,
         category: placeData.category,
+        description: placeData.description,
+        about: placeData.about || "",
+        specialOfferType: placeData.specialOfferType || "none",
+        specialOfferText: placeData.specialOfferText || "",
         latitude: placeData.latitude,
         longitude: placeData.longitude,
         rating: placeData.rating || 0,
-        images: imageUrls, // Save array of image URLs
+        images: imageUrls.length > 0 ? imageUrls : undefined, // Only update images if there are new ones
       },
     });
 
