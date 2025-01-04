@@ -184,7 +184,7 @@ export default function RestaurantForm({
   };
 
   return (
-    <Card className="p-6">
+    <Card className="p-6 pb-16">
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-2">
           스토어 정보 {initialData ? "수정" : "추가"}

@@ -15,20 +15,9 @@ import {
 import { MapPin } from "lucide-react";
 import Image from "next/image";
 import { Review } from "@prisma/client";
+import { getNeighborhood } from "@/lib/address";
 
-export const getNeighborhood = (address: string) => {
-  // 주소를 콤마로 분리하고 필요없는 부분 제거
-  const parts = address
-    .split(",")
-    .map((part) => part.trim())
-    .filter((part) => !part.includes("South Korea")) // South Korea 제거
-    .filter((part) => !part.includes("-dong")); // -dong으로 끝나는 부분 제거
 
-  // District와 Seoul을 포함한 부분들 반환
-  return parts
-    .filter((part) => part.includes("District") || part === "Seoul")
-    .join(", ");
-};
 
 const CATEGORIES = [
   { id: "all", label: "All", value: "all" },
@@ -515,11 +504,10 @@ export default function RestaurantsPage() {
                 restaurant.specialOfferType !== "none" && (
                   <div className="mb-2">
                     <span
-                      className={`inline-block px-2 py-1 rounded-full text-xs text-white ${
-                        restaurant.specialOfferType === "gift"
-                          ? "bg-pink-500"
-                          : "bg-orange-500"
-                      }`}
+                      className={`inline-block px-2 py-1 rounded-full text-xs text-white ${restaurant.specialOfferType === "gift"
+                        ? "bg-pink-500"
+                        : "bg-orange-500"
+                        }`}
                     >
                       {restaurant.specialOfferType === "gift"
                         ? "Extra Gift"
@@ -542,15 +530,13 @@ export default function RestaurantsPage() {
                 <span>|</span>
                 <span>리뷰 {restaurant.reviewCount || 0}</span>
                 <span>|</span>
-                {/* <span>{restaurant.district}</span>
-                <span>|</span> */}
                 <span className="line-clamp-1">
                   {getNeighborhood(restaurant.address)}
                 </span>
               </div>
 
               {restaurant.images && restaurant.images.length > 0 && (
-                <div className="grid grid-cols-2 gap-0.5">
+                <div className="grid grid-cols-4 gap-0.5">
                   {restaurant.images.slice(0, 4).map((image, index) => (
                     <div
                       key={image}

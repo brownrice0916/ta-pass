@@ -6,7 +6,6 @@ import { Star, Heart } from "lucide-react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
@@ -18,16 +17,16 @@ import {
 import { useSession } from "next-auth/react";
 import { Card } from "@/components/ui/card";
 import { Restaurant } from "@prisma/client";
+import { Review } from "../[id]/page";
 
-interface Review {
-  id: string;
-  user: { name: string; country: string; avatar: string };
-  createdAt: string;
-  content: string;
-  images: string[];
-  rating: number;
-  likes: number;
-}
+// interface Review {
+//   id: string;
+//   user: { name: string; country: string; avatar: string };
+//   createdAt: string;
+//   content: string;
+//   images: string[];
+//   rating: number;
+// }
 
 interface ReviewCardProps {
   review: Review;
@@ -38,9 +37,8 @@ interface ReviewCardProps {
 function ReviewCard({ review, onOpenDetail, restaurant }: ReviewCardProps) {
   const { data: session } = useSession();
 
-  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${
-    session?.user?.email || "default"
-  }`;
+  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${session?.user?.email || "default"
+    }`;
 
   return (
     <Card
@@ -97,7 +95,7 @@ function ReviewCard({ review, onOpenDetail, restaurant }: ReviewCardProps) {
                 />
                 {review.user.name}
               </div>
-              <div className="text-xs text-gray-500">{review.user.country}</div>
+              {/* <div className="text-xs text-gray-500">{review.user.country}</div> */}
             </div>
             <div className="text-xs text-gray-400">
               {new Date(review.createdAt).toLocaleDateString()}
@@ -110,11 +108,10 @@ function ReviewCard({ review, onOpenDetail, restaurant }: ReviewCardProps) {
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
-                className={`h-4 w-4 ${
-                  i < (review?.rating || 0)
-                    ? "text-yellow-500 fill-yellow-500"
-                    : "text-gray-300"
-                }`}
+                className={`h-4 w-4 ${i < (review?.rating || 0)
+                  ? "text-yellow-500 fill-yellow-500"
+                  : "text-gray-300"
+                  }`}
               />
             ))}
           </div>
@@ -122,7 +119,7 @@ function ReviewCard({ review, onOpenDetail, restaurant }: ReviewCardProps) {
         <div className="mt-auto flex items-center ml-auto">
           <Heart className="h-4 w-4 text-blue-500" />
           <span className="ml-2 text-xs text-gray-500">
-            {review.likes} Likes
+            Likes
           </span>
         </div>
       </div>
@@ -144,9 +141,8 @@ function ReviewDetailDialog({
   const [currentSlide, setCurrentSlide] = useState(0);
   const { data: session } = useSession();
 
-  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${
-    session?.user?.email || "default"
-  }`;
+  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${session?.user?.email || "default"
+    }`;
 
   if (!review) return null;
 
@@ -203,9 +199,8 @@ function ReviewDetailDialog({
             {review.images.map((_, index) => (
               <button
                 key={index}
-                className={`h-2 w-2 rounded-full ${
-                  currentSlide === index ? "bg-white" : "bg-white/50"
-                }`}
+                className={`h-2 w-2 rounded-full ${currentSlide === index ? "bg-white" : "bg-white/50"
+                  }`}
                 onClick={() => setCurrentSlide(index)}
               />
             ))}
@@ -228,7 +223,7 @@ function ReviewDetailDialog({
                   {review.user.name}
                 </div>
                 <div className="text-xs text-gray-500">
-                  {review.user.country}
+                  {/* {review.user.country} */}
                 </div>
               </div>
               <div className="text-xs text-gray-400">
@@ -242,11 +237,10 @@ function ReviewDetailDialog({
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
                   key={i}
-                  className={`h-4 w-4 ${
-                    i < (review?.rating || 0)
-                      ? "text-yellow-500 fill-yellow-500"
-                      : "text-gray-300"
-                  }`}
+                  className={`h-4 w-4 ${i < (review?.rating || 0)
+                    ? "text-yellow-500 fill-yellow-500"
+                    : "text-gray-300"
+                    }`}
                 />
               ))}
             </div>
@@ -256,7 +250,7 @@ function ReviewDetailDialog({
           <div className="mt-auto flex items-center ml-auto">
             <Heart className="h-4 w-4 text-blue-500" />
             <span className="ml-2 text-xs text-gray-500">
-              {review.likes} Likes
+              Likes
             </span>
           </div>
         </div>

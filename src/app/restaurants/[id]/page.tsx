@@ -10,14 +10,12 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from "@/components/ui/carousel";
 import Image from "next/image";
-import { Star, Bookmark } from "lucide-react";
-import { getNeighborhood } from "../page";
+import { Star } from "lucide-react";
 import { Restaurant } from "@prisma/client";
 import ReviewSection from "../components/review-section";
+import { getNeighborhood } from "@/lib/address";
 
 export interface Review {
   id: string;
@@ -146,9 +144,8 @@ export default function RestaurantDetail() {
             {restaurant.images.map((_, index) => (
               <button
                 key={index}
-                className={`h-2 w-2 rounded-full ${
-                  currentSlide === index ? "bg-white" : "bg-white/50"
-                }`}
+                className={`h-2 w-2 rounded-full ${currentSlide === index ? "bg-white" : "bg-white/50"
+                  }`}
                 onClick={() => setCurrentSlide(index)}
               />
             ))}
@@ -172,11 +169,10 @@ export default function RestaurantDetail() {
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
-                className={`h-4 w-4 ${
-                  i < (restaurant?.rating || 0)
-                    ? "text-yellow-500 fill-yellow-500"
-                    : "text-gray-300"
-                }`}
+                className={`h-4 w-4 ${i < (restaurant?.rating || 0)
+                  ? "text-yellow-500 fill-yellow-500"
+                  : "text-gray-300"
+                  }`}
               />
             ))}
             <span className="text-sm text-muted-foreground">
