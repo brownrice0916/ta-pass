@@ -37,7 +37,7 @@ const formSchema = z.object({
   address: z.string().min(1, "주소를 입력해주세요"),
   latitude: z.number(),  // .nullable() 제거
   longitude: z.number(), // .nullable() 제거
-  languageOptions: z.array(z.string()).min(1, "최소 하나의 언어를 선택해주세요"),
+  languages: z.array(z.string()).min(1, "최소 하나의 언어를 선택해주세요"),
 
   // 선택 항목
   description: z.string().optional(),
@@ -130,7 +130,7 @@ export default function RestaurantForm({
       specialOfferType: initialData?.specialOfferType ?? "none",
       specialOfferText: initialData?.specialOfferText ?? "",
       images: initialData?.images ?? [],
-      languageOptions: initialData?.languageOptions ?? ["ko"],
+      languages: initialData?.languages ?? ["ko"],
       socialLinks: initialData?.socialLinks ?? [],
 
     },
@@ -383,7 +383,7 @@ export default function RestaurantForm({
               {/* Language Options */}
               <FormField
                 control={control}
-                name="languageOptions"
+                name="languages"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>제공 언어 <span className="text-red-500">*</span></FormLabel>
