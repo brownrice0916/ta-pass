@@ -28,6 +28,7 @@ import ImageUpload from "./image-upload";
 import { CATEGORIES } from "@/lib/constants";
 import { Textarea } from "@/components/ui/textarea";
 import DaumPostcode from "react-daum-postcode";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   // 필수 항목
@@ -47,10 +48,25 @@ const formSchema = z.object({
   images: z.array(z.union([z.instanceof(File), z.string()])).optional(),
   socialLinks: z.array(
     z.object({
-      platform: z.string(),
-      url: z.string()  // .url() 제거
+      platform: z.string().min(1, "플랫폼을 선택해주세요"),
+      url: z.string()
+        .min(1, "URL을 입력해주세요")
+        .refine(
+          (url) => {
+            try {
+              if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = `https://${url}`;
+              }
+              new URL(url);
+              return true;
+            } catch {
+              return false;
+            }
+          },
+          { message: "올바른 URL 형식이 아닙니다" }
+        )
     })
-  ).optional().default([]),  // .default([]) 추가
+  )
 });
 const LANGUAGE_OPTIONS = [
   { value: "ko", label: "한국어" },
@@ -201,12 +217,22 @@ export default function RestaurantForm({
     initAutocomplete();
   }, [selectedCategory]);
 
-
   const addSocialLink = () => {
     const updatedLinks = [...socialLinks, { platform: "", url: "" }];
     setSocialLinks(updatedLinks);
     setValue("socialLinks", updatedLinks, {
-      shouldValidate: true
+      shouldValidate: true,
+      shouldDirty: true
+    });
+  };
+
+  const updateSocialLink = (index: number, field: 'platform' | 'url', value: string) => {
+    const updatedLinks = [...socialLinks];
+    updatedLinks[index][field] = value;
+    setSocialLinks(updatedLinks);
+    setValue("socialLinks", updatedLinks, {
+      shouldValidate: true,
+      shouldDirty: true
     });
   };
 
@@ -214,7 +240,8 @@ export default function RestaurantForm({
     const updatedLinks = socialLinks.filter((_, i) => i !== index);
     setSocialLinks(updatedLinks);
     setValue("socialLinks", updatedLinks, {
-      shouldValidate: true
+      shouldValidate: true,
+      shouldDirty: true
     });
   };
 
@@ -383,64 +410,84 @@ export default function RestaurantForm({
                 )}
               />
 
-              {/* Social Links */}
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <FormLabel>SNS 및 홈페이지 URL</FormLabel>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addSocialLink}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    추가하기
-                  </Button>
-                </div>
-                {socialLinks.map((link, index) => (
-                  <div key={index} className="flex gap-2 items-center">
-                    <div className="w-32">
-                      <Select
-                        value={link.platform}
-                        onValueChange={(value) => {
-                          const newLinks = [...socialLinks];
-                          newLinks[index].platform = value;
-                          setSocialLinks(newLinks);
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="선택" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {SOCIAL_PLATFORMS.map((platform) => (
-                            <SelectItem key={platform.value} value={platform.value}>
-                              {platform.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+              <FormField
+                control={control}
+                name="socialLinks"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <FormLabel>SNS 및 홈페이지 URL</FormLabel>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={addSocialLink}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          추가하기
+                        </Button>
+                      </div>
+                      {socialLinks.map((link, index) => (
+                        <div key={index} className="space-y-2">
+                          <div className="flex gap-2 items-start">
+                            <div className="w-32">
+                              <Select
+                                value={link.platform}
+                                onValueChange={(value) => {
+                                  const newLinks = [...socialLinks];
+                                  newLinks[index].platform = value;
+                                  setSocialLinks(newLinks);
+                                  field.onChange(newLinks);
+                                }}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="선택" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {SOCIAL_PLATFORMS.map((platform) => (
+                                    <SelectItem key={platform.value} value={platform.value}>
+                                      {platform.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="flex-1">
+                              <Input
+                                placeholder="URL 입력"
+                                value={link.url}
+                                onChange={(e) => {
+                                  const newLinks = [...socialLinks];
+                                  newLinks[index].url = e.target.value;
+                                  setSocialLinks(newLinks);
+                                  field.onChange(newLinks);
+                                }}
+                                className={cn(
+                                  form.formState.errors.socialLinks?.[index] && "border-destructive"
+                                )}
+                              />
+                              {form.formState.errors.socialLinks?.[index]?.url && (
+                                <p className="text-sm font-medium text-destructive mt-1">
+                                  {form.formState.errors.socialLinks[index]?.url?.message}
+                                </p>
+                              )}
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              onClick={() => removeSocialLink(index)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <Input
-                      placeholder="URL 입력"
-                      value={link.url}
-                      onChange={(e) => {
-                        const newLinks = [...socialLinks];
-                        newLinks[index].url = e.target.value;
-                        setSocialLinks(newLinks);
-                      }}
-                      className="flex-1"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => removeSocialLink(index)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
+                  </FormItem>
+                )}
+              />
 
 
               {/* Address Search */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { ReviewForm } from "@/components/review-form";
 import { Instagram, Facebook, Twitter, Globe, Youtube, BookOpen } from "lucide-react";
 import {
   Carousel,
+  CarouselApi,
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
@@ -53,7 +54,28 @@ export default function RestaurantDetail() {
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+
+
+  // 슬라이드 변경 핸들러
+  const handleSlideChange = useCallback(() => {
+    if (carouselApi) {
+      setCurrentSlide(carouselApi.selectedScrollSnap());
+    }
+  }, [carouselApi]);
+
+  // Carousel API 이벤트 연결
+  useEffect(() => {
+    if (carouselApi) {
+      carouselApi.on("scroll", handleSlideChange); // 스크롤 이벤트 핸들러 등록
+      handleSlideChange(); // 초기 상태 설정
+    }
+
+    return () => {
+      carouselApi?.off("scroll", handleSlideChange); // 클린업
+    };
+  }, [carouselApi, handleSlideChange]);
 
   useEffect(() => {
     if (restaurant) {
@@ -136,10 +158,9 @@ export default function RestaurantDetail() {
       >
         수정하기
       </Button>
-
       {restaurant.images && restaurant.images.length > 0 && (
         <div className="relative">
-          <Carousel className="w-full">
+          <Carousel setApi={setCarouselApi} className="w-full" onChange={handleSlideChange}>
             <CarouselContent>
               {restaurant.images.map((image, index) => (
                 <CarouselItem key={index}>
@@ -161,12 +182,17 @@ export default function RestaurantDetail() {
                 key={index}
                 className={`h-2 w-2 rounded-full ${currentSlide === index ? "bg-white" : "bg-white/50"
                   }`}
-                onClick={() => setCurrentSlide(index)}
+                onClick={() => {
+                  if (carouselApi) {
+                    carouselApi.scrollTo(index);
+                  }
+                }}
               />
             ))}
           </div>
         </div>
       )}
+
       <div className="p-2">
         <div>
           <p className="text-sm text-muted-foreground mb-2">
@@ -201,7 +227,7 @@ export default function RestaurantDetail() {
         </div>
         {restaurant.socialLinks && <div className="p-2">
           {restaurant.socialLinks && (
-            <div className="p-2">
+            <div className="py-2">
               <SocialLinks links={restaurant.socialLinks} />
             </div>
           )}

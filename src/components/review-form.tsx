@@ -63,7 +63,7 @@ export function ReviewForm({ restaurantId, onReviewAdded, onClose }: ReviewFormP
   };
 
   const handleNextStep = () => {
-    if (step === 3 && content && images.length > 0) {
+    if (step === 3) {  // images.length > 0 조건 제거
       handleSubmit();
       return;
     }
@@ -192,13 +192,12 @@ export function ReviewForm({ restaurantId, onReviewAdded, onClose }: ReviewFormP
             <Button
               className="w-full"
               onClick={handleSubmit}
-              disabled={isSubmitting || !images.length}
+              disabled={isSubmitting}  // images.length 조건 제거
             >
               {isSubmitting ? "작성 중..." : "작성 완료"}
             </Button>
           </div>
         );
-
       default:
         return null;
     }
