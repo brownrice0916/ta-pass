@@ -34,8 +34,8 @@ const formSchema = z.object({
   category: z.string().min(1, "카테고리를 선택해주세요"),
   name: z.string().min(1, "상호명을 입력해주세요"),
   address: z.string().min(1, "주소를 입력해주세요"),
-  latitude: z.number(),
-  longitude: z.number(),
+  latitude: z.number(),  // .nullable() 제거
+  longitude: z.number(), // .nullable() 제거
   languageOptions: z.array(z.string()).min(1, "최소 하나의 언어를 선택해주세요"),
 
   // 선택 항목
@@ -45,10 +45,12 @@ const formSchema = z.object({
   specialOfferType: z.enum(["none", "gift", "discount"]).optional(),
   specialOfferText: z.string().optional(),
   images: z.array(z.union([z.instanceof(File), z.string()])).optional(),
-  socialLinks: z.array(z.object({
-    platform: z.string(),
-    url: z.string().url("올바른 URL을 입력해주세요")
-  })).optional(),
+  socialLinks: z.array(
+    z.object({
+      platform: z.string(),
+      url: z.string()  // .url() 제거
+    })
+  ).optional().default([]),  // .default([]) 추가
 });
 const LANGUAGE_OPTIONS = [
   { value: "ko", label: "한국어" },
@@ -85,7 +87,9 @@ export default function RestaurantForm({
   const [selectedCategory, setSelectedCategory] = useState(
     initialData?.category || ""
   );
-  const [socialLinks, setSocialLinks] = useState<Array<{ platform: string; url: string }>>([]);
+  const [socialLinks, setSocialLinks] = useState<Array<{ platform: string; url: string }>>(
+    initialData?.socialLinks || []
+  );
   const addressInputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
@@ -112,8 +116,10 @@ export default function RestaurantForm({
       images: initialData?.images ?? [],
       languageOptions: initialData?.languageOptions ?? ["ko"],
       socialLinks: initialData?.socialLinks ?? [],
+
     },
   });
+
   const { control, setValue, watch } = form;
   const specialOfferType = watch("specialOfferType");
 
@@ -168,52 +174,48 @@ export default function RestaurantForm({
 
 
   const initAutocomplete = () => {
-    if (autocompleteRef.current) {
-      google.maps.event.clearInstanceListeners(autocompleteRef.current);
-      autocompleteRef.current = null;
-    }
-
-    if (inputRef.current && window.google) {
-      const selectedCategoryTypes = CATEGORIES.find(
-        (cat) => cat.value === selectedCategory
-      )?.types || ["establishment"];
-
-      autocompleteRef.current = new google.maps.places.Autocomplete(
-        inputRef.current,
-        {
-          fields: ["name", "formatted_address", "geometry", "rating", "types"],
-          types: selectedCategoryTypes,
-          componentRestrictions: { country: "kr" },
-        }
-      );
+    if (addressInputRef.current && window.google) {
+      autocompleteRef.current = new google.maps.places.Autocomplete(addressInputRef.current, {
+        componentRestrictions: { country: "kr" },
+      });
 
       autocompleteRef.current.addListener("place_changed", () => {
         const place = autocompleteRef.current?.getPlace();
-        if (place && place.geometry && place.geometry.location) {
+        if (place?.geometry?.location) {
           const lat = place.geometry.location.lat();
           const lng = place.geometry.location.lng();
 
-          setValue("name", place.name || "");
           setValue("address", place.formatted_address || "");
           setValue("latitude", lat);
           setValue("longitude", lng);
-          setValue("rating", place.rating || 0);
+
+          if (mapInstance.current && markerRef.current) {
+            mapInstance.current.setCenter({ lat, lng });
+            markerRef.current.setPosition({ lat, lng });
+          }
         }
       });
     }
   };
-
   useEffect(() => {
     initAutocomplete();
   }, [selectedCategory]);
 
 
   const addSocialLink = () => {
-    setSocialLinks([...socialLinks, { platform: "", url: "" }]);
+    const updatedLinks = [...socialLinks, { platform: "", url: "" }];
+    setSocialLinks(updatedLinks);
+    setValue("socialLinks", updatedLinks, {
+      shouldValidate: true
+    });
   };
 
   const removeSocialLink = (index: number) => {
-    setSocialLinks(socialLinks.filter((_, i) => i !== index));
+    const updatedLinks = socialLinks.filter((_, i) => i !== index);
+    setSocialLinks(updatedLinks);
+    setValue("socialLinks", updatedLinks, {
+      shouldValidate: true
+    });
   };
 
   const handleSubmit = async (values: FormValues) => {
@@ -225,19 +227,9 @@ export default function RestaurantForm({
 
       // 모든 데이터를 포함하여 전송
       const submitData = {
-        name: values.name,
-        address: values.address,
-        category: values.category,
-        description: values.description || "",
-        about: values.about || "",
-        specialOfferType: values.specialOfferType || "none",
-        specialOfferText: values.specialOfferText || "",
-        latitude: values.latitude,
-        longitude: values.longitude,
-        rating: values.rating || 0,
-        languageOptions: values.languageOptions || ["ko"],
-        socialLinks: socialLinks || [],
-        images: values.images || []
+        ...values,
+        category: selectedCategory,
+        socialLinks: socialLinks,
       };
 
       formData.append("data", JSON.stringify(submitData));
@@ -277,6 +269,13 @@ export default function RestaurantForm({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    console.log(form.getValues())
+    console.log("Form state:", form.formState);
+    console.log("Form errors:", form.formState.errors);
+    console.log(form.formState.isValid)
+  }, [form])
 
   return (
     <>
@@ -601,7 +600,7 @@ export default function RestaurantForm({
                   </FormItem>
                 )}
               />
-
+              {/* 
               {watch("name") && (
                 <div className="bg-muted p-4 rounded-lg space-y-2">
                   <h3 className="font-medium">선택된 장소 정보</h3>
@@ -631,7 +630,7 @@ export default function RestaurantForm({
                     </p>
                   </div>
                 </div>
-              )}
+              )} */}
 
               <div className="flex gap-3 pt-4">
                 <Button
@@ -644,7 +643,7 @@ export default function RestaurantForm({
                 </Button>
                 <Button
                   type="submit"
-                  disabled={!form.formState.isValid || loading}
+                  disabled={loading || !form.formState.isValid}
                   className="flex-1"
                 >
                   {loading ? "처리 중..." : submitButtonText}

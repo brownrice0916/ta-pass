@@ -199,9 +199,13 @@ export default function RestaurantDetail() {
             <span className="text-sm text-red-500 ml-2">20% 할인</span>
           </div> */}
         </div>
-        <div className="p-4">
-          <SocialLinks links={restaurant.socialLinks} />
-        </div>
+        {restaurant.socialLinks && <div className="p-2">
+          {restaurant.socialLinks && (
+            <div className="p-2">
+              <SocialLinks links={restaurant.socialLinks} />
+            </div>
+          )}
+        </div>}
         {/* Photos Grid */}
         <div className="mb-6 mt-10">
           <h2 className="text-lg font-semibold mb-2">Photos</h2>
