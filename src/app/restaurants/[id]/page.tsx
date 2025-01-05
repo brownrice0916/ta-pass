@@ -252,7 +252,7 @@ export default function RestaurantDetail() {
         {/* Customer Satisfaction */}
         <ReviewSection onReviewsChange={fetchReviews} restaurant={restaurant} reviews={reviews} />
         {/* About Section */}
-        <div className="mb-6">
+        <div className="mb-6 mt-4">
           <h2 className="text-lg font-semibold mb-2">About</h2>
           <Card className="bg-gray-50">
             <CardContent className="p-4">
@@ -269,7 +269,7 @@ export default function RestaurantDetail() {
             </CardContent>
           </Card>
         </div> */}
-        <div className="mb-6">
+        <div className="mb-6 mt-4">
           <h2 className="text-lg font-semibold mb-2">Store Info</h2>
           <GoogleMap
             mapContainerStyle={containerStyle}
