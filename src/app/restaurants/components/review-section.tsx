@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Star, Heart } from "lucide-react";
+import { Star, Heart, Plus, MessageSquare } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +18,7 @@ import { useSession } from "next-auth/react";
 import { Card } from "@/components/ui/card";
 import { Restaurant } from "@prisma/client";
 import { Review } from "../[id]/page";
+import { ReviewForm } from "@/components/review-form";
 
 // interface Review {
 //   id: string;
@@ -259,43 +260,90 @@ function ReviewDetailDialog({
   );
 }
 
+interface ReviewSectionProps {
+  reviews: Review[];
+  restaurant: Restaurant;
+  onReviewsChange: () => void;  // 추가
+}
+
 export default function ReviewSection({
   reviews,
   restaurant,
-}: {
-  reviews: Review[];
-  restaurant: Restaurant;
-}) {
+  onReviewsChange,
+}:
+  ReviewSectionProps
+) {
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+  const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
 
+  const handleReviewAdded = () => {
+    setIsReviewFormOpen(false);
+    onReviewsChange();
+    // TODO: 리뷰 목록 새로고침 로직 추가
+  };
   return (
     <div className="p-1">
-      <p className="text-lg font-semibold mb-4">95%의 고객이 만족했습니다</p>
-      {/* 스와이프 가능한 슬라이더 */}
-      <Carousel className="overflow-x-visible">
-        <CarouselContent className="flex overflow-visible p-1">
-          {reviews.map((review, index) => (
-            <CarouselItem
-              key={review.id}
-              className={`${index === 0 ? "pl-4" : "pl-1"} overflow-visible`}
-              style={{ flex: "0 0 95%" }}
-            >
-              <ReviewCard
-                restaurant={restaurant}
-                review={review}
-                onOpenDetail={setSelectedReview}
-              />
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-      </Carousel>
-      {/* 팝업 */}
+      <div className="flex justify-between items-center mb-4">
+        {reviews.length > 0 ? (
+          <p className="text-lg font-semibold">95%의 고객이 만족했습니다</p>
+        ) : (
+          <p className="text-lg font-semibold text-gray-600">아직 등록된 리뷰가 없습니다</p>
+        )}
+        <button
+          onClick={() => setIsReviewFormOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          리뷰 작성
+        </button>
+      </div>
+
+      {reviews.length > 0 ? (
+        <Carousel className="overflow-x-visible">
+          <CarouselContent className="flex overflow-visible p-1">
+            {[...reviews]
+              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+              .map((review, index) => (
+                <CarouselItem
+                  key={review.id}
+                  className={`${index === 0 ? "pl-4" : "pl-1"} overflow-visible`}
+                  style={{ flex: "0 0 95%" }}
+                >
+                  <ReviewCard
+                    restaurant={restaurant}
+                    review={review}
+                    onOpenDetail={setSelectedReview}
+                  />
+                </CarouselItem>
+              ))}
+          </CarouselContent>
+        </Carousel>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-lg">
+          <MessageSquare className="h-12 w-12 text-gray-400 mb-4" />
+          <p className="text-gray-600 mb-2">첫 번째 리뷰를 작성해보세요!</p>
+          <p className="text-sm text-gray-400">여러분의 소중한 경험을 공유해주세요.</p>
+        </div>
+      )}
+
+      {/* 리뷰 상세 Dialog */}
       <ReviewDetailDialog
         restaurant={restaurant}
         review={selectedReview}
         open={!!selectedReview}
         onClose={() => setSelectedReview(null)}
       />
+
+      {/* 리뷰 작성 Dialog */}
+      <Dialog open={isReviewFormOpen} onOpenChange={setIsReviewFormOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogTitle className="sr-only">리뷰 작성</DialogTitle>
+          <ReviewForm
+            restaurantId={restaurant.id}
+            onReviewAdded={handleReviewAdded}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

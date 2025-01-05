@@ -36,7 +36,9 @@ model Restaurant {
   rating          Float?   @default(0)
   specialOfferType String  @default("none")
   specialOfferText String  @default("")
-  images          String[]  @default([])
+  images          String[] @default([])
+  languages       String[] @default([])  // 추가
+  socialLinks     Json?    // 추가 (URL들을 JSON으로 저장)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   reviews         Review[]

@@ -100,7 +100,9 @@ export async function PUT(request: Request) {
         latitude: placeData.latitude,
         longitude: placeData.longitude,
         rating: placeData.rating || 0,
-        images: imageUrls.length > 0 ? imageUrls : undefined, // Only update images if there are new ones
+        images: imageUrls.length > 0 ? imageUrls : undefined,
+        languages: placeData.languageOptions || [], // 추가
+        socialLinks: placeData.socialLinks || [], // 추가
       },
     });
 

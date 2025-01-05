@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import { ReviewForm } from "@/components/review-form";
+import { Instagram, Facebook, Twitter, Globe, Youtube, BookOpen } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -16,6 +17,7 @@ import { Star } from "lucide-react";
 import { Restaurant } from "@prisma/client";
 import ReviewSection from "../components/review-section";
 import { getNeighborhood } from "@/lib/address";
+import SocialLinks from "../components/social-links";
 
 export interface Review {
   id: string;
@@ -26,10 +28,23 @@ export interface Review {
   images: string[]; // 리뷰 이미지 배열 추가
 }
 
+// 플랫폼별 아이콘 매핑
+const PLATFORM_ICONS = {
+  instagram: Instagram,
+  facebook: Facebook,
+  twitter: Twitter,
+  blog: BookOpen,
+  youtube: Youtube,
+  website: Globe,
+} as const;
+
+
 const containerStyle = {
   width: "100%",
   height: "400px",
 };
+
+
 
 export default function RestaurantDetail() {
   const params = useParams();
@@ -184,6 +199,9 @@ export default function RestaurantDetail() {
             <span className="text-sm text-red-500 ml-2">20% 할인</span>
           </div> */}
         </div>
+        <div className="p-4">
+          <SocialLinks links={restaurant.socialLinks} />
+        </div>
         {/* Photos Grid */}
         <div className="mb-6 mt-10">
           <h2 className="text-lg font-semibold mb-2">Photos</h2>
@@ -202,7 +220,7 @@ export default function RestaurantDetail() {
         </div>
 
         {/* Customer Satisfaction */}
-        <ReviewSection restaurant={restaurant} reviews={reviews} />
+        <ReviewSection onReviewsChange={fetchReviews} restaurant={restaurant} reviews={reviews} />
         {/* About Section */}
         <div className="mb-6">
           <h2 className="text-lg font-semibold mb-2">About</h2>
@@ -262,15 +280,15 @@ export default function RestaurantDetail() {
           </GoogleMap>
           <p className="text-sm">{restaurant?.address}</p>
         </div>
-        <div className="mt-8">
+        {/* <div className="mt-8">
           <h2 className="text-xl font-bold mb-4">Reviews</h2>
 
           <ReviewForm
             restaurantId={restaurant.id}
             onReviewAdded={fetchReviews}
           />
-        </div>
+        </div> */}
       </div>
-    </div>
+    </div >
   );
 }

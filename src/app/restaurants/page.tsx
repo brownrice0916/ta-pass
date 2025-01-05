@@ -340,7 +340,7 @@ export default function RestaurantsPage() {
     <div className="container mx-auto py-2 pb-16">
       <div className="flex justify-end mb-6">
         <Button onClick={() => router.push("/restaurants/post")}>
-          장소 추가
+          파트너 추가
         </Button>
       </div>
 
@@ -400,12 +400,15 @@ export default function RestaurantsPage() {
               <Marker
                 position={userLocation}
                 icon={{
-                  path: google.maps.SymbolPath.CIRCLE,
-                  fillColor: "#4f46e5",
-                  fillOpacity: 1,
-                  strokeColor: "#ffffff",
-                  strokeWeight: 2,
-                  scale: 8,
+                  url: '/markers/my-location.png',
+                  scaledSize: new google.maps.Size(30, 30),  // 이미지 크기 조절
+                  anchor: new google.maps.Point(20, 20),
+                  // path: google.maps.SymbolPath.CIRCLE,
+                  // fillColor: "#4f46e5",
+                  // fillOpacity: 1,
+                  // strokeColor: "#ffffff",
+                  // strokeWeight: 2,
+                  // scale: 8,
                 }}
                 title="내 위치"
                 onClick={handleUserLocationClick}
@@ -426,6 +429,11 @@ export default function RestaurantsPage() {
             <Marker
               onClick={() => handleMarkerClick(restaurant)}
               key={restaurant.id}
+              icon={{
+                url: '/markers/restaurant.png',
+                scaledSize: new google.maps.Size(32, 32),
+                anchor: new google.maps.Point(16, 16),
+              }}
               position={{
                 lat: restaurant.latitude,
                 lng: restaurant.longitude,
@@ -510,7 +518,7 @@ export default function RestaurantsPage() {
                         }`}
                     >
                       {restaurant.specialOfferType === "gift"
-                        ? "Extra Gift"
+                        ? "Welcome Gift"
                         : "Discount"}
                     </span>
                     <span className="text-sm ml-2 text-gray-600">

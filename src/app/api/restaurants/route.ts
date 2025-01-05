@@ -29,7 +29,7 @@ export async function GET(request: Request) {
       rating:
         restaurant.reviews.length > 0
           ? restaurant.reviews.reduce((sum, review) => sum + review.rating, 0) /
-            restaurant.reviews.length
+          restaurant.reviews.length
           : 0,
     }));
 
@@ -86,6 +86,8 @@ export async function POST(request: Request) {
         longitude: placeData.longitude,
         rating: placeData.rating || 0,
         images: imageUrls,
+        languages: placeData.languageOptions || [], // 추가
+        socialLinks: placeData.socialLinks || [], // 추가
       },
     });
 
