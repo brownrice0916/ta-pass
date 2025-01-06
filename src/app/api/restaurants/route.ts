@@ -9,6 +9,7 @@ export async function GET(request: Request) {
   const lat = parseFloat(searchParams.get("latitude") || "0");
   const lng = parseFloat(searchParams.get("longitude") || "0");
   const radius = parseFloat(searchParams.get("radius") || "1");
+  const query = searchParams.get("q");
 
   try {
     const restaurants = await prisma.restaurant.findMany({
@@ -20,6 +21,17 @@ export async function GET(request: Request) {
           },
         },
       },
+      where: query ? {
+        OR: [
+          { name: { contains: query, mode: 'insensitive' } },
+          { tags: { hasSome: [query] } },
+          { category: { contains: query, mode: 'insensitive' } },
+          { region1: { contains: query, mode: 'insensitive' } },
+          { region2: { contains: query, mode: 'insensitive' } },
+          { region3: { contains: query, mode: 'insensitive' } },
+          { region4: { contains: query, mode: 'insensitive' } }
+        ]
+      } : undefined,
     });
 
     // 리뷰 개수와 평균 평점을 계산하여 데이터 가공
@@ -43,6 +55,7 @@ export async function GET(request: Request) {
   }
 }
 
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
@@ -58,13 +71,13 @@ export async function POST(request: Request) {
 
     const placeData = JSON.parse(placeDataStr);
 
-    // Upload each image and get URLs
+    // 기존 placeData에서 region 정보를 직접 받도록 수정
+    const { region1, region2, region3, region4 } = placeData;
+
+    // Upload images
     const imageUrls = await Promise.all(
       imageFiles.map(async (file) => {
-        const filename = `${Date.now()}_${file.name.replace(
-          /[^a-zA-Z0-9.]/g,
-          ""
-        )}`;
+        const filename = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, "")}`;
         const blob = await put(`restaurants/${filename}`, file, {
           access: "public",
         });
@@ -72,23 +85,18 @@ export async function POST(request: Request) {
       })
     );
 
-    // Create restaurant with image URLs and new fields
+    // Create restaurant with region information
     const restaurant = await prisma.restaurant.create({
       data: {
-        name: placeData.name,
-        address: placeData.address,
-        category: placeData.category,
-        description: placeData.description,
-        about: placeData.about || "",
-        specialOfferType: placeData.specialOfferType || "none",
-        specialOfferText: placeData.specialOfferText || "",
-        latitude: placeData.latitude,
-        longitude: placeData.longitude,
-        rating: placeData.rating || 0,
+        ...placeData,
+        region1,
+        region2,
+        region3,
+        region4,
         images: imageUrls,
         languages: placeData.languages || [],
         socialLinks: placeData.socialLinks || [],
-        tags: placeData.tags || [],  // 추가된 부분
+        tags: [...(placeData.tags || []), region1, region2, region3], // 지역 정보를 태그에도 추가
       },
     });
 

@@ -71,7 +71,7 @@ const MyPage = () => {
                 </button>
             </div>
 
-            {/* Bottom Navigation */}
+
 
         </div >
     );

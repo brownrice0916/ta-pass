@@ -22,7 +22,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { MapPin, Plus, X } from "lucide-react";
+import { Languages, MapPin, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import ImageUpload from "./image-upload";
 import { CATEGORIES } from "@/lib/constants";
@@ -38,9 +38,13 @@ const formSchema = z.object({
   latitude: z.number(),  // .nullable() 제거
   longitude: z.number(), // .nullable() 제거
   languages: z.array(z.string()).min(1, "최소 하나의 언어를 선택해주세요"),
-
+  region1: z.string().optional(),
+  region2: z.string().optional(),
+  region3: z.string().optional(),
+  region4: z.string().optional(),
   // 선택 항목
   tags: z.array(z.string()).optional(),
+  addressDetail: z.string().optional(),
   description: z.string().optional(),
   about: z.string().optional(),
   rating: z.number().min(0).max(5).optional(),
@@ -126,6 +130,7 @@ export default function RestaurantForm({
       description: initialData?.description ?? "",
       about: initialData?.about ?? "",
       address: initialData?.address ?? "",
+      addressDetail: initialData?.addressDetail ?? "",
       latitude: initialData?.latitude ?? 37.5665,
       longitude: initialData?.longitude ?? 126.9780,
       rating: initialData?.rating ?? 0,
@@ -135,7 +140,10 @@ export default function RestaurantForm({
       languages: initialData?.languages ?? ["ko"],
       socialLinks: initialData?.socialLinks ?? [],
       tags: initialData?.tags ?? [],
-
+      region1: initialData?.region1 ?? "",
+      region2: initialData?.region2 ?? "",
+      region3: initialData?.region3 ?? "",
+      region4: initialData?.region4 ?? "",
     },
   });
 
@@ -259,7 +267,13 @@ export default function RestaurantForm({
       const submitData = {
         ...values,
         category: selectedCategory,
+        languages: values.languages,
         socialLinks: socialLinks,
+        region1: values.region1,
+        region2: values.region2,
+        region3: values.region3,
+        region4: values.region4 || '',
+
       };
 
       formData.append("data", JSON.stringify(submitData));
@@ -584,6 +598,22 @@ export default function RestaurantForm({
                   </FormItem>
                 )}
               />
+              <FormField
+                control={control}
+                name="addressDetail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>상세 주소</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="상세 주소"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               {isAddressModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -601,18 +631,46 @@ export default function RestaurantForm({
                     </div>
                     <DaumPostcode
                       onComplete={(data) => {
+                        // 기본 주소 설정
                         setValue('address', data.address);
-                        // 주소로 좌표 검색
+
+                        // 지역 정보 설정
+                        // region1: 시/도
+                        setValue('region1', data.sido);
+                        // region2: 구/군
+                        setValue('region2', data.sigungu);
+                        // region3: 동/읍/면
+                        setValue('region3', data.bname);
+
+                        // 구글 지오코딩으로 좌표 및 추가 정보 얻기
                         const geocoder = new google.maps.Geocoder();
                         geocoder.geocode(
                           { address: data.address },
                           (results, status) => {
-                            if (status === "OK" && results?.[0]?.geometry?.location) {
+                            if (status === "OK" && results?.[0]) {
                               const lat = results[0].geometry.location.lat();
                               const lng = results[0].geometry.location.lng();
                               setValue('latitude', lat);
                               setValue('longitude', lng);
 
+                              // region4: 주변 랜드마크나 지역명 설정
+                              const addressComponents = results[0].address_components;
+                              let landmark = '';
+
+                              // 주변 랜드마크/지역명 찾기
+                              for (const component of addressComponents) {
+                                if (component.types.includes('neighborhood') ||
+                                  component.types.includes('sublocality_level_4') ||
+                                  component.types.includes('point_of_interest')) {
+                                  landmark = component.long_name;
+                                  break;
+                                }
+                              }
+
+                              // region4 설정 (랜드마크나 동네 상권명)
+                              setValue('region4', landmark);
+
+                              // 지도 업데이트
                               if (mapInstance.current && markerRef.current) {
                                 const newLatLng = { lat, lng };
                                 mapInstance.current.setCenter(newLatLng);
@@ -624,6 +682,7 @@ export default function RestaurantForm({
                         setIsAddressModalOpen(false);
                       }}
                     />
+
                   </div>
                 </div>
               )}

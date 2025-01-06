@@ -12,10 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MapPin } from "lucide-react";
+import { MapPin, Search } from "lucide-react";
 import Image from "next/image";
 import { Review } from "@prisma/client";
 import { getNeighborhood } from "@/lib/address";
+import { Input } from "@/components/ui/input";
 
 
 
@@ -54,27 +55,27 @@ const CATEGORIES = [
   { id: "food", label: "Food", value: "food", types: ["restaurant", "cafe"] },
 ];
 
-const LOCATIONS = [
-  { id: "current", label: "현재 위치", value: "current", coordinates: null },
-  {
-    id: "hongdae",
-    label: "홍대",
-    value: "hongdae",
-    coordinates: { lat: 37.5578, lng: 126.9254 },
-  },
-  {
-    id: "gangnam",
-    label: "강남",
-    value: "gangnam",
-    coordinates: { lat: 37.4979, lng: 127.0276 },
-  },
-  {
-    id: "myeongdong",
-    label: "명동",
-    value: "myeongdong",
-    coordinates: { lat: 37.5637, lng: 126.9838 },
-  },
-];
+// const LOCATIONS = [
+//   { id: "current", label: "현재 위치", value: "current", coordinates: null },
+//   {
+//     id: "hongdae",
+//     label: "홍대",
+//     value: "hongdae",
+//     coordinates: { lat: 37.5578, lng: 126.9254 },
+//   },
+//   {
+//     id: "gangnam",
+//     label: "강남",
+//     value: "gangnam",
+//     coordinates: { lat: 37.4979, lng: 127.0276 },
+//   },
+//   {
+//     id: "myeongdong",
+//     label: "명동",
+//     value: "myeongdong",
+//     coordinates: { lat: 37.5637, lng: 126.9838 },
+//   },
+// ];
 
 interface Restaurant {
   id: string;
@@ -93,6 +94,12 @@ interface Restaurant {
   reviewCount?: number; // 추가
   district?: string; // 추가: 동 정보
   reviews?: Review[]; // 추가: 리뷰 배열
+  region1?: string;
+  region2?: string;
+  region3?: string;
+  region4?: string;
+  tags: any;
+  addressDetail?: string;
 }
 
 const containerStyle = {
@@ -142,41 +149,41 @@ export default function RestaurantsPage() {
     setIsClient(true);
   }, []);
 
-  const handleLocationChange = (value: string) => {
-    setSelectedLocation(value);
-    if (value === "current") {
-      if (userLocation) {
-        setCenter(userLocation);
-        fetchNearbyRestaurants(userLocation.lat, userLocation.lng);
-      } else {
-        setLoading(true);
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            const location = { lat: latitude, lng: longitude };
-            setUserLocation(location);
-            setCenter(location);
-            fetchNearbyRestaurants(latitude, longitude);
-            setLoading(false);
-          },
-          (error) => {
-            console.log(error);
-            setError("위치 정보를 가져올 수 없습니다.");
-            setLoading(false);
-          }
-        );
-      }
-    } else {
-      const location = LOCATIONS.find((loc) => loc.value === value);
-      if (location?.coordinates) {
-        setCenter(location.coordinates);
-        fetchNearbyRestaurants(
-          location.coordinates.lat,
-          location.coordinates.lng
-        );
-      }
-    }
-  };
+  // const handleLocationChange = (value: string) => {
+  //   setSelectedLocation(value);
+  //   if (value === "current") {
+  //     if (userLocation) {
+  //       setCenter(userLocation);
+  //       fetchNearbyRestaurants(userLocation.lat, userLocation.lng);
+  //     } else {
+  //       setLoading(true);
+  //       navigator.geolocation.getCurrentPosition(
+  //         (position) => {
+  //           const { latitude, longitude } = position.coords;
+  //           const location = { lat: latitude, lng: longitude };
+  //           setUserLocation(location);
+  //           setCenter(location);
+  //           fetchNearbyRestaurants(latitude, longitude);
+  //           setLoading(false);
+  //         },
+  //         (error) => {
+  //           console.log(error);
+  //           setError("위치 정보를 가져올 수 없습니다.");
+  //           setLoading(false);
+  //         }
+  //       );
+  //     }
+  //   } else {
+  //     const location = LOCATIONS.find((loc) => loc.value === value);
+  //     if (location?.coordinates) {
+  //       setCenter(location.coordinates);
+  //       fetchNearbyRestaurants(
+  //         location.coordinates.lat,
+  //         location.coordinates.lng
+  //       );
+  //     }
+  //   }
+  // };
 
   const mapRef = useRef<google.maps.Map | null>(null);
   const handleCenterOnUser = () => {
@@ -329,6 +336,34 @@ export default function RestaurantsPage() {
     }
   };
 
+  useEffect(() => {
+    if (restaurants.length > 0) {
+      const query = searchQuery
+
+      const filtered = query
+        ? restaurants.filter(restaurant =>
+          restaurant.name.toLowerCase().includes(query) ||
+          restaurant.tags.some((tag: string) => tag.toLowerCase().includes(query)) ||
+          restaurant.address.toLowerCase().includes(query) ||
+          restaurant.addressDetail?.toLowerCase().includes(query) ||
+          restaurant.category?.toLowerCase().includes(query) ||
+          restaurant.region1?.toLowerCase().includes(query) ||   // region1 추가
+          restaurant.region2?.toLowerCase().includes(query) ||   // region2 추가
+          restaurant.region3?.toLowerCase().includes(query) ||   // region3 추가
+          restaurant.region4?.toLowerCase().includes(query)      // region4 추가
+        )
+        : restaurants;
+
+      setFilteredRestaurants(filtered);
+    }
+  }, [searchQuery, restaurants]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    //setSearchQuery(searchQuery);
+
+  };
+
   if (!isClient) {
     return null; // or loading state
   }
@@ -347,7 +382,7 @@ export default function RestaurantsPage() {
       <div className="mb-4 relative">
         <div className="absolute top-1 left-1 right-1 z-10 space-y-4">
           <div className="rounded-lg p-1">
-            <div className="flex p-1 bg-white rounded-md items-center space-x-2 mb-4">
+            {/* <div className="flex p-1 bg-white rounded-md items-center space-x-2 mb-4">
               <Select
                 value={selectedLocation}
                 onValueChange={handleLocationChange}
@@ -363,6 +398,24 @@ export default function RestaurantsPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div> */}
+            {/* Search Bar */}
+            <div className="p-4">
+              <form onSubmit={handleSearch} className="relative">
+                <Input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Stay, shop, and save—where to?"
+                  className="w-full pl-4 pr-10 py-2 border rounded-lg"
+                />
+                <button
+                  type="submit"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-primary"
+                >
+                  <Search className="w-5 h-5" />
+                </button>
+              </form>
             </div>
             <div className="flex gap-1 overflow-x-auto pb-1 -mb-1 bg-gray">
               {CATEGORIES.map((category) => (

@@ -3,8 +3,23 @@
 import { Search } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
 
 export default function Main() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+
+
   return (
     <main className="min-h-screen bg-background pb-[72px]">
       <div className="mx-auto max-w-[393px] relative min-h-screen">
@@ -12,16 +27,21 @@ export default function Main() {
 
         {/* Search Bar */}
         <div className="p-4">
-          <div className="relative">
+          <form onSubmit={handleSearch} className="relative">
             <Input
               type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Stay, shop, and save—where to?"
               className="w-full pl-4 pr-10 py-2 border rounded-lg"
             />
-            <button className="absolute right-3 top-1/2 -translate-y-1/2 text-primary">
+            <button
+              type="submit"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-primary"
+            >
               <Search className="w-5 h-5" />
             </button>
-          </div>
+          </form>
         </div>
 
         {/* Main Categories */}
