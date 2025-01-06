@@ -39,6 +39,7 @@ model Restaurant {
   images          String[] @default([])
   languages       String[] @default([])  // 추가
   socialLinks     Json?    // 추가 (URL들을 JSON으로 저장)
+  tags            String[] @default([])  // 추가된 부분
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   reviews         Review[]

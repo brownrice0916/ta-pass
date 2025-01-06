@@ -86,8 +86,9 @@ export async function POST(request: Request) {
         longitude: placeData.longitude,
         rating: placeData.rating || 0,
         images: imageUrls,
-        languages: placeData.languageOptions || [], // 추가
-        socialLinks: placeData.socialLinks || [], // 추가
+        languages: placeData.languages || [],
+        socialLinks: placeData.socialLinks || [],
+        tags: placeData.tags || [],  // 추가된 부분
       },
     });
 

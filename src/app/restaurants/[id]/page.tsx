@@ -257,6 +257,9 @@ export default function RestaurantDetail() {
           <Card className="bg-gray-50">
             <CardContent className="p-4">
               <p>{restaurant?.description || "서비스 소개"}</p>
+              <div className="mt-10 text-gray-500 text-sm">
+                {restaurant.tags.map((tag) => (<span>{tag}</span>))}
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -310,6 +313,7 @@ export default function RestaurantDetail() {
           </GoogleMap>
           <p className="text-sm">{restaurant?.address}</p>
         </div>
+
         {/* <div className="mt-8">
           <h2 className="text-xl font-bold mb-4">Reviews</h2>
 

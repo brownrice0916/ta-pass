@@ -40,6 +40,7 @@ const formSchema = z.object({
   languages: z.array(z.string()).min(1, "최소 하나의 언어를 선택해주세요"),
 
   // 선택 항목
+  tags: z.array(z.string()).optional(),
   description: z.string().optional(),
   about: z.string().optional(),
   rating: z.number().min(0).max(5).optional(),
@@ -106,6 +107,7 @@ export default function RestaurantForm({
   const [socialLinks, setSocialLinks] = useState<Array<{ platform: string; url: string }>>(
     initialData?.socialLinks || []
   );
+  const [tagInput, setTagInput] = useState("");
   const addressInputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
@@ -132,13 +134,14 @@ export default function RestaurantForm({
       images: initialData?.images ?? [],
       languages: initialData?.languages ?? ["ko"],
       socialLinks: initialData?.socialLinks ?? [],
+      tags: initialData?.tags ?? [],
 
     },
   });
 
   const { control, setValue, watch } = form;
   const specialOfferType = watch("specialOfferType");
-
+  const tags = watch("tags");
 
   useEffect(() => {
     if (mapRef.current && typeof google !== "undefined") {
@@ -410,6 +413,73 @@ export default function RestaurantForm({
                 )}
               />
 
+              {/* Tags Input */}
+              <FormField
+                control={control}
+                name="tags"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>해시태그</FormLabel>
+                    <FormControl>
+                      <div className="space-y-2">
+                        <Input
+                          placeholder="해시태그 입력 후 Enter (예: #맛집)"
+                          value={tagInput}
+                          onChange={(e) => setTagInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            // composition 이벤트 중에는 처리하지 않음
+                            if (e.nativeEvent.isComposing) return;
+
+                            if (e.key === 'Enter' && tagInput.trim()) {
+                              e.preventDefault();
+                              const trimmedTag = tagInput.trim();
+                              // 최소 길이 체크 (빈 문자열이나 단일 문자 방지)
+                              if (trimmedTag.length < 2) return;
+
+                              let newTag = trimmedTag;
+                              if (!newTag.startsWith('#')) {
+                                newTag = '#' + newTag;
+                              }
+
+                              if (field.value && !field.value.includes(newTag)) {
+                                const newTags = [...field.value, newTag];
+                                field.onChange(newTags);
+                              }
+                              setTagInput('');
+                            }
+                          }}
+                          // composition 이벤트 처리
+                          onCompositionEnd={(e) => {
+                            const target = e.target as HTMLInputElement;
+                            setTagInput(target.value);
+                          }}
+                        />
+                        <div className="flex flex-wrap gap-2">
+                          {field.value && field.value.map((tag, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center gap-1 bg-primary/10 text-primary px-2 py-1 rounded-full"
+                            >
+                              <span>{tag}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newTags = field.value && field.value.filter((_, i) => i !== index);
+                                  field.onChange(newTags);
+                                }}
+                                className="text-primary hover:text-primary/80"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={control}
                 name="socialLinks"

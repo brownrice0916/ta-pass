@@ -103,6 +103,7 @@ export async function PUT(request: Request) {
         images: imageUrls.length > 0 ? imageUrls : undefined,
         languages: placeData.languageOptions || [], // 추가
         socialLinks: placeData.socialLinks || [], // 추가
+        tags: placeData.tags || [],  // 추가된 부분
       },
     });
 
