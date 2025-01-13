@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import KoreaTrends from "./videos";
 
 
 export default function Main() {
@@ -97,7 +98,8 @@ export default function Main() {
 
         {/* Korea Trends Section */}
         <section className="p-4">
-          <h2 className="text-lg font-bold mb-4">
+          <KoreaTrends />
+          {/* <h2 className="text-lg font-bold mb-4">
             Want to know more about Korea Trends?
           </h2>
           <div className="flex overflow-x-auto gap-4 pb-4">
@@ -109,7 +111,7 @@ export default function Main() {
                 </p>
               </div>
             ))}
-          </div>
+          </div> */}
         </section>
       </div>
     </main>
