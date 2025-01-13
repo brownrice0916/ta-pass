@@ -1,9 +1,8 @@
-// components/RegionSelect.tsx
 "use client";
 
 import { useState, useEffect } from 'react';
 import { REGIONS } from '@/lib/regions';
-import type { RegionData } from '@/types/regions';
+import type { RegionData, Regions } from '@/types/regions';
 
 interface RegionSelectProps {
     onRegionChange: (regions: RegionData) => void;
@@ -42,6 +41,9 @@ export function RegionSelect({ onRegionChange }: RegionSelectProps) {
         setRegion4('');
     };
 
+    // Type assertion for REGIONS
+    const regions = REGIONS as Regions;
+
     return (
         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
             <select
@@ -50,7 +52,7 @@ export function RegionSelect({ onRegionChange }: RegionSelectProps) {
                 className="border rounded-lg px-3 py-2"
             >
                 <option value="">시/도 선택</option>
-                {Object.keys(REGIONS).map((r1) => (
+                {Object.keys(regions).map((r1) => (
                     <option key={r1} value={r1}>{r1}</option>
                 ))}
             </select>
@@ -62,7 +64,7 @@ export function RegionSelect({ onRegionChange }: RegionSelectProps) {
                     className="border rounded-lg px-3 py-2"
                 >
                     <option value="">구/군 선택</option>
-                    {Object.keys(REGIONS[region1] || {}).map((r2) => (
+                    {Object.keys(regions[region1] || {}).map((r2) => (
                         <option key={r2} value={r2}>{r2}</option>
                     ))}
                 </select>
@@ -75,7 +77,7 @@ export function RegionSelect({ onRegionChange }: RegionSelectProps) {
                     className="border rounded-lg px-3 py-2"
                 >
                     <option value="">동/읍/면 선택</option>
-                    {Object.keys(REGIONS[region1][region2] || {}).map((r3) => (
+                    {Object.keys(regions[region1]?.[region2] || {}).map((r3) => (
                         <option key={r3} value={r3}>{r3}</option>
                     ))}
                 </select>
@@ -88,7 +90,7 @@ export function RegionSelect({ onRegionChange }: RegionSelectProps) {
                     className="border rounded-lg px-3 py-2"
                 >
                     <option value="">상세 지역 선택 (선택사항)</option>
-                    {REGIONS[region1][region2][region3].map((r4) => (
+                    {(regions[region1]?.[region2]?.[region3] || []).map((r4) => (
                         <option key={r4} value={r4}>{r4}</option>
                     ))}
                 </select>
