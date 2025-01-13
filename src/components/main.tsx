@@ -1,10 +1,11 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { ArrowRight, Plane, Search } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 
 export default function Main() {
@@ -17,6 +18,18 @@ export default function Main() {
       router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
     }
   };
+
+
+  const categories = [
+    { icon: "🛍️", label: "Fashion", color: "bg-pink-100" },
+    { icon: "✨", label: "Beauty", color: "bg-purple-100" },
+    { icon: "👑", label: "Luxury", color: "bg-yellow-100" },
+    { icon: "⛰️", label: "Activities", color: "bg-green-100" },
+    { icon: "🏛️", label: "Culture", color: "bg-blue-100" },
+    { icon: "🍽️", label: "Food", color: "bg-red-100" },
+  ];
+
+
 
 
 
@@ -43,25 +56,35 @@ export default function Main() {
             </button>
           </form>
         </div>
+        {/* First Banner */}
+        <div>
+          <Link href="/intro">
+            <div className="bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600  p-5 text-center text-white shadow-lg">
+              <h2 className="text-xl font-semibold mb-1">TA PASS와 함께하는 첫 여행!</h2>
+              <p className="text-sm mb-2">지금 바로 스마트한 여행을 시작하세요</p>
+              <div className="inline-flex items-center gap-2 bg-white text-blue-600 px-4 py-2 rounded-full text-sm font-medium">
+                <Plane className="w-4 h-4" />
+                <span className="text-xs">TA PASS 체험하기</span>
+                <ArrowRight className="w-4 h-4" />
+              </div>
+            </div>
+          </Link>
+        </div>
 
         {/* Main Categories */}
-        <div className="grid grid-cols-3 gap-4 p-4">
-          {[
-            { icon: "🛍️", label: "Fashion" },
-            { icon: "✨", label: "Beauty" },
-            { icon: "👑", label: "Luxury" },
-            { icon: "⛰️", label: "Activities" },
-            { icon: "🏛️", label: "Culture" },
-            { icon: "🍽️", label: "Food" },
-          ].map((category, index) => (
-            <button
-              key={index}
-              className="flex flex-col items-center justify-center p-4 bg-white rounded-lg shadow-sm"
-            >
-              <span className="text-2xl mb-2">{category.icon}</span>
-              <span className="text-sm">{category.label}</span>
-            </button>
-          ))}
+        <div className="px-4 mb-6 mt-6">
+          <h2 className="text-lg font-bold mb-4">Categories</h2>
+          <div className="grid grid-cols-3 gap-4">
+            {categories.map((category, index) => (
+              <button
+                key={index}
+                className={`flex flex-col items-center justify-center p-4 rounded-xl shadow-sm transition-all duration-300 ease-in-out ${category.color} hover:shadow-md hover:-translate-y-1`}
+              >
+                <span className="text-3xl mb-2">{category.icon}</span>
+                <span className="text-xs font-medium text-gray-700">{category.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Special Offer Banner */}

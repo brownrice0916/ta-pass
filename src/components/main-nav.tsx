@@ -120,6 +120,12 @@ export function MainNav() {
           {/* Footer Links */}
           <div className="pt-6 space-y-3">
             <Link
+              href="/faq"
+              className="block text-lg font-semibold text-primary hover:underline"
+            >
+              FAQ
+            </Link>
+            <Link
               href="/support"
               className="block text-lg font-semibold text-primary hover:underline"
             >
