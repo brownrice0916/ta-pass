@@ -280,6 +280,9 @@ export default function RestaurantsPage() {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const lastRestaurantRef = useRef<HTMLDivElement>(null);
 
+  const [imageLoading, setImageLoading] = useState(true);
+
+
   // useCallback으로 lastElementRef 함수 생성
   const lastElementRef = useCallback((node: HTMLDivElement) => {
     if (loading) return;
@@ -585,11 +588,20 @@ export default function RestaurantsPage() {
                       key={image}
                       className={`relative aspect-square overflow-hidden `}
                     >
+                      {imageLoading && (
+                        <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+                      )}
                       <Image
                         src={image}
                         alt={`${restaurant.name} ${index + 1}`}
                         fill
-                        className="object-cover"
+                        sizes="(max-width: 768px) 25vw, 25vw"
+                        loading="lazy"
+                        quality={75}
+                        className={`object-cover transition-opacity duration-300 ${imageLoading ? 'opacity-0' : 'opacity-100'
+                          }`}
+                        onLoad={() => setImageLoading(false)}
+                        onError={() => setImageLoading(false)}
                       />
                     </div>
                   ))}

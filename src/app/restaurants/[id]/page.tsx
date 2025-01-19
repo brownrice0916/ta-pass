@@ -57,6 +57,8 @@ export default function RestaurantDetail() {
   const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
 
+  const [imageLoading, setImageLoading] = useState(true);
+
 
   // 슬라이드 변경 핸들러
   const handleSlideChange = useCallback(() => {
@@ -238,11 +240,20 @@ export default function RestaurantDetail() {
           <div className="grid grid-cols-3 gap-1">
             {restaurant.images?.slice(0, 6).map((image, index) => (
               <div key={index} className="relative aspect-square">
+                {imageLoading && (
+                  <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+                )}
                 <Image
                   src={image}
-                  alt={`${restaurant.name} gallery image ${index + 1}`}
+                  alt={`${restaurant.name} ${index + 1}`}
                   fill
-                  className="object-cover"
+                  sizes="(max-width: 768px) 25vw, 25vw"
+                  loading="lazy"
+                  quality={75}
+                  className={`object-cover transition-opacity duration-300 ${imageLoading ? 'opacity-0' : 'opacity-100'
+                    }`}
+                  onLoad={() => setImageLoading(false)}
+                  onError={() => setImageLoading(false)}
                 />
               </div>
             ))}
