@@ -167,11 +167,20 @@ export default function RestaurantDetail() {
               {restaurant.images.map((image, index) => (
                 <CarouselItem key={index}>
                   <div className="relative aspect-square w-full">
+                    {imageLoading && (
+                      <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+                    )}
                     <Image
                       src={image}
-                      alt={`${restaurant.name} image ${index + 1}`}
+                      alt={`${restaurant.name} ${index + 1}`}
                       fill
-                      className="object-cover rounded-none"
+                      sizes="(max-width: 768px) 25vw, 25vw"
+                      loading="lazy"
+                      quality={75}
+                      className={`object-cover transition-opacity duration-300 ${imageLoading ? 'opacity-0' : 'opacity-100'
+                        }`}
+                      onLoad={() => setImageLoading(false)}
+                      onError={() => setImageLoading(false)}
                     />
                   </div>
                 </CarouselItem>
