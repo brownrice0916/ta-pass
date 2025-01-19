@@ -3,49 +3,57 @@ import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { Prisma } from "@prisma/client";
 
+// api/restaurants/route.ts
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const lat = parseFloat(searchParams.get("latitude") || "0");
   const lng = parseFloat(searchParams.get("longitude") || "0");
-  const radius = parseFloat(searchParams.get("radius") || "1");
   const query = searchParams.get("q");
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "10");
+  const skip = (page - 1) * limit;
 
   try {
-    const restaurants = await prisma.restaurant.findMany({
-      include: {
-        reviews: true, // reviews 관계 데이터 포함
-        _count: {
-          select: {
-            reviews: true, // 리뷰 개수도 함께 가져오기
-          },
-        },
-      },
+    // PostgreSQL의 경우 raw query를 사용한 거리 계산
+    const restaurants: any[] = await prisma.$queryRaw`
+      SELECT *,
+        ( 6371 * acos( cos( radians(${lat}) ) * 
+          cos( radians( latitude ) ) * 
+          cos( radians( longitude ) - radians(${lng}) ) + 
+          sin( radians(${lat}) ) * 
+          sin( radians( latitude ) ) ) 
+        ) AS distance
+      FROM "Restaurant"
+      WHERE ${query ?
+        Prisma.sql`(name ILIKE ${`%${query}%`} OR category ILIKE ${`%${query}%`})`
+        : Prisma.sql`1=1`}
+      ORDER BY distance
+      LIMIT ${limit}
+      OFFSET ${skip}
+    `;
+
+    const totalCount = await prisma.restaurant.count({
       where: query ? {
         OR: [
           { name: { contains: query, mode: 'insensitive' } },
-          { tags: { hasSome: [query] } },
           { category: { contains: query, mode: 'insensitive' } },
-          { region1: { contains: query, mode: 'insensitive' } },
-          { region2: { contains: query, mode: 'insensitive' } },
-          { region3: { contains: query, mode: 'insensitive' } },
-          { region4: { contains: query, mode: 'insensitive' } }
+          // ... 기타 검색 조건
         ]
       } : undefined,
     });
 
-    // 리뷰 개수와 평균 평점을 계산하여 데이터 가공
-    const restaurantsWithReviewInfo = restaurants.map((restaurant) => ({
-      ...restaurant,
-      reviewCount: restaurant._count.reviews,
-      rating:
-        restaurant.reviews.length > 0
-          ? restaurant.reviews.reduce((sum, review) => sum + review.rating, 0) /
-          restaurant.reviews.length
-          : 0,
-    }));
+    return NextResponse.json({
+      restaurants,
+      metadata: {
+        currentPage: page,
+        totalPages: Math.ceil(totalCount / limit),
+        totalCount,
+        hasMore: skip + restaurants.length < totalCount
+      }
+    });
 
-    return NextResponse.json(restaurantsWithReviewInfo);
   } catch (error) {
     console.error("Error fetching restaurants:", error);
     return NextResponse.json(

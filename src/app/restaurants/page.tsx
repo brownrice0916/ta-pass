@@ -1,22 +1,16 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { GoogleMap, InfoWindow, Marker } from "@react-google-maps/api";
 import { useRouter } from "next/navigation";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { MapPin, Search } from "lucide-react";
 import Image from "next/image";
 import { Review } from "@prisma/client";
 import { getNeighborhood } from "@/lib/address";
 import { Input } from "@/components/ui/input";
+import ExcelImport from "./components/excel-import";
 
 
 
@@ -55,28 +49,6 @@ const CATEGORIES = [
   { id: "food", label: "Food", value: "food", types: ["restaurant", "cafe"] },
 ];
 
-// const LOCATIONS = [
-//   { id: "current", label: "현재 위치", value: "current", coordinates: null },
-//   {
-//     id: "hongdae",
-//     label: "홍대",
-//     value: "hongdae",
-//     coordinates: { lat: 37.5578, lng: 126.9254 },
-//   },
-//   {
-//     id: "gangnam",
-//     label: "강남",
-//     value: "gangnam",
-//     coordinates: { lat: 37.4979, lng: 127.0276 },
-//   },
-//   {
-//     id: "myeongdong",
-//     label: "명동",
-//     value: "myeongdong",
-//     coordinates: { lat: 37.5637, lng: 126.9838 },
-//   },
-// ];
-
 interface Restaurant {
   id: string;
   name: string;
@@ -109,10 +81,9 @@ const containerStyle = {
 export default function RestaurantsPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [filteredRestaurants, setFilteredRestaurants] = useState<Restaurant[]>(
-    []
-  );
+  const [filteredRestaurants, setFilteredRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -145,45 +116,22 @@ export default function RestaurantsPage() {
   const [selectedLocation, setSelectedLocation] = useState("current");
   const [isClient, setIsClient] = useState(false);
 
+  const ITEMS_PER_PAGE = 10;  // 한 번에 불러올 아이템 수
+
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // const handleLocationChange = (value: string) => {
-  //   setSelectedLocation(value);
-  //   if (value === "current") {
-  //     if (userLocation) {
-  //       setCenter(userLocation);
-  //       fetchNearbyRestaurants(userLocation.lat, userLocation.lng);
-  //     } else {
-  //       setLoading(true);
-  //       navigator.geolocation.getCurrentPosition(
-  //         (position) => {
-  //           const { latitude, longitude } = position.coords;
-  //           const location = { lat: latitude, lng: longitude };
-  //           setUserLocation(location);
-  //           setCenter(location);
-  //           fetchNearbyRestaurants(latitude, longitude);
-  //           setLoading(false);
-  //         },
-  //         (error) => {
-  //           console.log(error);
-  //           setError("위치 정보를 가져올 수 없습니다.");
-  //           setLoading(false);
-  //         }
-  //       );
-  //     }
-  //   } else {
-  //     const location = LOCATIONS.find((loc) => loc.value === value);
-  //     if (location?.coordinates) {
-  //       setCenter(location.coordinates);
-  //       fetchNearbyRestaurants(
-  //         location.coordinates.lat,
-  //         location.coordinates.lng
-  //       );
-  //     }
-  //   }
-  // };
+  // 페이지 변경 시 새로운 데이터 불러오기
+  useEffect(() => {
+    if (userLocation && page > 1) {
+      fetchNearbyRestaurants(userLocation.lat, userLocation.lng, page);
+    }
+  }, [page]);
+
 
   const mapRef = useRef<google.maps.Map | null>(null);
   const handleCenterOnUser = () => {
@@ -196,24 +144,27 @@ export default function RestaurantsPage() {
   };
 
   useEffect(() => {
-    let filtered = restaurants;
+    if (restaurants.length > 0) {
+      let filtered = [...restaurants];
 
-    // 카테고리 필터링
-    if (selectedCategory !== "all") {
-      filtered = filtered.filter((r) => r.category === selectedCategory);
+      // 카테고리 필터링
+      if (selectedCategory !== "all") {
+        filtered = filtered.filter((r) => r.category === selectedCategory);
+      }
+
+      // 검색어 필터링
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        filtered = filtered.filter(
+          (r) =>
+            r.name.toLowerCase().includes(query) ||
+            r.address.toLowerCase().includes(query) ||
+            (Array.isArray(r.tags) && r.tags.some(tag => tag.toLowerCase().includes(query)))
+        );
+      }
+
+      setFilteredRestaurants(filtered);
     }
-
-    // 검색어 필터링
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (r) =>
-          r.name.toLowerCase().includes(query) ||
-          r.address.toLowerCase().includes(query)
-      );
-    }
-
-    setFilteredRestaurants(filtered);
   }, [selectedCategory, restaurants, searchQuery]);
 
   useEffect(() => {
@@ -272,96 +223,145 @@ export default function RestaurantsPage() {
           componentRestrictions: { country: "kr" },
         }
       );
-
-      //   autocompleteRef.current.addListener("place_changed", () => {
-      //     console.log("place_changed,,");
-      //     const place = autocompleteRef.current?.getPlace();
-      //     if (place && place.geometry && place.geometry.location) {
-      //       const lat = place.geometry.location.lat();
-      //       const lng = place.geometry.location.lng();
-
-      //       // 동 정보 추출
-      //       let district = "";
-      //       if (place.address_components) {
-      //         const subLocality = place.address_components.find((component) =>
-      //           component.types.includes("sublocality_level_2")
-      //         );
-      //         if (subLocality) {
-      //           district = subLocality.long_name;
-      //         }
-      //       }
-
-      //       const restaurantData = {
-      //         name: place.name || "",
-      //         address: place.formatted_address || "",
-      //         latitude: lat,
-      //         longitude: lng,
-      //         category: selectedCategory,
-      //         rating: place.rating || 0,
-      //         isOpen: place.opening_hours?.isOpen() || false,
-      //         district,
-      //       };
-
-      //       console.log(place.opening_hours);
-      //       setNewRestaurant(restaurantData);
-      //       setCenter({ lat, lng });
-      //     }
-      //   });
     }
   };
 
-  //   useEffect(() => {
-  //     if (isOpen) {
-  //       initAutocomplete();
-  //     }
-  //   }, [selectedCategory, isOpen]);
 
   const fetchNearbyRestaurants = async (
     latitude: number,
-    longitude: number
+    longitude: number,
+    pageNumber = 1
   ) => {
     try {
-      // setLoading(true);
+      if (pageNumber === 1) {
+        setLoading(true);
+      } else {
+        setIsLoading(true);
+      }
       const response = await fetch(
-        `/api/restaurants?latitude=${latitude}&longitude=${longitude}&radius=1`
+        `/api/restaurants?latitude=${latitude}&longitude=${longitude}&radius=1&page=${pageNumber}&limit=${ITEMS_PER_PAGE}`
       );
       if (!response.ok) throw new Error("Failed to fetch restaurants");
       const data = await response.json();
-      setRestaurants(data);
-      console.log("data", data);
+
+      // 거리 정보 추가 및 정렬
+      const restaurantsWithDistance = data.restaurants.map((restaurant: Restaurant) => ({
+        ...restaurant,
+        distance: calculateDistance(
+          latitude,
+          longitude,
+          restaurant.latitude,
+          restaurant.longitude
+        )
+      })).sort((a: Restaurant, b: Restaurant) => (a.distance || 0) - (b.distance || 0));
+
+      if (pageNumber === 1) {
+        setRestaurants(restaurantsWithDistance);
+      } else {
+        setRestaurants(prev => {
+          const newRestaurants = restaurantsWithDistance;
+          const existingIds = new Set(prev.map(r => r.id));
+          const uniqueNewRestaurants = newRestaurants.filter(
+            (restaurant: Restaurant) => !existingIds.has(restaurant.id)
+          );
+          return [...prev, ...uniqueNewRestaurants].sort((a, b) => (a.distance || 0) - (b.distance || 0));
+        });
+      }
+
+      setHasMore(data.metadata.hasMore);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
+      setIsLoading(false);
     }
   };
 
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const lastRestaurantRef = useRef<HTMLDivElement>(null);
+
+  // useCallback으로 lastElementRef 함수 생성
+  const lastElementRef = useCallback((node: HTMLDivElement) => {
+    if (loading) return;
+
+    if (observerRef.current) observerRef.current.disconnect();
+
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setPage(prev => prev + 1);
+      }
+    }, { threshold: 0.1 });
+
+    if (node) observerRef.current.observe(node);
+  }, [loading, hasMore]);
+
   useEffect(() => {
-    if (restaurants.length > 0) {
-      const query = searchQuery
-
-      const filtered = query
-        ? restaurants.filter(restaurant =>
-          restaurant.name.toLowerCase().includes(query) ||
-          restaurant.tags.some((tag: string) => tag.toLowerCase().includes(query)) ||
-          restaurant.address.toLowerCase().includes(query) ||
-          restaurant.addressDetail?.toLowerCase().includes(query) ||
-          restaurant.category?.toLowerCase().includes(query) ||
-          restaurant.region1?.toLowerCase().includes(query) ||   // region1 추가
-          restaurant.region2?.toLowerCase().includes(query) ||   // region2 추가
-          restaurant.region3?.toLowerCase().includes(query) ||   // region3 추가
-          restaurant.region4?.toLowerCase().includes(query)      // region4 추가
-        )
-        : restaurants;
-
-      setFilteredRestaurants(filtered);
+    if (userLocation && page > 1) {
+      console.log('Fetching page:', page); // 디버깅용
+      fetchNearbyRestaurants(userLocation.lat, userLocation.lng, page);
     }
+  }, [page, userLocation]);
+
+  // 두 지점 간의 거리를 계산하는 함수 (Haversine formula)
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371; // 지구의 반경 (km)
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c; // km 단위
+    return distance;
+  };
+
+
+  useEffect(() => {
+    if (loading) return;
+
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore) {
+          setPage(prev => prev + 1);
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    observerRef.current = observer;
+
+    if (lastRestaurantRef.current) {
+      observer.observe(lastRestaurantRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [loading, hasMore]);
+
+
+  useEffect(() => {
+    if (!restaurants || !Array.isArray(restaurants)) return;
+
+    const query = searchQuery.toLowerCase();
+    const filtered = query
+      ? restaurants.filter(restaurant =>
+        restaurant.name.toLowerCase().includes(query) ||
+        (Array.isArray(restaurant.tags) && restaurant.tags.some((tag: string) => tag.toLowerCase().includes(query))) ||
+        restaurant.address.toLowerCase().includes(query) ||
+        restaurant.addressDetail?.toLowerCase().includes(query) ||
+        restaurant.category?.toLowerCase().includes(query) ||
+        restaurant.region1?.toLowerCase().includes(query) ||
+        restaurant.region2?.toLowerCase().includes(query) ||
+        restaurant.region3?.toLowerCase().includes(query) ||
+        restaurant.region4?.toLowerCase().includes(query)
+      )
+      : restaurants;
+
+    setFilteredRestaurants(filtered);
   }, [searchQuery, restaurants]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    //setSearchQuery(searchQuery);
-
   };
 
   if (!isClient) {
@@ -374,32 +374,15 @@ export default function RestaurantsPage() {
   return (
     <div className="container mx-auto py-2 pb-16">
       <div className="flex justify-end mb-6">
-        <Button onClick={() => router.push("/restaurants/post")}>
+        <Button className="mr-1" onClick={() => router.push("/restaurants/post")}>
           파트너 추가
         </Button>
+        <ExcelImport />
       </div>
 
       <div className="mb-4 relative">
         <div className="absolute top-1 left-1 right-1 z-10 space-y-4">
           <div className="rounded-lg p-1">
-            {/* <div className="flex p-1 bg-white rounded-md items-center space-x-2 mb-4">
-              <Select
-                value={selectedLocation}
-                onValueChange={handleLocationChange}
-              >
-                <SelectTrigger className="w-full border-0 focus:ring-0">
-                  <SelectValue placeholder="위치 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  {LOCATIONS.map((location) => (
-                    <SelectItem key={location.value} value={location.value}>
-                      {location.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div> */}
-            {/* Search Bar */}
             <div className="p-4">
               <form onSubmit={handleSearch} className="relative">
                 <Input
@@ -454,14 +437,8 @@ export default function RestaurantsPage() {
                 position={userLocation}
                 icon={{
                   url: '/markers/my-location.png',
-                  scaledSize: new google.maps.Size(30, 30),  // 이미지 크기 조절
+                  scaledSize: new google.maps.Size(30, 30),
                   anchor: new google.maps.Point(20, 20),
-                  // path: google.maps.SymbolPath.CIRCLE,
-                  // fillColor: "#4f46e5",
-                  // fillOpacity: 1,
-                  // strokeColor: "#ffffff",
-                  // strokeWeight: 2,
-                  // scale: 8,
                 }}
                 title="내 위치"
                 onClick={handleUserLocationClick}
@@ -478,7 +455,7 @@ export default function RestaurantsPage() {
               )}
             </>
           )}
-          {filteredRestaurants.map((restaurant) => (
+          {restaurants.map((restaurant) => (
             <Marker
               onClick={() => handleMarkerClick(restaurant)}
               key={restaurant.id}
@@ -527,28 +504,26 @@ export default function RestaurantsPage() {
             </InfoWindow>
           )}
         </GoogleMap>
-        <Button
+        {/* <Button
           onClick={handleCenterOnUser}
           variant="outline"
           size="icon"
           className="bg-white shadow-lg hover:bg-gray-100"
         >
           <MapPin className="h-5 w-5 text-indigo-600" />
-        </Button>
+        </Button> */}
       </div>
 
       <div>
-        {filteredRestaurants.map((restaurant) => (
+        {restaurants.map((restaurant, index) => (
           <Card
-            key={restaurant.id}
+            key={`restaurant-${restaurant.id}`}
+            ref={index === restaurants.length - 1 ? lastElementRef : null}
             className="mb-4 overflow-hidden cursor-pointer hover:shadow-lg transition-all duration-200 border border-gray-200"
             onClick={() => router.push(`/restaurants/${restaurant.id}`)}
           >
             <div className="p-4">
               <div className="flex items-center gap-3 mb-3">
-                {/* <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold">
-                  {restaurant.name.charAt(0)}
-                </div> */}
                 <div className="flex-1">
                   <div className="flex items-center">
                     <h3 className="font-semibold text-lg mr-3 text-primary">
@@ -560,7 +535,6 @@ export default function RestaurantsPage() {
                   </div>
                 </div>
               </div>
-              {/* Special Offer 태그 */}
               {restaurant.specialOfferType &&
                 restaurant.specialOfferType !== "none" && (
                   <div className="mb-2">
@@ -579,7 +553,6 @@ export default function RestaurantsPage() {
                     </span>
                   </div>
                 )}
-              {/* 영업 정보, 리뷰 수 표시 */}
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
                 <span
                   className={
@@ -594,6 +567,15 @@ export default function RestaurantsPage() {
                 <span className="line-clamp-1">
                   {getNeighborhood(restaurant.address)}
                 </span>
+                {restaurant.distance && (
+                  <>
+                    <span>|</span>
+                    <span>{restaurant.distance < 1
+                      ? `${Math.round(restaurant.distance * 1000)}m`
+                      : `${restaurant.distance.toFixed(1)}km`}
+                    </span>
+                  </>
+                )}
               </div>
 
               {restaurant.images && restaurant.images.length > 0 && (
@@ -616,6 +598,9 @@ export default function RestaurantsPage() {
             </div>
           </Card>
         ))}
+        {isLoading && <div className="text-center py-4">Loading...</div>}
+        {loading && <div className="text-center py-4">Loading...</div>}
+        {!hasMore && <div className="text-center py-4">No more restaurants</div>}
       </div>
     </div>
   );

@@ -88,21 +88,20 @@ export default function RestaurantDetail() {
     longitude: number
   ) => {
     try {
-      // setLoading(true);
       const response = await fetch(
         `/api/restaurants?latitude=${latitude}&longitude=${longitude}&radius=1`
       );
       if (!response.ok) throw new Error("Failed to fetch restaurants");
       const data = await response.json();
-      setRestaurants(data);
+      // API 응답이 { restaurants: [], metadata: {} } 구조이므로 restaurants 배열만 설정
+      setRestaurants(data.restaurants || []);
       console.log("data", data);
     } catch (err) {
-      // setError(err instanceof Error ? err.message : "An error occurred");
+      console.error("Error fetching restaurants:", err);
     } finally {
       setLoading(false);
     }
   };
-
   const fetchReviews = async () => {
     try {
       const response = await fetch(`/api/restaurants/${params.id}/reviews`);
@@ -119,6 +118,7 @@ export default function RestaurantDetail() {
       fetchReviews();
     }
   }, [params.id]);
+
 
   useEffect(() => {
     const fetchRestaurant = async () => {
@@ -258,7 +258,7 @@ export default function RestaurantDetail() {
             <CardContent className="p-4">
               <p>{restaurant?.description || "서비스 소개"}</p>
               <div className="mt-10 text-gray-500 text-sm">
-                {restaurant.tags.map((tag) => (<span>{tag}</span>))}
+                {restaurant.tags.map((tag, index) => (<span key={index}>{tag}<span>{index !== restaurant.tags.length - 1 ? "," : ''}</span></span>))}
               </div>
             </CardContent>
           </Card>
@@ -297,12 +297,22 @@ export default function RestaurantDetail() {
                 lat: restaurant.latitude,
                 lng: restaurant.longitude,
               }}
+              icon={{
+                url: '/markers/my-location.png',
+                scaledSize: new google.maps.Size(30, 30),
+                anchor: new google.maps.Point(20, 20),
+              }}
               title={restaurant.name}
             />
             {restaurants.map((restaurant) => (
               <Marker
                 // onClick={() => handleMarkerClick(restaurant)}
                 key={restaurant.id}
+                icon={{
+                  url: '/markers/restaurant.png',
+                  scaledSize: new google.maps.Size(32, 32),
+                  anchor: new google.maps.Point(16, 16),
+                }}
                 position={{
                   lat: restaurant.latitude,
                   lng: restaurant.longitude,
