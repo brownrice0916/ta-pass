@@ -377,9 +377,9 @@ export default function RestaurantsPage() {
   return (
     <div className="container mx-auto py-2 pb-16">
       <div className="flex justify-end mb-6">
-        <Button className="mr-1" onClick={() => router.push("/restaurants/post")}>
+        {/* <Button className="mr-1" onClick={() => router.push("/restaurants/post")}>
           파트너 추가
-        </Button>
+        </Button> */}
         <ExcelImport />
       </div>
 
@@ -568,7 +568,7 @@ export default function RestaurantsPage() {
                 <span>리뷰 {restaurant.reviewCount || 0}</span>
                 <span>|</span>
                 <span className="line-clamp-1">
-                  {restaurant.address}
+                  {restaurant.region1} {restaurant.region2}
                   {/* {getNeighborhood(restaurant.address)} */}
                 </span>
                 {restaurant.distance && (

@@ -36,10 +36,10 @@ const MyPage = () => {
 
                 {/* Stats Section */}
                 <div className="flex w-full gap-4 mb-6">
-                    <div className="flex-1 bg-blue-500 text-white p-6 rounded-lg shadow-md text-center">
+                    {/* <div className="flex-1 bg-blue-500 text-white p-6 rounded-lg shadow-md text-center">
                         <h3 className="text-lg">나의 방문</h3>
                         <p className="text-4xl font-bold">{ }</p>
-                    </div>
+                    </div> */}
                     <div className="flex-1 bg-blue-500 text-white p-6 rounded-lg shadow-md text-center">
                         <h3 className="text-lg">나의 리뷰</h3>
                         <p className="text-4xl font-bold">{ }</p>
@@ -47,13 +47,13 @@ const MyPage = () => {
                 </div>
 
                 {/* Shortcut Section */}
-                <div className="w-full grid grid-cols-3 gap-4 bg-white p-4 rounded-lg shadow-md mb-4">
+                {/* <div className="w-full grid grid-cols-3 gap-4 bg-white p-4 rounded-lg shadow-md mb-4">
                     <ShortcutItem icon="📅" label="예약정보" link="/reservations" />
                     <ShortcutItem icon="🔖" label="즐겨찾기" link="/favorites" />
                     <ShortcutItem icon="🔍" label="최근 확인" link="/recent" />
                     <ShortcutItem icon="📍" label="방문한 곳" link="/visited" />
                     <ShortcutItem icon="✍️" label="작성한 리뷰" link="/reviews" />
-                </div>
+                </div> */}
 
                 {/* Info Section */}
                 <div className="w-full grid grid-cols-3 gap-4 bg-white p-4 rounded-lg shadow-md">

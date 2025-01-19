@@ -312,7 +312,7 @@ export default function RestaurantDetail() {
               clickableIcons: false,
             }}
           >
-            <Marker
+            {/* <Marker
               position={{
                 lat: restaurant.latitude,
                 lng: restaurant.longitude,
@@ -323,7 +323,7 @@ export default function RestaurantDetail() {
                 anchor: new google.maps.Point(20, 20),
               }}
               title={restaurant.name}
-            />
+            /> */}
             {restaurants.map((restaurant) => (
               <Marker
                 // onClick={() => handleMarkerClick(restaurant)}
