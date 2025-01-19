@@ -568,7 +568,8 @@ export default function RestaurantsPage() {
                 <span>리뷰 {restaurant.reviewCount || 0}</span>
                 <span>|</span>
                 <span className="line-clamp-1">
-                  {getNeighborhood(restaurant.address)}
+                  {restaurant.address}
+                  {/* {getNeighborhood(restaurant.address)} */}
                 </span>
                 {restaurant.distance && (
                   <>
