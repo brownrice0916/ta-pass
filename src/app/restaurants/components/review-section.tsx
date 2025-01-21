@@ -36,11 +36,12 @@ interface ReviewCardProps {
   restaurant: Restaurant;
 }
 
-function ReviewCard({ review, onOpenDetail, restaurant }: ReviewCardProps) {
+function ReviewCard({ review, onOpenDetail }: ReviewCardProps) {
   const { data: session } = useSession();
 
-  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${session?.user?.email || "default"
-    }`;
+  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${
+    session?.user?.email || "default"
+  }`;
 
   return (
     <Card
@@ -113,19 +114,18 @@ function ReviewCard({ review, onOpenDetail, restaurant }: ReviewCardProps) {
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
-                className={`h-4 w-4 ${i < (review?.rating || 0)
-                  ? "text-yellow-500 fill-yellow-500"
-                  : "text-gray-300"
-                  }`}
+                className={`h-4 w-4 ${
+                  i < (review?.rating || 0)
+                    ? "text-yellow-500 fill-yellow-500"
+                    : "text-gray-300"
+                }`}
               />
             ))}
           </div>
         </div>
         <div className="mt-auto flex items-center ml-auto">
           <Heart className="h-4 w-4 text-blue-500" />
-          <span className="ml-2 text-xs text-gray-500">
-            Likes
-          </span>
+          <span className="ml-2 text-xs text-gray-500">Likes</span>
         </div>
       </div>
     </Card>
@@ -147,7 +147,9 @@ function ReviewDetailDialog({
   const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
   const { data: session } = useSession();
 
-  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${session?.user?.email || "default"}`;
+  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${
+    session?.user?.email || "default"
+  }`;
 
   // 슬라이드 변경 핸들러
   const handleSlideChange = useCallback(() => {
@@ -172,16 +174,19 @@ function ReviewDetailDialog({
 
   // 이미지가 없을 경우 상단 영역 확장
   const hasImages = review.images.length > 0;
-  const topHeight = hasImages ? "h-24" : "h-48";  // 이미지가 없으면 h-48로 높이 확장
 
   return (
     <Dialog open={open} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-xs p-0">
         <DialogTitle className="hidden"></DialogTitle>
 
-        <div className={`absolute top-0 left-0 right-0 h-24 z-10 bg-gradient-to-b from-black/70 to-transparent pointer-events-none`} />
+        <div
+          className={`absolute top-0 left-0 right-0 h-24 z-10 bg-gradient-to-b from-black/70 to-transparent pointer-events-none`}
+        />
         {!hasImages && <div className="h-3" />}
-        <DialogClose className={`absolute top-2  right-2 bg-black/20 hover:bg-black/40 p-2 rounded-full text-white shadow-md z-20 w-8 h-8 transition-colors`}>
+        <DialogClose
+          className={`absolute top-2  right-2 bg-black/20 hover:bg-black/40 p-2 rounded-full text-white shadow-md z-20 w-8 h-8 transition-colors`}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -229,10 +234,11 @@ function ReviewDetailDialog({
             {review.images.map((_, index) => (
               <button
                 key={index}
-                className={`h-2 w-2 rounded-full transition-opacity ${currentSlide === index
-                  ? "bg-white"
-                  : "bg-white/50 hover:bg-white/70"
-                  }`}
+                className={`h-2 w-2 rounded-full transition-opacity ${
+                  currentSlide === index
+                    ? "bg-white"
+                    : "bg-white/50 hover:bg-white/70"
+                }`}
                 onClick={() => carouselApi?.scrollTo(index)} // 클릭 시 슬라이드 이동
               />
             ))}
@@ -260,15 +266,18 @@ function ReviewDetailDialog({
                 {new Date(review.createdAt).toLocaleDateString()}
               </div>
             </div>
-            <p className="text-xs text-gray-700 line-clamp-4 mb-1">{review.content}</p>
+            <p className="text-xs text-gray-700 line-clamp-4 mb-1">
+              {review.content}
+            </p>
             <div className="flex items-center">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
                   key={i}
-                  className={`h-4 w-4 ${i < (review?.rating || 0)
-                    ? "text-yellow-500 fill-yellow-500"
-                    : "text-gray-300"
-                    }`}
+                  className={`h-4 w-4 ${
+                    i < (review?.rating || 0)
+                      ? "text-yellow-500 fill-yellow-500"
+                      : "text-gray-300"
+                  }`}
                 />
               ))}
             </div>
@@ -286,16 +295,14 @@ function ReviewDetailDialog({
 interface ReviewSectionProps {
   reviews: Review[];
   restaurant: Restaurant;
-  onReviewsChange: () => void;  // 추가
+  onReviewsChange: () => void; // 추가
 }
 
 export default function ReviewSection({
   reviews,
   restaurant,
   onReviewsChange,
-}:
-  ReviewSectionProps
-) {
+}: ReviewSectionProps) {
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
 
@@ -310,7 +317,9 @@ export default function ReviewSection({
         {reviews.length > 0 ? (
           <p className="text-lg font-semibold">95%의 고객이 만족했습니다</p>
         ) : (
-          <p className="text-lg font-semibold text-gray-600">아직 등록된 리뷰가 없습니다</p>
+          <p className="text-lg font-semibold text-gray-600">
+            아직 등록된 리뷰가 없습니다
+          </p>
         )}
         <button
           onClick={() => setIsReviewFormOpen(true)}
@@ -325,11 +334,17 @@ export default function ReviewSection({
         <Carousel className="overflow-x-visible">
           <CarouselContent className="flex overflow-visible p-1">
             {[...reviews]
-              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+              .sort(
+                (a, b) =>
+                  new Date(b.createdAt).getTime() -
+                  new Date(a.createdAt).getTime()
+              )
               .map((review, index) => (
                 <CarouselItem
                   key={review.id}
-                  className={`${index === 0 ? "pl-4" : "pl-1"} overflow-visible`}
+                  className={`${
+                    index === 0 ? "pl-4" : "pl-1"
+                  } overflow-visible`}
                   style={{ flex: "0 0 95%" }}
                 >
                   <ReviewCard
@@ -345,7 +360,9 @@ export default function ReviewSection({
         <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-lg">
           <MessageSquare className="h-12 w-12 text-gray-400 mb-4" />
           <p className="text-gray-600 mb-2">첫 번째 리뷰를 작성해보세요!</p>
-          <p className="text-sm text-gray-400">여러분의 소중한 경험을 공유해주세요.</p>
+          <p className="text-sm text-gray-400">
+            여러분의 소중한 경험을 공유해주세요.
+          </p>
         </div>
       )}
 

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Azeret_Mono as Geist_Mono } from 'next/font/google';
+import { Geist, Azeret_Mono as Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -18,6 +18,7 @@ export const metadata: Metadata = {
 };
 
 import ClientLayout from "./client-layout";
+import Providers from "@/providers";
 
 export default function RootLayout({
   children,
@@ -26,10 +27,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ClientLayout >{children}</ClientLayout>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <ClientLayout>
+          <Providers>{children}</Providers>
+        </ClientLayout>
       </body>
     </html>
   );
 }
-

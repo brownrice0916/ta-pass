@@ -43,7 +43,7 @@ export default function SignUpPage() {
 
       alert("사용 가능한 이메일입니다.");
       return true;
-    } catch (error) {
+    } catch {
       alert("이메일 중복 확인 중 오류가 발생했습니다.");
       return false;
     }
@@ -93,8 +93,8 @@ export default function SignUpPage() {
       } else {
         router.push("/login");
       }
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err) {
+      alert((err as Error).message);
     } finally {
       setIsLoading(false);
     }
@@ -156,7 +156,7 @@ export default function SignUpPage() {
 
             <Input
               required
-              placeholder="내용"
+              placeholder="닉네임"
               value={formData.name}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, name: e.target.value }))

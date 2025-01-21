@@ -22,7 +22,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Languages, MapPin, Plus, X } from "lucide-react";
+import { MapPin, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import ImageUpload from "./image-upload";
 import { CATEGORIES } from "@/lib/constants";
@@ -35,7 +35,7 @@ const formSchema = z.object({
   category: z.string().min(1, "카테고리를 선택해주세요"),
   name: z.string().min(1, "상호명을 입력해주세요"),
   address: z.string().min(1, "주소를 입력해주세요"),
-  latitude: z.number(),  // .nullable() 제거
+  latitude: z.number(), // .nullable() 제거
   longitude: z.number(), // .nullable() 제거
   languages: z.array(z.string()).min(1, "최소 하나의 언어를 선택해주세요"),
   region1: z.string().optional(),
@@ -54,12 +54,13 @@ const formSchema = z.object({
   socialLinks: z.array(
     z.object({
       platform: z.string().min(1, "플랫폼을 선택해주세요"),
-      url: z.string()
+      url: z
+        .string()
         .min(1, "URL을 입력해주세요")
         .refine(
           (url) => {
             try {
-              if (!url.startsWith('http://') && !url.startsWith('https://')) {
+              if (!url.startsWith("http://") && !url.startsWith("https://")) {
                 url = `https://${url}`;
               }
               new URL(url);
@@ -69,9 +70,9 @@ const formSchema = z.object({
             }
           },
           { message: "올바른 URL 형식이 아닙니다" }
-        )
+        ),
     })
-  )
+  ),
 });
 const LANGUAGE_OPTIONS = [
   { value: "ko", label: "한국어" },
@@ -88,7 +89,6 @@ const SOCIAL_PLATFORMS = [
   { value: "youtube", label: "YouTube" },
   { value: "website", label: "Website" },
 ];
-
 
 export type FormValues = z.infer<typeof formSchema>;
 
@@ -108,19 +108,17 @@ export default function RestaurantForm({
   const [selectedCategory, setSelectedCategory] = useState(
     initialData?.category || ""
   );
-  const [socialLinks, setSocialLinks] = useState<Array<{ platform: string; url: string }>>(
-    initialData?.socialLinks || []
-  );
+  const [socialLinks, setSocialLinks] = useState<
+    Array<{ platform: string; url: string }>
+  >(initialData?.socialLinks || []);
   const [tagInput, setTagInput] = useState("");
   const addressInputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
   const mapInstance = useRef<google.maps.Map | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const isEditMode = !!initialData;
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
-
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -132,7 +130,7 @@ export default function RestaurantForm({
       address: initialData?.address ?? "",
       addressDetail: initialData?.addressDetail ?? "",
       latitude: initialData?.latitude ?? 37.5665,
-      longitude: initialData?.longitude ?? 126.9780,
+      longitude: initialData?.longitude ?? 126.978,
       rating: initialData?.rating ?? 0,
       specialOfferType: initialData?.specialOfferType ?? "none",
       specialOfferText: initialData?.specialOfferText ?? "",
@@ -149,24 +147,24 @@ export default function RestaurantForm({
 
   const { control, setValue, watch } = form;
   const specialOfferType = watch("specialOfferType");
-  const tags = watch("tags");
 
   useEffect(() => {
     if (mapRef.current && typeof google !== "undefined") {
-      const defaultLocation = { lat: 37.5665, lng: 126.9780 };
+      const defaultLocation = { lat: 37.5665, lng: 126.978 };
 
       mapInstance.current = new google.maps.Map(mapRef.current, {
         center: defaultLocation,
         zoom: 15,
-        disableDefaultUI: true,  // 기본 UI 비활성화
-        zoomControl: true,      // 줌 컨트롤만 활성화
-        mapTypeControl: false,  // 지도 타입 컨트롤 비활성화
-        scaleControl: false,    // 스케일 컨트롤 비활성화
+        disableDefaultUI: true, // 기본 UI 비활성화
+        zoomControl: true, // 줌 컨트롤만 활성화
+        mapTypeControl: false, // 지도 타입 컨트롤 비활성화
+        scaleControl: false, // 스케일 컨트롤 비활성화
         streetViewControl: false, // 스트리트뷰 비활성화
-        rotateControl: false,    // 회전 컨트롤 비활성화
+        rotateControl: false, // 회전 컨트롤 비활성화
         fullscreenControl: false, // 전체화면 컨트롤 비활성화
-        clickableIcons: false,   // POI 클릭 비활성화
-        styles: [               // POI 라벨 숨기기
+        clickableIcons: false, // POI 클릭 비활성화
+        styles: [
+          // POI 라벨 숨기기
           {
             featureType: "poi",
             elementType: "labels",
@@ -181,17 +179,17 @@ export default function RestaurantForm({
         draggable: true,
       });
 
-      google.maps.event.addListener(markerRef.current, 'dragend', function () {
+      google.maps.event.addListener(markerRef.current, "dragend", function () {
         const position = markerRef.current?.getPosition();
         if (position) {
-          setValue('latitude', position.lat());
-          setValue('longitude', position.lng());
+          setValue("latitude", position.lat());
+          setValue("longitude", position.lng());
 
           // Reverse geocoding to get address
           const geocoder = new google.maps.Geocoder();
           geocoder.geocode({ location: position }, (results, status) => {
             if (status === "OK" && results?.[0]) {
-              setValue('address', results[0].formatted_address);
+              setValue("address", results[0].formatted_address);
             }
           });
         }
@@ -199,12 +197,14 @@ export default function RestaurantForm({
     }
   }, []);
 
-
   const initAutocomplete = () => {
     if (addressInputRef.current && window.google) {
-      autocompleteRef.current = new google.maps.places.Autocomplete(addressInputRef.current, {
-        componentRestrictions: { country: "kr" },
-      });
+      autocompleteRef.current = new google.maps.places.Autocomplete(
+        addressInputRef.current,
+        {
+          componentRestrictions: { country: "kr" },
+        }
+      );
 
       autocompleteRef.current.addListener("place_changed", () => {
         const place = autocompleteRef.current?.getPlace();
@@ -233,17 +233,7 @@ export default function RestaurantForm({
     setSocialLinks(updatedLinks);
     setValue("socialLinks", updatedLinks, {
       shouldValidate: true,
-      shouldDirty: true
-    });
-  };
-
-  const updateSocialLink = (index: number, field: 'platform' | 'url', value: string) => {
-    const updatedLinks = [...socialLinks];
-    updatedLinks[index][field] = value;
-    setSocialLinks(updatedLinks);
-    setValue("socialLinks", updatedLinks, {
-      shouldValidate: true,
-      shouldDirty: true
+      shouldDirty: true,
     });
   };
 
@@ -252,7 +242,7 @@ export default function RestaurantForm({
     setSocialLinks(updatedLinks);
     setValue("socialLinks", updatedLinks, {
       shouldValidate: true,
-      shouldDirty: true
+      shouldDirty: true,
     });
   };
 
@@ -272,8 +262,7 @@ export default function RestaurantForm({
         region1: values.region1,
         region2: values.region2,
         region3: values.region3,
-        region4: values.region4 || '',
-
+        region4: values.region4 || "",
       };
 
       formData.append("data", JSON.stringify(submitData));
@@ -315,11 +304,11 @@ export default function RestaurantForm({
   };
 
   useEffect(() => {
-    console.log(form.getValues())
+    console.log(form.getValues());
     console.log("Form state:", form.formState);
     console.log("Form errors:", form.formState.errors);
-    console.log(form.formState.isValid)
-  }, [form])
+    console.log(form.formState.isValid);
+  }, [form]);
 
   return (
     <>
@@ -328,16 +317,20 @@ export default function RestaurantForm({
       </h1>
       <div className="bg-[#f3f4f6] p-2">
         <Card className="p-6 pb-16 bg-white rounded-md">
-
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            <form
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-6"
+            >
               {/* Store Name */}
               <FormField
                 control={control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>상호명<span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>
+                      상호명<span className="text-red-500">*</span>
+                    </FormLabel>
                     <FormControl>
                       <Input {...field} placeholder="상호명을 입력하세요" />
                     </FormControl>
@@ -350,7 +343,9 @@ export default function RestaurantForm({
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>업종  <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>
+                      업종 <span className="text-red-500">*</span>
+                    </FormLabel>
                     <Select
                       onValueChange={(value) => {
                         field.onChange(value);
@@ -366,7 +361,10 @@ export default function RestaurantForm({
                       <SelectContent>
                         {CATEGORIES.filter((cat) => cat.value !== "all").map(
                           (category) => (
-                            <SelectItem key={category.value} value={category.value}>
+                            <SelectItem
+                              key={category.value}
+                              value={category.value}
+                            >
                               {category.label}
                             </SelectItem>
                           )
@@ -377,9 +375,6 @@ export default function RestaurantForm({
                   </FormItem>
                 )}
               />
-
-
-
 
               <FormField
                 control={control}
@@ -403,13 +398,19 @@ export default function RestaurantForm({
                 name="languages"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>제공 언어 <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>
+                      제공 언어 <span className="text-red-500">*</span>
+                    </FormLabel>
                     <div className="flex flex-wrap gap-2">
                       {LANGUAGE_OPTIONS.map((lang) => (
                         <Button
                           key={lang.value}
                           type="button"
-                          variant={field.value?.includes(lang.value) ? "default" : "outline"}
+                          variant={
+                            field.value?.includes(lang.value)
+                              ? "default"
+                              : "outline"
+                          }
                           onClick={() => {
                             const newValue = field.value?.includes(lang.value)
                               ? field.value.filter((v) => v !== lang.value)
@@ -444,22 +445,25 @@ export default function RestaurantForm({
                             // composition 이벤트 중에는 처리하지 않음
                             if (e.nativeEvent.isComposing) return;
 
-                            if (e.key === 'Enter' && tagInput.trim()) {
+                            if (e.key === "Enter" && tagInput.trim()) {
                               e.preventDefault();
                               const trimmedTag = tagInput.trim();
                               // 최소 길이 체크 (빈 문자열이나 단일 문자 방지)
                               if (trimmedTag.length < 2) return;
 
                               let newTag = trimmedTag;
-                              if (!newTag.startsWith('#')) {
-                                newTag = '#' + newTag;
+                              if (!newTag.startsWith("#")) {
+                                newTag = "#" + newTag;
                               }
 
-                              if (field.value && !field.value.includes(newTag)) {
+                              if (
+                                field.value &&
+                                !field.value.includes(newTag)
+                              ) {
                                 const newTags = [...field.value, newTag];
                                 field.onChange(newTags);
                               }
-                              setTagInput('');
+                              setTagInput("");
                             }
                           }}
                           // composition 이벤트 처리
@@ -469,24 +473,27 @@ export default function RestaurantForm({
                           }}
                         />
                         <div className="flex flex-wrap gap-2">
-                          {field.value && field.value.map((tag, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center gap-1 bg-primary/10 text-primary px-2 py-1 rounded-full"
-                            >
-                              <span>{tag}</span>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const newTags = field.value && field.value.filter((_, i) => i !== index);
-                                  field.onChange(newTags);
-                                }}
-                                className="text-primary hover:text-primary/80"
+                          {field.value &&
+                            field.value.map((tag, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center gap-1 bg-primary/10 text-primary px-2 py-1 rounded-full"
                               >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </div>
-                          ))}
+                                <span>{tag}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newTags =
+                                      field.value &&
+                                      field.value.filter((_, i) => i !== index);
+                                    field.onChange(newTags);
+                                  }}
+                                  className="text-primary hover:text-primary/80"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            ))}
                         </div>
                       </div>
                     </FormControl>
@@ -530,7 +537,10 @@ export default function RestaurantForm({
                                 </SelectTrigger>
                                 <SelectContent>
                                   {SOCIAL_PLATFORMS.map((platform) => (
-                                    <SelectItem key={platform.value} value={platform.value}>
+                                    <SelectItem
+                                      key={platform.value}
+                                      value={platform.value}
+                                    >
                                       {platform.label}
                                     </SelectItem>
                                   ))}
@@ -548,12 +558,17 @@ export default function RestaurantForm({
                                   field.onChange(newLinks);
                                 }}
                                 className={cn(
-                                  form.formState.errors.socialLinks?.[index] && "border-destructive"
+                                  form.formState.errors.socialLinks?.[index] &&
+                                    "border-destructive"
                                 )}
                               />
-                              {form.formState.errors.socialLinks?.[index]?.url && (
+                              {form.formState.errors.socialLinks?.[index]
+                                ?.url && (
                                 <p className="text-sm font-medium text-destructive mt-1">
-                                  {form.formState.errors.socialLinks[index]?.url?.message}
+                                  {
+                                    form.formState.errors.socialLinks[index]
+                                      ?.url?.message
+                                  }
                                 </p>
                               )}
                             </div>
@@ -573,14 +588,15 @@ export default function RestaurantForm({
                 )}
               />
 
-
               {/* Address Search */}
               <FormField
                 control={control}
                 name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>주소 <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>
+                      주소 <span className="text-red-500">*</span>
+                    </FormLabel>
                     <FormControl>
                       <div className="relative">
                         <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-5 w-5" />
@@ -605,10 +621,7 @@ export default function RestaurantForm({
                   <FormItem>
                     <FormLabel>상세 주소</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="상세 주소"
-                      />
+                      <Input {...field} placeholder="상세 주소" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -632,15 +645,15 @@ export default function RestaurantForm({
                     <DaumPostcode
                       onComplete={(data) => {
                         // 기본 주소 설정
-                        setValue('address', data.address);
+                        setValue("address", data.address);
 
                         // 지역 정보 설정
                         // region1: 시/도
-                        setValue('region1', data.sido);
+                        setValue("region1", data.sido);
                         // region2: 구/군
-                        setValue('region2', data.sigungu);
+                        setValue("region2", data.sigungu);
                         // region3: 동/읍/면
-                        setValue('region3', data.bname);
+                        setValue("region3", data.bname);
 
                         // 구글 지오코딩으로 좌표 및 추가 정보 얻기
                         const geocoder = new google.maps.Geocoder();
@@ -650,25 +663,30 @@ export default function RestaurantForm({
                             if (status === "OK" && results?.[0]) {
                               const lat = results[0].geometry.location.lat();
                               const lng = results[0].geometry.location.lng();
-                              setValue('latitude', lat);
-                              setValue('longitude', lng);
+                              setValue("latitude", lat);
+                              setValue("longitude", lng);
 
                               // region4: 주변 랜드마크나 지역명 설정
-                              const addressComponents = results[0].address_components;
-                              let landmark = '';
+                              const addressComponents =
+                                results[0].address_components;
+                              let landmark = "";
 
                               // 주변 랜드마크/지역명 찾기
                               for (const component of addressComponents) {
-                                if (component.types.includes('neighborhood') ||
-                                  component.types.includes('sublocality_level_4') ||
-                                  component.types.includes('point_of_interest')) {
+                                if (
+                                  component.types.includes("neighborhood") ||
+                                  component.types.includes(
+                                    "sublocality_level_4"
+                                  ) ||
+                                  component.types.includes("point_of_interest")
+                                ) {
                                   landmark = component.long_name;
                                   break;
                                 }
                               }
 
                               // region4 설정 (랜드마크나 동네 상권명)
-                              setValue('region4', landmark);
+                              setValue("region4", landmark);
 
                               // 지도 업데이트
                               if (mapInstance.current && markerRef.current) {
@@ -682,7 +700,6 @@ export default function RestaurantForm({
                         setIsAddressModalOpen(false);
                       }}
                     />
-
                   </div>
                 </div>
               )}
@@ -691,11 +708,6 @@ export default function RestaurantForm({
               <div className="w-full h-64 rounded-lg overflow-hidden">
                 <div ref={mapRef} className="w-full h-full" />
               </div>
-
-
-
-
-
 
               <FormField
                 control={control}
@@ -762,7 +774,10 @@ export default function RestaurantForm({
               <Controller
                 name="images"
                 control={control}
-                render={({ field: { onChange, value }, fieldState: { error } }) => (
+                render={({
+                  field: { onChange, value },
+                  fieldState: { error },
+                }) => (
                   <FormItem>
                     <FormLabel>이미지 추가 (최대 5개)</FormLabel>
                     <FormControl>
@@ -776,38 +791,6 @@ export default function RestaurantForm({
                   </FormItem>
                 )}
               />
-              {/* 
-              {watch("name") && (
-                <div className="bg-muted p-4 rounded-lg space-y-2">
-                  <h3 className="font-medium">선택된 장소 정보</h3>
-                  <div className="space-y-1 text-sm">
-                    <p>
-                      <span className="font-medium">이름:</span> {watch("name")}
-                    </p>
-                    <p>
-                      <span className="font-medium">주소:</span> {watch("address")}
-                    </p>
-                    <p>
-                      <span className="font-medium">카테고리:</span>{" "}
-                      {CATEGORIES.find((cat) => cat.value === selectedCategory)
-                        ?.label || "정보 없음"}
-                    </p>
-                    <p>
-                      <span className="font-medium">위도:</span>{" "}
-                      {watch("latitude")?.toFixed(6)}
-                    </p>
-                    <p>
-                      <span className="font-medium">경도:</span>{" "}
-                      {watch("longitude")?.toFixed(6)}
-                    </p>
-                    <p>
-                      <span className="font-medium">평점:</span>{" "}
-                      {watch("rating")?.toFixed(1)}
-                    </p>
-                  </div>
-                </div>
-              )} */}
-
               <div className="flex gap-3 pt-4">
                 <Button
                   type="button"
