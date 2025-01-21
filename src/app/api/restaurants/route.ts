@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
-import { Prisma } from "@prisma/client";
+import { Prisma, Restaurant } from "@prisma/client";
 
 // api/restaurants/route.ts
 export async function GET(request: Request) {
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
   const swLng = parseFloat(searchParams.get("swLng") || "0");
 
   try {
-    let restaurants: any[];
+    let restaurants: Restaurant[];
     let totalCount: number;
 
     if (neLat && neLng && swLat && swLng) {
