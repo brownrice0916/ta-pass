@@ -6,11 +6,10 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
 model User {
   id         Int      @id @default(autoincrement())
   email      String   @unique
-  password   StringspecialOfferText
+  password   String   @db.VarChar(255) // Specify the password type as VarChar with a length of 255 characters
   name       String
   country    String   @default("")
   gender     String   @default("")
