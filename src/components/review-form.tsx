@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { X } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 interface ReviewFormProps {
@@ -17,7 +17,13 @@ export function ReviewForm({ restaurantId, onReviewAdded, onClose }: ReviewFormP
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [images, setImages] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { data: session } = useSession();
+  //const { data: session } = useSession();
+  const handlePrevStep = () => {
+    if (step > 1) {
+      setStep(step - 1);
+    }
+  };
+
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -70,9 +76,9 @@ export function ReviewForm({ restaurantId, onReviewAdded, onClose }: ReviewFormP
     setStep(step + 1);
   };
 
-  if (!session) {
-    return null;
-  }
+  // if (!session) {
+  //   return null;
+  // }
 
   const renderStepContent = () => {
     switch (step) {
@@ -206,7 +212,19 @@ export function ReviewForm({ restaurantId, onReviewAdded, onClose }: ReviewFormP
   return (
     <div className="bg-white rounded-lg">
       <div className="flex justify-between items-center p-4 border-b">
-        <h1 className="text-xl font-bold">리뷰 작성</h1>
+        <div className="flex items-center gap-3">
+          {step > 1 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handlePrevStep}
+              className="hover:bg-gray-100 -ml-2"
+            >
+              <ArrowLeft className="h-5 w-5 text-gray-600" />
+            </Button>
+          )}
+          <h1 className="text-xl font-bold">리뷰 작성</h1>
+        </div>
         {onClose && (
           <button onClick={onClose} className="text-gray-500">
             <X size={24} />
@@ -239,6 +257,7 @@ export function ReviewForm({ restaurantId, onReviewAdded, onClose }: ReviewFormP
       ) : (
         <>
           <div className="flex justify-between px-6 pt-4">
+
             {[1, 2, 3].map((stepNumber) => (
               <div
                 key={stepNumber}

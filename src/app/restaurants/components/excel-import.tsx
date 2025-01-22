@@ -105,6 +105,7 @@ export default function ExcelImport() {
             longitude: lng,
             specialOfferType: (row.specialOfferType?.split(",").map((tag: string) => tag.trim()) || []).filter(Boolean),
             specialOfferText: row.specialOfferText?.trim() || "",
+            specialOfferTextDetail: row.specialOfferTextDetail?.trim() || "",
         };
     };
 

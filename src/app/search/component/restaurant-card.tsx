@@ -42,23 +42,22 @@ export const RestaurantCard = memo(
           </div>
 
           {restaurant.specialOfferType?.length > 0 && (
-            <div className="mb-2 flex">
+            <div className="mb-2 flex items-center">
               {restaurant.specialOfferType.map((offerType, index) => (
                 <div key={`${restaurant.id}-offer-${index}`}>
                   <span
-                    className={`inline-block px-2 py-1 rounded-full text-xs text-white ${
-                      offerType === "Special Gift"
-                        ? "bg-pink-500"
-                        : "bg-orange-500"
-                    }`}
+                    className={`inline-block px-2 py-1 rounded-full text-xs text-white mr-1 ${offerType === "Special Gift"
+                      ? "bg-pink-500"
+                      : "bg-orange-500"
+                      }`}
                   >
                     {offerType === "Special Gift" ? "Special Gift" : "Discount"}
                   </span>
-                  <span className="text-sm ml-2 text-gray-600">
-                    {restaurant.specialOfferText}
-                  </span>
                 </div>
               ))}
+              <span className="text-sm ml-2 text-gray-600 ">
+                {restaurant.specialOfferText}
+              </span>
             </div>
           )}
 
@@ -103,9 +102,8 @@ export const RestaurantCard = memo(
                     sizes="(max-width: 768px) 25vw, 25vw"
                     loading="lazy"
                     quality={75}
-                    className={`object-cover transition-opacity duration-300 ${
-                      imageLoading ? "opacity-0" : "opacity-100"
-                    }`}
+                    className={`object-cover transition-opacity duration-300 ${imageLoading ? "opacity-0" : "opacity-100"
+                      }`}
                     onLoad={onImageLoad}
                     onError={onImageError}
                   />

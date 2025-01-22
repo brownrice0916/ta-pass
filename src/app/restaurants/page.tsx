@@ -15,6 +15,8 @@ import ExcelImport from "./components/excel-import";
 import { useRestaurants } from "./hooks/use-restaurants";
 import { RestaurantCard } from "../search/component/restaurant-card";
 import { MapPin, Search } from "lucide-react";
+import GoogleMapsProvider from "../google-maps-provider";
+import RestaurantMap from "./components/restaurant-map";
 
 const CATEGORIES = [
   { id: "all", label: "All", value: "all" },
@@ -118,12 +120,9 @@ export default function RestaurantsPage() {
       `/api/restaurants?neLat=${ne.lat()}&neLng=${ne.lng()}&swLat=${sw.lat()}&swLng=${sw.lng()}`
     );
     const data = await response.json();
-
-    const fetchedRestaurants = data.restaurants;
-
-    setMapRestaurants(fetchedRestaurants);
-    return fetchedRestaurants;
+    setMapRestaurants(data.restaurants);
   };
+
   const filteredRestaurants = useMemo(() => {
     return listRestaurants.filter((restaurant: Restaurant) => {
       // 카테고리 매칭
@@ -363,11 +362,10 @@ export default function RestaurantsPage() {
                               setSelectedLocation(location.id);
                               setIsFilterModalOpen(false);
                             }}
-                            className={`px-3 py-1.5 rounded-full text-sm ${
-                              selectedLocation === location.id
-                                ? "bg-primary text-white"
-                                : "bg-gray-100 hover:bg-gray-200"
-                            }`}
+                            className={`px-3 py-1.5 rounded-full text-sm ${selectedLocation === location.id
+                              ? "bg-primary text-white"
+                              : "bg-gray-100 hover:bg-gray-200"
+                              }`}
                           >
                             {location.label}
                           </button>
@@ -384,11 +382,10 @@ export default function RestaurantsPage() {
                               setSelectedCategory(category.value);
                               setIsFilterModalOpen(false);
                             }}
-                            className={`px-3 py-1.5 rounded-full text-sm ${
-                              selectedCategory === category.value
-                                ? "bg-primary text-white"
-                                : "bg-gray-100 hover:bg-gray-200"
-                            }`}
+                            className={`px-3 py-1.5 rounded-full text-sm ${selectedCategory === category.value
+                              ? "bg-primary text-white"
+                              : "bg-gray-100 hover:bg-gray-200"
+                              }`}
                           >
                             {category.label}
                           </button>
@@ -401,73 +398,18 @@ export default function RestaurantsPage() {
             </div>
           </div>
         </div>
-        <GoogleMap
-          mapContainerStyle={containerStyle}
-          center={center}
-          zoom={15}
-          options={memoizedMapOptions}
-          onLoad={(map) => {
-            mapRef.current = map;
-          }}
-          onBoundsChanged={async () => {
-            const bounds = mapRef.current?.getBounds();
-            console.log("bounds", bounds);
-            if (bounds) {
-              const restaurants = await fetchRestaurantsInBounds(bounds);
-              console.log(restaurants);
-              setMapRestaurants(restaurants);
-            }
-          }}
-        >
-          {userLocation && (
-            <Marker
-              position={userLocation}
-              icon={{
-                url: "/markers/my-location.png",
-                scaledSize: new google.maps.Size(30, 30),
-                anchor: new google.maps.Point(20, 20),
-              }}
-              title="내 위치"
-              onClick={handleUserLocationClick}
-            />
-          )}
-          <MarkerList
-            restaurants={mapRestaurants}
+        <GoogleMapsProvider>
+          <RestaurantMap
+            center={center}
+            userLocation={userLocation}
+            mapRestaurants={mapRestaurants}
+            selectedMarker={selectedMarker}
             onMarkerClick={handleMarkerClick}
+            onUserLocationClick={handleUserLocationClick}
+            onBoundsChanged={fetchRestaurantsInBounds}
+            setSelectedMarker={setSelectedMarker}
           />
-          {selectedMarker && (
-            <InfoWindow
-              position={{
-                lat: selectedMarker.latitude,
-                lng: selectedMarker.longitude,
-              }}
-              onCloseClick={() => setSelectedMarker(null)}
-            >
-              <div className="p-2 min-w-[200px]">
-                <h3 className="font-semibold mb-1">{selectedMarker.name}</h3>
-                <p className="text-sm text-gray-600">
-                  {selectedMarker.address}
-                </p>
-                <div className="flex items-center mt-2">
-                  <span>평점: </span>
-                  <span className="ml-1">
-                    {selectedMarker.rating?.toFixed(1)}
-                  </span>
-                  <span className="ml-1">★</span>
-                </div>
-                <Button
-                  className="w-full mt-2 text-sm"
-                  size="sm"
-                  onClick={() =>
-                    router.push(`/restaurants/${selectedMarker.id}`)
-                  }
-                >
-                  자세히 보기
-                </Button>
-              </div>
-            </InfoWindow>
-          )}
-        </GoogleMap>
+        </GoogleMapsProvider>
         <Button
           onClick={handleCenterOnUser}
           variant="outline"
@@ -489,6 +431,27 @@ export default function RestaurantsPage() {
             </div>
           </div>
         )}
+        {!isLoading && filteredRestaurants.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16">
+            <div className="text-center space-y-4">
+              <p className="text-lg font-medium text-gray-900">검색 결과가 없습니다</p>
+              <p className="text-sm text-gray-500">
+                다른 키워드나 필터로 다시 시도해보세요
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedCategory('all');
+                  setSelectedLocation('전체');
+                }}
+              >
+                필터 초기화
+              </Button>
+            </div>
+          </div>
+        )}
+
 
         {filteredRestaurants.map((restaurant) => (
           <RestaurantCard
@@ -501,12 +464,12 @@ export default function RestaurantsPage() {
           />
         ))}
         {/* 추가 데이터 로딩 상태 */}
-        {isFetchingNextPage && (
+        {/* {isFetchingNextPage && (
           <div className="text-center py-4 flex items-center justify-center gap-2">
             <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             <span>더 많은 장소를 불러오는 중...</span>
           </div>
-        )}
+        )} */}
 
         {/* 무한 스크롤 트리거 */}
         {hasNextPage && !isFetchingNextPage && (

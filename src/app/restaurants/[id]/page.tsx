@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import { ReviewForm } from "@/components/review-form";
-import { Instagram, Facebook, Twitter, Globe, Youtube, BookOpen } from "lucide-react";
+import { Instagram, Facebook, Twitter, Globe, Youtube, BookOpen, X, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Carousel,
   CarouselApi,
@@ -19,6 +19,10 @@ import { Restaurant } from "@prisma/client";
 import ReviewSection from "../components/review-section";
 import { getNeighborhood } from "@/lib/address";
 import SocialLinks from "../components/social-links";
+import GoogleMapsProvider from "@/app/google-maps-provider";
+import RestaurantMap from "../components/restaurant-map";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { DialogClose, DialogTitle } from "@radix-ui/react-dialog";
 
 export interface Review {
   id: string;
@@ -56,9 +60,12 @@ export default function RestaurantDetail() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [modalCarouselApi, setModalCarouselApi] = useState<CarouselApi | null>(null);
 
   const [imageLoading, setImageLoading] = useState(true);
 
+  const [showSpecialOfferDetail, setShowSpecialOfferDetail] = useState(false);
 
   // 슬라이드 변경 핸들러
   const handleSlideChange = useCallback(() => {
@@ -231,10 +238,45 @@ export default function RestaurantDetail() {
               ({reviews.length || 0} Reviews)
             </span>
           </div>
+          {restaurant.specialOfferType?.length > 0 && (
+            <div className="mb-2 mt-2 flex items-center">
+              {restaurant.specialOfferType.map((offerType, index) => (
+                <div key={`${restaurant.id}-offer-${index}`}>
+                  <span
+                    className={`inline-block px-2 py-1 rounded-full text-xs text-white mr-1 ${offerType === "Special Gift"
+                      ? "bg-pink-500"
+                      : "bg-orange-500"
+                      }`}
+                  >
+                    {offerType === "Special Gift" ? "Special Gift" : "Discount"}
+                  </span>
+                </div>
+              ))}
+              <span className="text-sm ml-2 text-gray-600 ">
+                {restaurant.specialOfferText}
+              </span>
+              {/* <span
+                className=" text-sm ml-2 text-primary cursor-pointer"
+                onClick={() => setShowSpecialOfferDetail(true)}
+              >
+                상세보기
+              </span> */}
+            </div>
+          )}
+
+          {/* {showSpecialOfferDetail && (
+            <Dialog open={true} onOpenChange={() => setShowSpecialOfferDetail(false)}>
+              <DialogTitle>Special Offer Detail</DialogTitle>
+              <DialogContent>
+                <pre className="text-xs">{restaurant.specialOfferTextDetail}</pre>
+              </DialogContent>
+              <DialogClose aria-label="Close" />
+            </Dialog>
+          )} */}
           {/* <div className="mt-2">
-            <span className="text-lg font-bold">36,000원</span>
-            <span className="text-sm text-red-500 ml-2">20% 할인</span>
-          </div> */}
+              <span className="text-lg font-bold">36,000원</span>
+              <span className="text-sm text-red-500 ml-2">20% 할인</span>
+              </div> */}
         </div>
         {restaurant.socialLinks && <div className="p-2">
           {restaurant.socialLinks && (
@@ -247,26 +289,96 @@ export default function RestaurantDetail() {
         <div className="mb-6 mt-10">
           <h2 className="text-lg font-semibold mb-2">Photos</h2>
           <div className="grid grid-cols-3 gap-1">
-            {restaurant.images?.slice(0, 6).map((image, index) => (
-              <div key={index} className="relative aspect-square">
-                {imageLoading && (
-                  <div className="absolute inset-0 bg-gray-200 animate-pulse" />
-                )}
-                <Image
-                  src={image}
-                  alt={`${restaurant.name} ${index + 1}`}
-                  fill
-                  sizes="(max-width: 768px) 25vw, 25vw"
-                  loading="lazy"
-                  quality={75}
-                  className={`object-cover transition-opacity duration-300 ${imageLoading ? 'opacity-0' : 'opacity-100'
-                    }`}
-                  onLoad={() => setImageLoading(false)}
-                  onError={() => setImageLoading(false)}
-                />
-              </div>
-            ))}
+            {reviews
+              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+              .filter(review => review.images && review.images.length > 0)
+              .slice(0, 6)
+              .map((review, index) => (
+                <div
+                  key={index}
+                  className="relative aspect-square cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => setSelectedImageIndex(index)}
+                >
+                  {imageLoading && (
+                    <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+                  )}
+                  <Image
+                    src={review.images[0]}
+                    alt={`Review photo ${index + 1}`}
+                    fill
+                    sizes="(max-width: 768px) 25vw, 25vw"
+                    loading="lazy"
+                    quality={75}
+                    className={`object-cover transition-opacity duration-300 ${imageLoading ? 'opacity-0' : 'opacity-100'
+                      }`}
+                    onLoad={() => setImageLoading(false)}
+                    onError={() => setImageLoading(false)}
+                  />
+                </div>
+              ))}
           </div>
+          {selectedImageIndex !== null && (
+            <div className="fixed inset-0 z-50">
+              {/* 배경 오버레이 */}
+              <div
+                className="absolute inset-0 bg-black/30"
+                onClick={() => setSelectedImageIndex(null)}
+              />
+
+              {/* 모달 컨텐츠 */}
+              <div className="relative h-full flex items-center justify-center p-4">
+                <div className="relative w-full max-w-[393px] bg-white rounded-lg overflow-hidden">
+                  {/* 닫기 버튼 */}
+                  <button
+                    onClick={() => setSelectedImageIndex(null)}
+                    className="absolute top-2 right-2 z-50 text-gray-500 rounded-full p-1.5 hover:bg-gray-100 transition-colors w-8 h-8 flex items-center justify-center"
+                  >
+                    <X size={20} />
+                  </button>
+
+                  {/* 캐러셀 */}
+                  <Carousel
+                    setApi={setModalCarouselApi}
+                    className="w-full"
+                  >
+                    <CarouselContent>
+                      {reviews
+                        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                        .filter(review => review.images && review.images.length > 0)
+                        .slice(0, 6)
+                        .map((review, index) => (
+                          <CarouselItem key={index}>
+                            <div className="relative aspect-square w-full">
+                              <Image
+                                src={review.images[0]}
+                                alt={`Review photo ${index + 1}`}
+                                fill
+                                quality={100}
+                                className="object-contain"
+                              />
+                            </div>
+                          </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                  </Carousel>
+
+                  {/* 좌우 네비게이션 버튼 */}
+                  <button
+                    onClick={() => modalCarouselApi?.scrollPrev()}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 z-50 bg-gray-100/80 text-gray-700 rounded-full p-1.5 hover:bg-gray-200 transition-colors w-8 h-8 flex items-center justify-center"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  <button
+                    onClick={() => modalCarouselApi?.scrollNext()}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 z-50 bg-gray-100/80 text-gray-700 rounded-full p-1.5 hover:bg-gray-200 transition-colors w-8 h-8 flex items-center justify-center"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Customer Satisfaction */}
@@ -283,67 +395,34 @@ export default function RestaurantDetail() {
             </CardContent>
           </Card>
         </div>
-        {/* Reservation Info */}
-        {/* <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-2">Reservation Info</h2>
+        <div>
+          <h2 className="text-lg font-semibold mb-2">Special Offer</h2>
           <Card className="bg-gray-50">
             <CardContent className="p-4">
-              <p>{restaurant?.about || "서비스 소개"}</p>
+              <pre className="text-xs whitespace-pre-wrap word-wrap break-words">{restaurant.specialOfferTextDetail}</pre>
             </CardContent>
           </Card>
-        </div> */}
+        </div>
+
         <div className="mb-6 mt-4">
           <h2 className="text-lg font-semibold mb-2">Store Info</h2>
-          <GoogleMap
-            mapContainerStyle={containerStyle}
-            center={{
-              lat: restaurant.latitude,
-              lng: restaurant.longitude,
-            }}
-            zoom={17}
-            options={{
-              disableDefaultUI: true,
-              zoomControl: false,
-              mapTypeControl: false,
-              scaleControl: false,
-              streetViewControl: false,
-              rotateControl: false,
-              fullscreenControl: false,
-              clickableIcons: false,
-            }}
-          >
-            {/* <Marker
-              position={{
+          <GoogleMapsProvider>
+            <RestaurantMap
+              center={{
                 lat: restaurant.latitude,
                 lng: restaurant.longitude,
               }}
-              icon={{
-                url: '/markers/my-location.png',
-                scaledSize: new google.maps.Size(30, 30),
-                anchor: new google.maps.Point(20, 20),
-              }}
-              title={restaurant.name}
-            /> */}
-            {restaurants.map((restaurant) => (
-              <Marker
-                // onClick={() => handleMarkerClick(restaurant)}
-                key={restaurant.id}
-                icon={{
-                  url: '/markers/restaurant.png',
-                  scaledSize: new google.maps.Size(32, 32),
-                  anchor: new google.maps.Point(16, 16),
-                }}
-                position={{
-                  lat: restaurant.latitude,
-                  lng: restaurant.longitude,
-                }}
-                title={restaurant.name}
-              />
-            ))}
-          </GoogleMap>
+              userLocation={null}
+              mapRestaurants={restaurants}
+              selectedMarker={null}
+              onMarkerClick={() => { }}
+              onUserLocationClick={() => { }}
+              onBoundsChanged={() => { }}
+              setSelectedMarker={() => { }}
+            />
+          </GoogleMapsProvider>
           <p className="text-sm">{restaurant?.address}</p>
         </div>
-
         {/* <div className="mt-8">
           <h2 className="text-xl font-bold mb-4">Reviews</h2>
 

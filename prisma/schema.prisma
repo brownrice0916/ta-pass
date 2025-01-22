@@ -23,29 +23,30 @@ model User {
 }
 
 model Restaurant {
-  id               String   @id @default(cuid())
-  name             String
-  description      String   @default("")
-  about            String   @default("")
-  address          String
-  addressDetail    String   @default("")
-  latitude         Float
-  longitude        Float
-  category         String?
-  rating           Float?   @default(0)
-  specialOfferType String[] @default([])
-  specialOfferText String   @default("")
-  images           String[] @default([])
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  languages        String[] @default([])
-  socialLinks      Json?
-  tags             String[] @default([])
-  reviews          Review[]
-  region1          String?   @default("") // 시/도
-  region2          String?   @default("") // 구/군
-  region3          String?   @default("") // 동/읍/면
-  region4          String?  // 세부 지역명 (예: "홍대입구")
+  id                     String   @id @default(cuid())
+  name                   String
+  description            String   @default("")
+  about                  String   @default("")
+  address                String
+  latitude               Float
+  longitude              Float
+  category               String?
+  rating                 Float?   @default(0)
+  specialOfferText       String   @default("")
+  images                 String[] @default([])
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  addressDetail          String   @default("")
+  languages              String[] @default([])
+  region1                String?  @default("")
+  region2                String?  @default("")
+  region3                String?  @default("")
+  region4                String?
+  socialLinks            Json?
+  tags                   String[] @default([])
+  specialOfferType       String[] @default([])
+  specialOfferTextDetail String   @default("")
+  reviews                Review[]
 }
 
 model Review {

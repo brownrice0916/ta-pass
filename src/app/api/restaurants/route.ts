@@ -36,11 +36,10 @@ export async function GET(request: Request) {
         FROM "Restaurant"
         WHERE latitude BETWEEN ${swLat} AND ${neLat}
           AND longitude BETWEEN ${swLng} AND ${neLng}
-          AND ${
-            query
-              ? Prisma.sql`(name ILIKE ${`%${query}%`} OR category ILIKE ${`%${query}%`})`
-              : Prisma.sql`1=1`
-          }
+          AND ${query
+          ? Prisma.sql`(name ILIKE ${`%${query}%`} OR category ILIKE ${`%${query}%`})`
+          : Prisma.sql`1=1`
+        }
         ORDER BY distance
         LIMIT ${limit}
         OFFSET ${skip}
@@ -52,10 +51,10 @@ export async function GET(request: Request) {
           longitude: { gte: swLng, lte: neLng },
           OR: query
             ? [
-                { name: { contains: query, mode: "insensitive" } },
-                { category: { contains: query, mode: "insensitive" } },
-                // ... 기타 검색 조건
-              ]
+              { name: { contains: query, mode: "insensitive" } },
+              { category: { contains: query, mode: "insensitive" } },
+              // ... 기타 검색 조건
+            ]
             : undefined,
         },
       });
@@ -70,10 +69,9 @@ export async function GET(request: Request) {
             sin( radians( latitude ) ) ) 
           ) AS distance
         FROM "Restaurant"
-        WHERE ${
-          query
-            ? Prisma.sql`(name ILIKE ${`%${query}%`} OR category ILIKE ${`%${query}%`})`
-            : Prisma.sql`1=1`
+        WHERE ${query
+          ? Prisma.sql`(name ILIKE ${`%${query}%`} OR category ILIKE ${`%${query}%`})`
+          : Prisma.sql`1=1`
         }
         ORDER BY distance
         LIMIT ${limit}
@@ -83,15 +81,31 @@ export async function GET(request: Request) {
       totalCount = await prisma.restaurant.count({
         where: query
           ? {
-              OR: [
-                { name: { contains: query, mode: "insensitive" } },
-                { category: { contains: query, mode: "insensitive" } },
-                // ... 기타 검색 조건
-              ],
-            }
+            OR: [
+              { name: { contains: query, mode: "insensitive" } },
+              { category: { contains: query, mode: "insensitive" } },
+              // ... 기타 검색 조건
+            ],
+          }
           : undefined,
       });
     }
+
+    // Fetch review count for each restaurant
+    const restaurantIds = restaurants.map((restaurant) => restaurant.id);
+    const reviewCounts = await prisma.review.groupBy({
+      by: ["restaurantId"],
+      _count: { id: true },
+      where: { restaurantId: { in: restaurantIds } },
+    });
+
+    // Add review count to each restaurant
+    restaurants = restaurants.map((restaurant) => {
+      const reviewCount = reviewCounts.find(
+        (count) => count.restaurantId === restaurant.id
+      );
+      return { ...restaurant, reviewCount: reviewCount?._count?.id || 0 };
+    });
 
     return NextResponse.json({
       restaurants,

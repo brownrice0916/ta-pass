@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { Star, Heart, Plus, MessageSquare } from "lucide-react";
 import {
@@ -15,11 +16,11 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
-import { useSession } from "next-auth/react";
 import { Card } from "@/components/ui/card";
 import { Restaurant } from "@prisma/client";
 import { Review } from "../[id]/page";
 import { ReviewForm } from "@/components/review-form";
+import { useRouter } from "next/navigation";
 
 // interface Review {
 //   id: string;
@@ -39,9 +40,8 @@ interface ReviewCardProps {
 function ReviewCard({ review, onOpenDetail }: ReviewCardProps) {
   const { data: session } = useSession();
 
-  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${
-    session?.user?.email || "default"
-  }`;
+  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${session?.user?.email || "default"
+    }`;
 
   return (
     <Card
@@ -114,11 +114,10 @@ function ReviewCard({ review, onOpenDetail }: ReviewCardProps) {
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
-                className={`h-4 w-4 ${
-                  i < (review?.rating || 0)
-                    ? "text-yellow-500 fill-yellow-500"
-                    : "text-gray-300"
-                }`}
+                className={`h-4 w-4 ${i < (review?.rating || 0)
+                  ? "text-yellow-500 fill-yellow-500"
+                  : "text-gray-300"
+                  }`}
               />
             ))}
           </div>
@@ -147,9 +146,8 @@ function ReviewDetailDialog({
   const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
   const { data: session } = useSession();
 
-  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${
-    session?.user?.email || "default"
-  }`;
+  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${session?.user?.email || "default"
+    }`;
 
   // 슬라이드 변경 핸들러
   const handleSlideChange = useCallback(() => {
@@ -234,11 +232,10 @@ function ReviewDetailDialog({
             {review.images.map((_, index) => (
               <button
                 key={index}
-                className={`h-2 w-2 rounded-full transition-opacity ${
-                  currentSlide === index
-                    ? "bg-white"
-                    : "bg-white/50 hover:bg-white/70"
-                }`}
+                className={`h-2 w-2 rounded-full transition-opacity ${currentSlide === index
+                  ? "bg-white"
+                  : "bg-white/50 hover:bg-white/70"
+                  }`}
                 onClick={() => carouselApi?.scrollTo(index)} // 클릭 시 슬라이드 이동
               />
             ))}
@@ -273,11 +270,10 @@ function ReviewDetailDialog({
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
                   key={i}
-                  className={`h-4 w-4 ${
-                    i < (review?.rating || 0)
-                      ? "text-yellow-500 fill-yellow-500"
-                      : "text-gray-300"
-                  }`}
+                  className={`h-4 w-4 ${i < (review?.rating || 0)
+                    ? "text-yellow-500 fill-yellow-500"
+                    : "text-gray-300"
+                    }`}
                 />
               ))}
             </div>
@@ -305,7 +301,8 @@ export default function ReviewSection({
 }: ReviewSectionProps) {
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
-
+  const { data: session } = useSession();
+  const router = useRouter();
   const handleReviewAdded = () => {
     setIsReviewFormOpen(false);
     onReviewsChange();
@@ -322,7 +319,15 @@ export default function ReviewSection({
           </p>
         )}
         <button
-          onClick={() => setIsReviewFormOpen(true)}
+          onClick={() => {
+            if (!session) {
+              if (confirm('로그인이 필요합니다. 로그인하시겠습니까?')) {
+                router.push('/login');
+              }
+            } else {
+              setIsReviewFormOpen(true);
+            }
+          }}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors"
         >
           <Plus className="h-4 w-4" />
@@ -342,9 +347,8 @@ export default function ReviewSection({
               .map((review, index) => (
                 <CarouselItem
                   key={review.id}
-                  className={`${
-                    index === 0 ? "pl-4" : "pl-1"
-                  } overflow-visible`}
+                  className={`${index === 0 ? "pl-4" : "pl-1"
+                    } overflow-visible`}
                   style={{ flex: "0 0 95%" }}
                 >
                   <ReviewCard

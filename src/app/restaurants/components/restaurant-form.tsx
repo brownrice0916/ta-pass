@@ -559,18 +559,18 @@ export default function RestaurantForm({
                                 }}
                                 className={cn(
                                   form.formState.errors.socialLinks?.[index] &&
-                                    "border-destructive"
+                                  "border-destructive"
                                 )}
                               />
                               {form.formState.errors.socialLinks?.[index]
                                 ?.url && (
-                                <p className="text-sm font-medium text-destructive mt-1">
-                                  {
-                                    form.formState.errors.socialLinks[index]
-                                      ?.url?.message
-                                  }
-                                </p>
-                              )}
+                                  <p className="text-sm font-medium text-destructive mt-1">
+                                    {
+                                      form.formState.errors.socialLinks[index]
+                                        ?.url?.message
+                                    }
+                                  </p>
+                                )}
                             </div>
                             <Button
                               type="button"
