@@ -1,22 +1,17 @@
-"use client";
+"use client"
 
-import { useEffect, useState, useRef, useCallback, useMemo } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  GoogleMap,
-  InfoWindow,
-  Marker,
-  MarkerClusterer,
-} from "@react-google-maps/api";
-import { useRouter } from "next/navigation";
-import type { Review } from "@prisma/client";
-import { Input } from "@/components/ui/input";
-import ExcelImport from "./components/excel-import";
-import { useRestaurants } from "./hooks/use-restaurants";
-import { RestaurantCard } from "../search/component/restaurant-card";
-import { MapPin, Search } from "lucide-react";
-import GoogleMapsProvider from "../google-maps-provider";
-import RestaurantMap from "./components/restaurant-map";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react"
+import { Button } from "@/components/ui/button"
+import { GoogleMap, InfoWindow, Marker, MarkerClusterer } from "@react-google-maps/api"
+import { useRouter } from "next/navigation"
+import type { Review } from "@prisma/client"
+import { Input } from "@/components/ui/input"
+import ExcelImport from "./components/excel-import"
+import { useRestaurants } from "./hooks/use-restaurants"
+import { RestaurantCard } from "../search/component/restaurant-card"
+import { Filter, MapPin, Search, Sliders } from "lucide-react"
+import GoogleMapsProvider from "../google-maps-provider"
+import RestaurantMap from "./components/restaurant-map"
 
 const CATEGORIES = [
   { id: "all", label: "All", value: "all" },
@@ -51,53 +46,55 @@ const CATEGORIES = [
     types: ["museum", "art_gallery", "movie_theater"],
   },
   { id: "food", label: "Food", value: "Food", types: ["restaurant", "cafe"] },
-];
+]
 
 export interface Restaurant {
-  id: string;
-  name: string;
-  description: string;
-  about?: string; // API에 있는 필드 추가
-  address: string;
-  latitude: number;
-  longitude: number;
-  category: string | null; // null 허용
-  rating: number | null; // undefined 대신 null 사용
-  images: string[];
-  distance?: number;
-  specialOfferType: string[]; // string[] 타입으로 변경
-  specialOfferText?: string;
-  isOpen?: boolean;
-  reviewCount?: number;
-  district?: string;
-  reviews?: Review[];
-  region1: string | null; // null 허용
-  region2: string | null; // null 허용
-  region3: string | null; // null 허용
-  region4: string | null; // null 허용
-  tags: string[];
-  addressDetail: string | null; // null 허용
+  id: string
+  name: string
+  description: string
+  about?: string // API에 있는 필드 추가
+  address: string
+  latitude: number
+  longitude: number
+  category: string | null // null 허용
+  rating: number | null // undefined 대신 null 사용
+  images: string[]
+  distance?: number
+  specialOfferType: string[] // string[] 타입으로 변경
+  specialOfferText?: string
+  isOpen?: boolean
+  reviewCount?: number
+  district?: string
+  reviews?: Review[]
+  region1: string | null // null 허용
+  region2: string | null // null 허용
+  region3: string | null // null 허용
+  region4: string | null // null 허용
+  tags: string[]
+  addressDetail: string | null // null 허용
 }
 
 const containerStyle = {
   width: "100%",
   height: "400px",
-};
+}
 
 export default function RestaurantsPage() {
-  const [center, setCenter] = useState({ lat: 37.5665, lng: 126.978 });
+  const [center, setCenter] = useState({ lat: 37.5665, lng: 126.978 })
   const [userLocation, setUserLocation] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedLocation, setSelectedLocation] = useState("전체");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedMarker, setSelectedMarker] = useState<Restaurant | null>(null);
-  const [imageLoading, setImageLoading] = useState(true);
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+    lat: number
+    lng: number
+  } | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState("all")
+  const [selectedLocation, setSelectedLocation] = useState("전체")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedMarker, setSelectedMarker] = useState<Restaurant | null>(null)
+  const [imageLoading, setImageLoading] = useState(true)
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
+  const [tempCategory, setTempCategory] = useState("all")
+  const [tempLocation, setTempLocation] = useState("전체")
 
-  const router = useRouter();
+  const router = useRouter()
 
   const {
     data: listData,
@@ -105,88 +102,84 @@ export default function RestaurantsPage() {
     hasNextPage,
     isLoading,
     isFetchingNextPage,
-  } = useRestaurants(center.lat, center.lng, searchQuery);
+  } = useRestaurants(center.lat, center.lng, searchQuery)
   const listRestaurants = useMemo(() => {
-    return listData?.pages.flatMap((page) => page.restaurants) ?? [];
-  }, [listData]);
+    return listData?.pages.flatMap((page) => page.restaurants) ?? []
+  }, [listData])
 
-  const [mapRestaurants, setMapRestaurants] = useState<Restaurant[]>([]);
+  const [mapRestaurants, setMapRestaurants] = useState<Restaurant[]>([])
 
   const fetchRestaurantsInBounds = async (bounds: google.maps.LatLngBounds) => {
-    const ne = bounds.getNorthEast();
-    const sw = bounds.getSouthWest();
+    const ne = bounds.getNorthEast()
+    const sw = bounds.getSouthWest()
 
     const response = await fetch(
-      `/api/restaurants?neLat=${ne.lat()}&neLng=${ne.lng()}&swLat=${sw.lat()}&swLng=${sw.lng()}`
-    );
-    const data = await response.json();
-    setMapRestaurants(data.restaurants);
-  };
+      `/api/restaurants?neLat=${ne.lat()}&neLng=${ne.lng()}&swLat=${sw.lat()}&swLng=${sw.lng()}`,
+    )
+    const data = await response.json()
+    setMapRestaurants(data.restaurants)
+  }
 
   const filteredRestaurants = useMemo(() => {
     return listRestaurants.filter((restaurant: Restaurant) => {
       // 카테고리 매칭
-      const matchesCategory =
-        selectedCategory === "all" || restaurant.category === selectedCategory;
+      const matchesCategory = selectedCategory === "all" || restaurant.category === selectedCategory
 
       // 지역 매칭
       const matchesLocation =
         selectedLocation === "전체" ||
         restaurant.region1?.includes(selectedLocation) ||
         restaurant.region2?.includes(selectedLocation) ||
-        restaurant.address?.includes(selectedLocation);
+        restaurant.address?.includes(selectedLocation)
 
       // 검색어 매칭
       const matchesSearch =
         searchQuery === "" ||
         restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         restaurant.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        restaurant.addressDetail
-          ?.toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        restaurant.category
-          ?.toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
+        restaurant.addressDetail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        restaurant.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         restaurant.region1?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         restaurant.region2?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         restaurant.region3?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        restaurant.region4?.toLowerCase().includes(searchQuery.toLowerCase());
+        restaurant.region4?.toLowerCase().includes(searchQuery.toLowerCase())
 
-      return matchesCategory && matchesLocation && matchesSearch;
-    });
-  }, [listData, selectedCategory, selectedLocation, searchQuery]); // selectedLocation 의존성 추가
+      return matchesCategory && matchesLocation && matchesSearch
+    })
+  }, [listData, selectedCategory, selectedLocation, searchQuery, tempCategory, tempLocation]) // selectedLocation 의존성 추가
+
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const { latitude, longitude } = position.coords;
-          const location = { lat: latitude, lng: longitude };
-          setCenter(location);
-          setUserLocation(location);
+          const { latitude, longitude } = position.coords
+          const location = { lat: latitude, lng: longitude }
+          setCenter(location)
+          setUserLocation(location)
         },
         (error) => {
-          console.log(error);
-        }
-      );
+          console.log(error)
+        },
+      )
     }
-  }, []);
+  }, [])
 
   const handleMarkerClick = useCallback((restaurant: Restaurant) => {
-    setSelectedMarker(restaurant);
-  }, []);
+    setSelectedMarker(restaurant)
+  }, [])
 
   const handleUserLocationClick = useCallback(() => {
-    setSelectedMarker(null);
-  }, []);
+    setSelectedMarker(null)
+  }, [])
 
-  const mapRef = useRef<google.maps.Map | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null)
 
   const handleCenterOnUser = useCallback(() => {
     if (userLocation && mapRef.current) {
-      mapRef.current.panTo(userLocation);
-      mapRef.current.setZoom(15);
+      mapRef.current.panTo(userLocation)
+      mapRef.current.setZoom(15)
     }
-  }, [userLocation]);
+  }, [userLocation])
 
   const memoizedMapOptions = useMemo(
     () => ({
@@ -199,16 +192,16 @@ export default function RestaurantsPage() {
       fullscreenControl: false,
       clickableIcons: false,
     }),
-    []
-  );
+    [],
+  )
 
   // MarkerList 컴포넌트 생성
   const MarkerList = ({
     restaurants,
     onMarkerClick,
   }: {
-    restaurants: Restaurant[];
-    onMarkerClick: (restaurant: Restaurant) => void;
+    restaurants: Restaurant[]
+    onMarkerClick: (restaurant: Restaurant) => void
   }) => {
     return (
       <MarkerClusterer averageCenter enableRetinaIcons gridSize={60}>
@@ -233,65 +226,62 @@ export default function RestaurantsPage() {
           </>
         )}
       </MarkerClusterer>
-    );
-  };
+    )
+  }
 
   const LoaderRef = ({ onIntersect }: { onIntersect: () => void }) => {
-    const loaderRef = useRef<HTMLDivElement>(null);
+    const loaderRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
-      const currentRef = loaderRef.current;
-      if (!currentRef) return;
+      const currentRef = loaderRef.current
+      if (!currentRef) return
 
       const observer = new IntersectionObserver(
         (entries) => {
           if (entries[0].isIntersecting) {
-            onIntersect();
+            onIntersect()
           }
         },
-        { threshold: 0.1 }
-      );
+        { threshold: 0.1 },
+      )
 
-      observer.observe(currentRef);
+      observer.observe(currentRef)
 
       return () => {
         if (currentRef) {
-          observer.unobserve(currentRef);
+          observer.unobserve(currentRef)
         }
-      };
-    }, [onIntersect]);
+      }
+    }, [onIntersect])
 
-    return <div ref={loaderRef} className="h-10" />;
-  };
+    return <div ref={loaderRef} className="h-10" />
+  }
 
-  const useOnClickOutside = (
-    ref: React.RefObject<HTMLElement>,
-    handler: (event: MouseEvent | TouchEvent) => void
-  ) => {
+  const useOnClickOutside = (ref: React.RefObject<HTMLElement>, handler: (event: MouseEvent | TouchEvent) => void) => {
     useEffect(() => {
       const listener = (event: MouseEvent | TouchEvent) => {
         if (!ref.current || ref.current.contains(event?.target as Node)) {
-          return;
+          return
         }
-        handler(event);
-      };
+        handler(event)
+      }
 
-      document.addEventListener("mousedown", listener);
-      document.addEventListener("touchstart", listener);
+      document.addEventListener("mousedown", listener)
+      document.addEventListener("touchstart", listener)
 
       return () => {
-        document.removeEventListener("mousedown", listener);
-        document.removeEventListener("touchstart", listener);
-      };
-    }, [ref, handler]);
-  };
+        document.removeEventListener("mousedown", listener)
+        document.removeEventListener("touchstart", listener)
+      }
+    }, [ref, handler])
+  }
 
   // 드롭다운 부분 수정
-  const dropdownRef = useRef<HTMLDivElement>(null!);
+  const dropdownRef = useRef<HTMLDivElement>(null!)
 
   useOnClickOutside(dropdownRef, () => {
-    setIsFilterModalOpen(false);
-  });
+    setIsFilterModalOpen(false)
+  })
 
   // if (isError) {
   //   return <div>error</div>;
@@ -322,7 +312,7 @@ export default function RestaurantsPage() {
     { id: "합정", label: "합정" },
     { id: "성수", label: "성수" },
     { id: "여의도", label: "여의도" },
-  ];
+  ]
 
   return (
     <div className="container mx-auto py-2 pb-16">
@@ -339,32 +329,42 @@ export default function RestaurantsPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Where to?"
+                  placeholder="검색어를 입력해 주세요."
                   className="w-full pl-4 pr-10 py-3 border rounded-full shadow-md focus:ring-2 focus:ring-primary/20"
-                  onClick={() => setIsFilterModalOpen(true)}
+                // onClick={() => setIsFilterModalOpen(true)}
                 />
-                <button
-                  type="submit"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-primary"
-                >
+                <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-primary">
                   <Search className="w-5 h-5" />
                 </button>
+                {/* 필터 버튼 */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => {
+                    setTempCategory(selectedCategory)
+                    setTempLocation(selectedLocation)
+                    setIsFilterModalOpen(true)
+                  }}
+                >
+                  <Sliders className="w-4 h-4 mr-2" />
+                  필터
+                </Button>
 
+                {/* 필터 모달 */}
                 {isFilterModalOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border p-4 z-50">
+                  <div
+                    ref={dropdownRef}
+                    className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border p-4 z-50"
+                  >
                     <div className="mb-4">
                       <h3 className="text-sm font-medium mb-2">지역</h3>
                       <div className="flex flex-wrap gap-2">
                         {LOCATIONS.map((location) => (
                           <button
                             key={location.id}
-                            onClick={() => {
-                              setSelectedLocation(location.id);
-                              setIsFilterModalOpen(false);
-                            }}
-                            className={`px-3 py-1.5 rounded-full text-sm ${selectedLocation === location.id
-                              ? "bg-primary text-white"
-                              : "bg-gray-100 hover:bg-gray-200"
+                            onClick={() => setTempLocation(location.id)}
+                            className={`px-3 py-1.5 rounded-full text-sm ${tempLocation === location.id ? "bg-primary text-white" : "bg-gray-100 hover:bg-gray-200"
                               }`}
                           >
                             {location.label}
@@ -378,11 +378,8 @@ export default function RestaurantsPage() {
                         {CATEGORIES.map((category) => (
                           <button
                             key={category.id}
-                            onClick={() => {
-                              setSelectedCategory(category.value);
-                              setIsFilterModalOpen(false);
-                            }}
-                            className={`px-3 py-1.5 rounded-full text-sm ${selectedCategory === category.value
+                            onClick={() => setTempCategory(category.value)}
+                            className={`px-3 py-1.5 rounded-full text-sm ${tempCategory === category.value
                               ? "bg-primary text-white"
                               : "bg-gray-100 hover:bg-gray-200"
                               }`}
@@ -392,6 +389,17 @@ export default function RestaurantsPage() {
                         ))}
                       </div>
                     </div>
+                    {/* 확인 버튼 */}
+                    <Button
+                      className="mt-4"
+                      onClick={() => {
+                        setSelectedCategory(tempCategory)
+                        setSelectedLocation(tempLocation)
+                        setIsFilterModalOpen(false)
+                      }}
+                    >
+                      확인
+                    </Button>
                   </div>
                 )}
               </div>
@@ -435,15 +443,13 @@ export default function RestaurantsPage() {
           <div className="flex flex-col items-center justify-center py-16">
             <div className="text-center space-y-4">
               <p className="text-lg font-medium text-gray-900">검색 결과가 없습니다</p>
-              <p className="text-sm text-gray-500">
-                다른 키워드나 필터로 다시 시도해보세요
-              </p>
+              <p className="text-sm text-gray-500">다른 키워드나 필터로 다시 시도해보세요</p>
               <Button
                 variant="outline"
                 onClick={() => {
-                  setSearchQuery('');
-                  setSelectedCategory('all');
-                  setSelectedLocation('전체');
+                  setSearchQuery("")
+                  setSelectedCategory("all")
+                  setSelectedLocation("전체")
                 }}
               >
                 필터 초기화
@@ -451,7 +457,6 @@ export default function RestaurantsPage() {
             </div>
           </div>
         )}
-
 
         {filteredRestaurants.map((restaurant) => (
           <RestaurantCard
@@ -472,10 +477,9 @@ export default function RestaurantsPage() {
         )} */}
 
         {/* 무한 스크롤 트리거 */}
-        {hasNextPage && !isFetchingNextPage && (
-          <LoaderRef onIntersect={() => fetchNextPage()} />
-        )}
+        {hasNextPage && !isFetchingNextPage && <LoaderRef onIntersect={() => fetchNextPage()} />}
       </div>
     </div>
-  );
+  )
 }
+
