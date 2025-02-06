@@ -13,27 +13,46 @@ import {
 } from "@/components/ui/select";
 import AuthLayout from "@/components/layout/AuthLayout";
 import { signIn } from "next-auth/react";
+import { useForm } from "react-hook-form"; // useForm 추가
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 export default function SignUpPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
-    name: "",
-    country: "",
-    gender: "",
-    birthYear: "",
-    birthMonth: "",
-    birthDay: "",
+  const [isLoading, setIsLoading] = useState(false);
+
+  // useForm 훅을 사용하여 폼 데이터 관리
+  const form = useForm({
+    defaultValues: {
+      email: "",
+      password: "",
+      confirmPassword: "",
+      name: "",
+      country: "",
+      gender: "",
+      birthYear: "",
+      birthMonth: "",
+      birthDay: "",
+    },
   });
 
-  // app/signup/page.tsx의 handleSubmit 함수를 수정
-  const [isLoading, setIsLoading] = useState(false);
+  const {
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = form;
 
   const handleEmailCheck = async () => {
     try {
-      const response = await fetch(`/api/signup?email=${formData.email}`);
+      const response = await fetch(
+        `/api/signup?email=${form.getValues().email}`
+      );
       const data = await response.json();
 
       if (data.exists) {
@@ -49,13 +68,11 @@ export default function SignUpPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: any) => {
     setIsLoading(true);
-
     try {
       // confirmPassword를 제외한 필요한 데이터만 추출
-      const { ...signupData } = formData;
+      const { confirmPassword, ...signupData } = data;
       console.log("전송하는 데이터:", signupData);
 
       const response = await fetch("/api/signup", {
@@ -63,11 +80,8 @@ export default function SignUpPage() {
         headers: {
           "Content-Type": "application/json",
         },
-
         body: JSON.stringify(signupData), // confirmPassword가 제외된 데이터
       });
-
-      console.log("응답 상태:", response.status);
 
       const responseText = await response.text();
       console.log("응답 텍스트:", responseText);
@@ -76,11 +90,12 @@ export default function SignUpPage() {
         throw new Error("서버로부터 응답이 없습니다.");
       }
 
-      const data = JSON.parse(responseText);
+      const responseData = JSON.parse(responseText);
 
       if (!response.ok) {
-        throw new Error(data.error || "회원가입에 실패했습니다.");
+        throw new Error(responseData.error || "회원가입에 실패했습니다.");
       }
+
       const result = await signIn("credentials", {
         email: signupData.email,
         password: signupData.password,
@@ -103,160 +118,225 @@ export default function SignUpPage() {
   return (
     <AuthLayout activeTab="signup">
       <main className="flex-1 p-4">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <Input
-                required
-                type="email"
-                placeholder="이메일"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    email: e.target.value,
-                  }))
-                }
-              />
-              <Button
-                type="button"
-                className="shrink-0"
-                onClick={handleEmailCheck}
-                disabled={!formData.email || isLoading}
-              >
-                중복확인
-              </Button>
-            </div>
-
-            <Input
-              required
-              type="password"
-              placeholder="비밀번호(최소 8자리 이상)"
-              value={formData.password}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  password: e.target.value,
-                }))
-              }
+        <Form {...form}>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* 이메일 */}
+            <FormField
+              control={control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    이메일 <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="email"
+                        placeholder="이메일을 입력하세요"
+                        className="placeholder:text-gray-400 text-black"
+                      />
+                    </FormControl>
+                    <Button
+                      type="button"
+                      className="shrink-0"
+                      disabled={!field.value || isLoading}
+                      onClick={handleEmailCheck}
+                    >
+                      중복확인
+                    </Button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
 
-            <Input
-              required
-              type="password"
-              placeholder="비밀번호 확인"
-              value={formData.confirmPassword}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  confirmPassword: e.target.value,
-                }))
-              }
+            {/* 비밀번호 */}
+            <FormField
+              control={control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    비밀번호 <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="password"
+                      placeholder="비밀번호(최소 8자리 이상)"
+                      className="placeholder:text-gray-400 text-black"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
 
-            <Input
-              required
-              placeholder="닉네임"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, name: e.target.value }))
-              }
+            {/* 비밀번호 확인 */}
+            <FormField
+              control={control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    비밀번호 확인 <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="password"
+                      placeholder="비밀번호(최소 8자리 이상)"
+                      className="placeholder:text-gray-400 text-black"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
 
-            <Select
-              value={formData.country}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, country: value }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="국적" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="kr">대한민국</SelectItem>
-                <SelectItem value="jp">일본</SelectItem>
-                <SelectItem value="cn">중국</SelectItem>
-                {/* Add more countries as needed */}
-              </SelectContent>
-            </Select>
+            {/* 닉네임 */}
+            <FormField
+              control={control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    닉네임 <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="닉네임"
+                      className="placeholder:text-gray-400 text-black"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            <Select
-              value={formData.gender}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, gender: value }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="성별" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="male">남성</SelectItem>
-                <SelectItem value="female">여성</SelectItem>
-                <SelectItem value="other">기타</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* 국적 */}
+            <FormField
+              control={control}
+              name="country"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    국적 <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger className="placeholder:text-gray-400 text-black">
+                      <SelectValue
+                        placeholder="국적 선택"
+                        className="placeholder:text-gray-400 text-black" // 플레이스홀더 색상 변경
+                      />
+                    </SelectTrigger>
+                    <SelectContent className="cursor-pointer">
+                      <SelectItem className="cursor-pointer" value="kr">
+                        대한민국
+                      </SelectItem>
+                      <SelectItem className="cursor-pointer" value="jp">
+                        일본
+                      </SelectItem>
+                      <SelectItem className="cursor-pointer" value="cn">
+                        중국
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            <div className="grid grid-cols-3 gap-2">
-              <Input
-                placeholder="YYYY"
-                value={formData.birthYear}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    birthYear: e.target.value,
-                  }))
-                }
-              />
-              <Input
-                placeholder="MM"
-                value={formData.birthMonth}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    birthMonth: e.target.value,
-                  }))
-                }
-              />
-              <Input
-                placeholder="DD"
-                value={formData.birthDay}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    birthDay: e.target.value,
-                  }))
-                }
-              />
-            </div>
-          </div>
+            {/* 성별 */}
+            <FormField
+              control={control}
+              name="gender"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    성별 <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger className="placeholder:text-gray-400 text-black">
+                      <SelectValue
+                        placeholder="성별 선택"
+                        className="placeholder:text-gray-400 text-black" // 플레이스홀더 색상 변경
+                      />
+                    </SelectTrigger>
+                    <SelectContent className="cursor-pointer">
+                      <SelectItem className="cursor-pointer" value="male">
+                        남성
+                      </SelectItem>
+                      <SelectItem className="cursor-pointer" value="female">
+                        여성
+                      </SelectItem>
+                      <SelectItem className="cursor-pointer" value="other">
+                        기타
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <Button type="submit" className="w-full">
-            가입하기
-          </Button>
+            {/* 생년월일 */}
+            <FormItem>
+              <FormLabel>
+                생년월일 <span className="text-red-500">*</span>
+              </FormLabel>
+              <div className="grid grid-cols-3 gap-2">
+                <FormField
+                  control={control}
+                  name="birthYear"
+                  render={({ field }) => (
+                    <FormControl>
+                      <Input
+                        {...field}
+                        className="placeholder:text-gray-400 text-black"
+                        placeholder="YYYY"
+                      />
+                    </FormControl>
+                  )}
+                />
+                <FormField
+                  control={control}
+                  name="birthMonth"
+                  render={({ field }) => (
+                    <FormControl>
+                      <Input
+                        {...field}
+                        className="placeholder:text-gray-400 text-black"
+                        placeholder="MM"
+                      />
+                    </FormControl>
+                  )}
+                />
+                <FormField
+                  control={control}
+                  name="birthDay"
+                  render={({ field }) => (
+                    <FormControl>
+                      <Input
+                        {...field}
+                        className="placeholder:text-gray-400 text-black"
+                        placeholder="DD"
+                      />
+                    </FormControl>
+                  )}
+                />
+              </div>
+              <FormMessage />
+            </FormItem>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                OR SIGN UP WITH
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <Button variant="outline" className="w-full">
-              Google
+            <Button type="submit" className="w-full">
+              가입하기
             </Button>
-            <Button variant="outline" className="w-full">
-              Facebook
-            </Button>
-            <Button variant="outline" className="w-full">
-              Apple
-            </Button>
-          </div>
-        </form>
+          </form>
+        </Form>
       </main>
     </AuthLayout>
   );

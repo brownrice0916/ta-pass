@@ -15,8 +15,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false); // Remember me state 추가
 
+  // 페이지 로드 시 저장된 이메일 로드
   useEffect(() => {
+    const savedEmail = localStorage.getItem("email");
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true); // 저장된 이메일이 있으면 체크박스 체크
+    }
+
     if (session) {
       router.push("/");
     }
@@ -36,6 +44,11 @@ export default function LoginPage() {
 
       if (result?.ok) {
         // 로그인 성공
+        if (rememberMe) {
+          localStorage.setItem("email", email); // "로그인 정보 기억하기"가 체크된 경우 이메일 저장
+        } else {
+          localStorage.removeItem("email"); // 체크되지 않은 경우 로컬스토리지에서 이메일 삭제
+        }
         router.push("/"); // 메인 페이지로 리다이렉트
       } else {
         // 로그인 실패
@@ -82,6 +95,18 @@ export default function LoginPage() {
             disabled={isLoading}
           />
         </div>
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="rememberMe"
+            checked={rememberMe}
+            onChange={() => setRememberMe(!rememberMe)} // 체크박스 토글
+            disabled={isLoading}
+          />
+          <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-700">
+            로그인 정보 기억하기
+          </label>
+        </div>
         <Button
           type="submit"
           className="w-full bg-blue-600 text-white hover:bg-blue-700"
@@ -96,28 +121,12 @@ export default function LoginPage() {
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t" />
         </div>
-        <div className="relative flex justify-center text-sm text-gray-500">
-          OR CONTINUE WITH
-        </div>
-      </div>
-
-      {/* Social Login Buttons */}
-      <div className="grid grid-cols-3 gap-4">
-        <Button variant="outline" className="w-full">
-          Google
-        </Button>
-        <Button variant="outline" className="w-full">
-          Facebook
-        </Button>
-        <Button variant="outline" className="w-full">
-          Apple
-        </Button>
       </div>
 
       {/* Additional Links */}
       <div className="flex justify-between mt-4 text-sm text-gray-500">
-        <Link href="/forgot-id">아이디 찾기</Link>
-        <Link href="/forgot-password">비밀번호 찾기</Link>
+        <Link href="/forgot-id">비밀번호 찾기</Link>
+        {/* <Link href="/forgot-password"></Link> */}
       </div>
     </AuthLayout>
   );
