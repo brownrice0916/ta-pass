@@ -42,11 +42,10 @@ const MyPage = () => {
 
         {/* Stats Section */}
         <div className="flex w-full gap-4 mb-6">
-          {/* <div className="flex-1 bg-blue-500 text-white p-6 rounded-lg shadow-md text-center">
-                        <h3 className="text-lg">나의 방문</h3>
-                        <p className="text-4xl font-bold">{ }</p>
-                    </div> */}
-          <div className="flex-1 bg-blue-500 text-white p-6 rounded-lg shadow-md text-center">
+          <div
+            className="flex-1 bg-blue-500 text-white p-6 rounded-lg shadow-md text-center cursor-pointer"
+            onClick={() => router.push("/reviews")}
+          >
             <h3 className="text-lg">나의 리뷰</h3>
             <p className="text-4xl font-bold">{}</p>
           </div>
@@ -63,7 +62,7 @@ const MyPage = () => {
 
         {/* Info Section */}
         <div className="w-full grid grid-cols-3 gap-4 bg-white p-4 rounded-lg shadow-md">
-          <ShortcutItem icon="🎧" label="고객센터" link="/support" />
+          <ShortcutItem icon="🎧" label="고객센터" link="/faq" />
           <ShortcutItem icon="⭐" label="이벤트" link="/events" />
           <ShortcutItem icon="📢" label="공지사항" link="/notices" />
         </div>

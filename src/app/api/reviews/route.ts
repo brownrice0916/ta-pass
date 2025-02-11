@@ -63,3 +63,37 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const userId = Number(session.user.id); // Convert userId to a number
+
+    const reviews = await prisma.review.findMany({
+      where: {
+        userId: userId, // Filter by userId
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        restaurant: true, // Include restaurant info
+        user: true, // Include user info
+      },
+    });
+
+    // If no reviews are found, return an empty array instead of an error
+    return NextResponse.json(reviews, { status: 200 });
+  } catch (error) {
+    console.error("Error fetching reviews:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}

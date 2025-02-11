@@ -37,11 +37,12 @@ interface ReviewCardProps {
   restaurant: Restaurant;
 }
 
-function ReviewCard({ review, onOpenDetail }: ReviewCardProps) {
+export function ReviewCard({ review, onOpenDetail }: ReviewCardProps) {
   const { data: session } = useSession();
 
-  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${session?.user?.email || "default"
-    }`;
+  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${
+    session?.user?.email || "default"
+  }`;
 
   return (
     <Card
@@ -114,10 +115,11 @@ function ReviewCard({ review, onOpenDetail }: ReviewCardProps) {
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
-                className={`h-4 w-4 ${i < (review?.rating || 0)
-                  ? "text-yellow-500 fill-yellow-500"
-                  : "text-gray-300"
-                  }`}
+                className={`h-4 w-4 ${
+                  i < (review?.rating || 0)
+                    ? "text-yellow-500 fill-yellow-500"
+                    : "text-gray-300"
+                }`}
               />
             ))}
           </div>
@@ -131,7 +133,7 @@ function ReviewCard({ review, onOpenDetail }: ReviewCardProps) {
   );
 }
 
-function ReviewDetailDialog({
+export function ReviewDetailDialog({
   review,
   open,
   onClose,
@@ -146,8 +148,9 @@ function ReviewDetailDialog({
   const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
   const { data: session } = useSession();
 
-  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${session?.user?.email || "default"
-    }`;
+  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${
+    session?.user?.email || "default"
+  }`;
 
   // 슬라이드 변경 핸들러
   const handleSlideChange = useCallback(() => {
@@ -232,10 +235,11 @@ function ReviewDetailDialog({
             {review.images.map((_, index) => (
               <button
                 key={index}
-                className={`h-2 w-2 rounded-full transition-opacity ${currentSlide === index
-                  ? "bg-white"
-                  : "bg-white/50 hover:bg-white/70"
-                  }`}
+                className={`h-2 w-2 rounded-full transition-opacity ${
+                  currentSlide === index
+                    ? "bg-white"
+                    : "bg-white/50 hover:bg-white/70"
+                }`}
                 onClick={() => carouselApi?.scrollTo(index)} // 클릭 시 슬라이드 이동
               />
             ))}
@@ -270,10 +274,11 @@ function ReviewDetailDialog({
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
                   key={i}
-                  className={`h-4 w-4 ${i < (review?.rating || 0)
-                    ? "text-yellow-500 fill-yellow-500"
-                    : "text-gray-300"
-                    }`}
+                  className={`h-4 w-4 ${
+                    i < (review?.rating || 0)
+                      ? "text-yellow-500 fill-yellow-500"
+                      : "text-gray-300"
+                  }`}
                 />
               ))}
             </div>
@@ -321,8 +326,8 @@ export default function ReviewSection({
         <button
           onClick={() => {
             if (!session) {
-              if (confirm('로그인이 필요합니다. 로그인하시겠습니까?')) {
-                router.push('/login');
+              if (confirm("로그인이 필요합니다. 로그인하시겠습니까?")) {
+                router.push("/login");
               }
             } else {
               setIsReviewFormOpen(true);
@@ -347,8 +352,9 @@ export default function ReviewSection({
               .map((review, index) => (
                 <CarouselItem
                   key={review.id}
-                  className={`${index === 0 ? "pl-4" : "pl-1"
-                    } overflow-visible`}
+                  className={`${
+                    index === 0 ? "pl-4" : "pl-1"
+                  } overflow-visible`}
                   style={{ flex: "0 0 95%" }}
                 >
                   <ReviewCard

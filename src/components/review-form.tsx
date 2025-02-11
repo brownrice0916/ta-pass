@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, X } from "lucide-react";
-import { useSession } from "next-auth/react";
 
 interface ReviewFormProps {
   restaurantId: string;
@@ -10,7 +9,11 @@ interface ReviewFormProps {
   onClose?: () => void;
 }
 
-export function ReviewForm({ restaurantId, onReviewAdded, onClose }: ReviewFormProps) {
+export function ReviewForm({
+  restaurantId,
+  onReviewAdded,
+  onClose,
+}: ReviewFormProps) {
   const [step, setStep] = useState(1);
   const [rating, setRating] = useState(5);
   const [content, setContent] = useState("");
@@ -23,7 +26,6 @@ export function ReviewForm({ restaurantId, onReviewAdded, onClose }: ReviewFormP
       setStep(step - 1);
     }
   };
-
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -69,7 +71,8 @@ export function ReviewForm({ restaurantId, onReviewAdded, onClose }: ReviewFormP
   };
 
   const handleNextStep = () => {
-    if (step === 3) {  // images.length > 0 조건 제거
+    if (step === 3) {
+      // images.length > 0 조건 제거
       handleSubmit();
       return;
     }
@@ -91,18 +94,16 @@ export function ReviewForm({ restaurantId, onReviewAdded, onClose }: ReviewFormP
                 <button
                   key={value}
                   type="button"
-                  className={`text-4xl transition-colors ${value <= rating ? "text-yellow-500" : "text-gray-300"
-                    }`}
+                  className={`text-4xl transition-colors ${
+                    value <= rating ? "text-yellow-500" : "text-gray-300"
+                  }`}
                   onClick={() => setRating(value)}
                 >
                   ★
                 </button>
               ))}
             </div>
-            <Button
-              className="w-full"
-              onClick={handleNextStep}
-            >
+            <Button className="w-full" onClick={handleNextStep}>
               다음
             </Button>
           </div>
@@ -111,7 +112,9 @@ export function ReviewForm({ restaurantId, onReviewAdded, onClose }: ReviewFormP
       case 2:
         return (
           <div className="flex flex-col p-6">
-            <h2 className="text-lg font-semibold mb-4">방문후기를 작성해주세요.</h2>
+            <h2 className="text-lg font-semibold mb-4">
+              방문후기를 작성해주세요.
+            </h2>
             <Textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
@@ -198,7 +201,7 @@ export function ReviewForm({ restaurantId, onReviewAdded, onClose }: ReviewFormP
             <Button
               className="w-full"
               onClick={handleSubmit}
-              disabled={isSubmitting}  // images.length 조건 제거
+              disabled={isSubmitting} // images.length 조건 제거
             >
               {isSubmitting ? "작성 중..." : "작성 완료"}
             </Button>
@@ -257,25 +260,27 @@ export function ReviewForm({ restaurantId, onReviewAdded, onClose }: ReviewFormP
       ) : (
         <>
           <div className="flex justify-between px-6 pt-4">
-
             {[1, 2, 3].map((stepNumber) => (
               <div
                 key={stepNumber}
-                className={`flex items-center ${stepNumber !== 3 ? "flex-1" : ""
-                  }`}
+                className={`flex items-center ${
+                  stepNumber !== 3 ? "flex-1" : ""
+                }`}
               >
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${step >= stepNumber
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-500"
-                    }`}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
+                    step >= stepNumber
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-500"
+                  }`}
                 >
                   {stepNumber}
                 </div>
                 {stepNumber !== 3 && (
                   <div
-                    className={`flex-1 h-1 mx-2 ${step > stepNumber ? "bg-blue-600" : "bg-gray-200"
-                      }`}
+                    className={`flex-1 h-1 mx-2 ${
+                      step > stepNumber ? "bg-blue-600" : "bg-gray-200"
+                    }`}
                   />
                 )}
               </div>

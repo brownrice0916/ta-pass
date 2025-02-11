@@ -4,9 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { GoogleMap, Marker } from "@react-google-maps/api";
-import { ReviewForm } from "@/components/review-form";
-import { Instagram, Facebook, Twitter, Globe, Youtube, BookOpen, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Carousel,
   CarouselApi,
@@ -21,8 +19,6 @@ import { getNeighborhood } from "@/lib/address";
 import SocialLinks from "../components/social-links";
 import GoogleMapsProvider from "@/app/google-maps-provider";
 import RestaurantMap from "../components/restaurant-map";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { DialogClose, DialogTitle } from "@radix-ui/react-dialog";
 
 export interface Review {
   id: string;
@@ -31,25 +27,8 @@ export interface Review {
   createdAt: string;
   content: string;
   images: string[]; // 리뷰 이미지 배열 추가
+  restaurant?: Restaurant;
 }
-
-// 플랫폼별 아이콘 매핑
-const PLATFORM_ICONS = {
-  instagram: Instagram,
-  facebook: Facebook,
-  twitter: Twitter,
-  blog: BookOpen,
-  youtube: Youtube,
-  website: Globe,
-} as const;
-
-
-const containerStyle = {
-  width: "100%",
-  height: "400px",
-};
-
-
 
 export default function RestaurantDetail() {
   const params = useParams();
@@ -60,12 +39,14 @@ export default function RestaurantDetail() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
-  const [modalCarouselApi, setModalCarouselApi] = useState<CarouselApi | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(
+    null
+  );
+  const [modalCarouselApi, setModalCarouselApi] = useState<CarouselApi | null>(
+    null
+  );
 
   const [imageLoading, setImageLoading] = useState(true);
-
-  const [showSpecialOfferDetail, setShowSpecialOfferDetail] = useState(false);
 
   // 슬라이드 변경 핸들러
   const handleSlideChange = useCallback(() => {
@@ -128,7 +109,6 @@ export default function RestaurantDetail() {
     }
   }, [params.id]);
 
-
   useEffect(() => {
     const fetchRestaurant = async () => {
       try {
@@ -169,7 +149,11 @@ export default function RestaurantDetail() {
       </Button>
       {restaurant.images && restaurant.images.length > 0 && (
         <div className="relative">
-          <Carousel setApi={setCarouselApi} className="w-full" onChange={handleSlideChange}>
+          <Carousel
+            setApi={setCarouselApi}
+            className="w-full"
+            onChange={handleSlideChange}
+          >
             <CarouselContent>
               {restaurant.images.map((image, index) => (
                 <CarouselItem key={index}>
@@ -184,8 +168,9 @@ export default function RestaurantDetail() {
                       sizes="(max-width: 768px) 25vw, 25vw"
                       loading="lazy"
                       quality={75}
-                      className={`object-cover transition-opacity duration-300 ${imageLoading ? 'opacity-0' : 'opacity-100'
-                        }`}
+                      className={`object-cover transition-opacity duration-300 ${
+                        imageLoading ? "opacity-0" : "opacity-100"
+                      }`}
                       onLoad={() => setImageLoading(false)}
                       onError={() => setImageLoading(false)}
                     />
@@ -198,8 +183,9 @@ export default function RestaurantDetail() {
             {restaurant.images.map((_, index) => (
               <button
                 key={index}
-                className={`h-2 w-2 rounded-full ${currentSlide === index ? "bg-white" : "bg-white/50"
-                  }`}
+                className={`h-2 w-2 rounded-full ${
+                  currentSlide === index ? "bg-white" : "bg-white/50"
+                }`}
                 onClick={() => {
                   if (carouselApi) {
                     carouselApi.scrollTo(index);
@@ -228,10 +214,11 @@ export default function RestaurantDetail() {
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
-                className={`h-4 w-4 ${i < (restaurant?.rating || 0)
-                  ? "text-yellow-500 fill-yellow-500"
-                  : "text-gray-300"
-                  }`}
+                className={`h-4 w-4 ${
+                  i < (restaurant?.rating || 0)
+                    ? "text-yellow-500 fill-yellow-500"
+                    : "text-gray-300"
+                }`}
               />
             ))}
             <span className="text-sm text-muted-foreground">
@@ -243,10 +230,11 @@ export default function RestaurantDetail() {
               {restaurant.specialOfferType.map((offerType, index) => (
                 <div key={`${restaurant.id}-offer-${index}`}>
                   <span
-                    className={`inline-block px-2 py-1 rounded-full text-xs text-white mr-1 ${offerType === "Special Gift"
-                      ? "bg-pink-500"
-                      : "bg-orange-500"
-                      }`}
+                    className={`inline-block px-2 py-1 rounded-full text-xs text-white mr-1 ${
+                      offerType === "Special Gift"
+                        ? "bg-pink-500"
+                        : "bg-orange-500"
+                    }`}
                   >
                     {offerType === "Special Gift" ? "Special Gift" : "Discount"}
                   </span>
@@ -278,20 +266,26 @@ export default function RestaurantDetail() {
               <span className="text-sm text-red-500 ml-2">20% 할인</span>
               </div> */}
         </div>
-        {restaurant.socialLinks && <div className="p-2">
-          {restaurant.socialLinks && (
-            <div className="py-2">
-              <SocialLinks links={restaurant.socialLinks} />
-            </div>
-          )}
-        </div>}
+        {restaurant.socialLinks && (
+          <div className="p-2">
+            {restaurant.socialLinks && (
+              <div className="py-2">
+                <SocialLinks links={restaurant.socialLinks} />
+              </div>
+            )}
+          </div>
+        )}
         {/* Photos Grid */}
         <div className="mb-6 mt-10">
           <h2 className="text-lg font-semibold mb-2">Photos</h2>
           <div className="grid grid-cols-3 gap-1">
             {reviews
-              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-              .filter(review => review.images && review.images.length > 0)
+              .sort(
+                (a, b) =>
+                  new Date(b.createdAt).getTime() -
+                  new Date(a.createdAt).getTime()
+              )
+              .filter((review) => review.images && review.images.length > 0)
               .slice(0, 6)
               .map((review, index) => (
                 <div
@@ -309,8 +303,9 @@ export default function RestaurantDetail() {
                     sizes="(max-width: 768px) 25vw, 25vw"
                     loading="lazy"
                     quality={75}
-                    className={`object-cover transition-opacity duration-300 ${imageLoading ? 'opacity-0' : 'opacity-100'
-                      }`}
+                    className={`object-cover transition-opacity duration-300 ${
+                      imageLoading ? "opacity-0" : "opacity-100"
+                    }`}
                     onLoad={() => setImageLoading(false)}
                     onError={() => setImageLoading(false)}
                   />
@@ -337,14 +332,17 @@ export default function RestaurantDetail() {
                   </button>
 
                   {/* 캐러셀 */}
-                  <Carousel
-                    setApi={setModalCarouselApi}
-                    className="w-full"
-                  >
+                  <Carousel setApi={setModalCarouselApi} className="w-full">
                     <CarouselContent>
                       {reviews
-                        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                        .filter(review => review.images && review.images.length > 0)
+                        .sort(
+                          (a, b) =>
+                            new Date(b.createdAt).getTime() -
+                            new Date(a.createdAt).getTime()
+                        )
+                        .filter(
+                          (review) => review.images && review.images.length > 0
+                        )
                         .slice(0, 6)
                         .map((review, index) => (
                           <CarouselItem key={index}>
@@ -382,7 +380,11 @@ export default function RestaurantDetail() {
         </div>
 
         {/* Customer Satisfaction */}
-        <ReviewSection onReviewsChange={fetchReviews} restaurant={restaurant} reviews={reviews} />
+        <ReviewSection
+          onReviewsChange={fetchReviews}
+          restaurant={restaurant}
+          reviews={reviews}
+        />
         {/* About Section */}
         <div className="mb-6 mt-4">
           <h2 className="text-lg font-semibold mb-2">About</h2>
@@ -390,7 +392,14 @@ export default function RestaurantDetail() {
             <CardContent className="p-4">
               <p>{restaurant?.description || "서비스 소개"}</p>
               <div className="mt-10 text-gray-500 text-sm">
-                {restaurant.tags.map((tag, index) => (<span key={index}>{tag}<span>{index !== restaurant.tags.length - 1 ? "," : ''}</span></span>))}
+                {restaurant.tags.map((tag, index) => (
+                  <span key={index}>
+                    {tag}
+                    <span>
+                      {index !== restaurant.tags.length - 1 ? "," : ""}
+                    </span>
+                  </span>
+                ))}
               </div>
             </CardContent>
           </Card>
@@ -399,7 +408,9 @@ export default function RestaurantDetail() {
           <h2 className="text-lg font-semibold mb-2">Special Offer</h2>
           <Card className="bg-gray-50">
             <CardContent className="p-4">
-              <pre className="text-xs whitespace-pre-wrap word-wrap break-words">{restaurant.specialOfferTextDetail}</pre>
+              <pre className="text-xs whitespace-pre-wrap word-wrap break-words">
+                {restaurant.specialOfferTextDetail}
+              </pre>
             </CardContent>
           </Card>
         </div>
@@ -415,10 +426,10 @@ export default function RestaurantDetail() {
               userLocation={null}
               mapRestaurants={restaurants}
               selectedMarker={null}
-              onMarkerClick={() => { }}
-              onUserLocationClick={() => { }}
-              onBoundsChanged={() => { }}
-              setSelectedMarker={() => { }}
+              onMarkerClick={() => {}}
+              onUserLocationClick={() => {}}
+              onBoundsChanged={() => {}}
+              setSelectedMarker={() => {}}
             />
           </GoogleMapsProvider>
           <p className="text-sm">{restaurant?.address}</p>
@@ -432,6 +443,6 @@ export default function RestaurantDetail() {
           />
         </div> */}
       </div>
-    </div >
+    </div>
   );
 }
