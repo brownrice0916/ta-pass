@@ -39,6 +39,11 @@ const MyPage = () => {
     }
   }, [session]);
 
+  const handleComingSoonClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    alert("서비스 준비중입니다.");
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
       {/* Header */}
@@ -94,8 +99,20 @@ const MyPage = () => {
         {/* Info Section */}
         <div className="w-full grid grid-cols-3 gap-4 bg-white p-4 rounded-lg shadow-md">
           <ShortcutItem icon="🎧" label="고객센터" link="/faq" />
-          <ShortcutItem icon="⭐" label="이벤트" link="/events" />
-          <ShortcutItem icon="📢" label="공지사항" link="/notices" />
+          <ShortcutItem
+            icon="⭐"
+            label="이벤트"
+            link="#"
+            onClick={handleComingSoonClick}
+            comingSoon
+          />
+          <ShortcutItem
+            icon="📢"
+            label="공지사항"
+            link="/#"
+            onClick={handleComingSoonClick}
+            comingSoon
+          />
         </div>
 
         {/* Logout Button */}
@@ -111,22 +128,37 @@ const MyPage = () => {
     </div>
   );
 };
+interface ShortcutItemProps {
+  icon: string;
+  label: string;
+  link: string;
+  comingSoon?: boolean;
+  onClick?: (e: React.MouseEvent) => void;
+}
 
 const ShortcutItem = ({
   icon,
   label,
   link,
-}: {
-  icon: string;
-  label: string;
-  link: string;
-}) => (
+  comingSoon,
+  onClick,
+}: ShortcutItemProps) => (
   <a
     href={link}
-    className="flex flex-col items-center justify-center text-center p-4"
+    onClick={onClick}
+    className={`relative flex flex-col items-center justify-center text-center p-4 hover:bg-gray-50 rounded-lg transition-colors ${
+      comingSoon ? "cursor-default" : ""
+    }`}
   >
     <div className="text-3xl mb-2">{icon}</div>
     <p className="text-sm">{label}</p>
+    {comingSoon && (
+      <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
+        <span className="text-white text-sm font-medium px-2 py-1 bg-blue-600 rounded">
+          준비중
+        </span>
+      </div>
+    )}
   </a>
 );
 
