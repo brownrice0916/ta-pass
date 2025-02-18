@@ -2,16 +2,15 @@ import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { User as MyUser } from "@/lib/types"; // Your custom User type
+import { User as MyUser } from "@/lib/types";
 
-// Extend the next-auth User type
 declare module "next-auth" {
   interface Session {
     user: {
       id: string;
       email: string;
       name?: string | null;
-    }
+    };
   }
 }
 
@@ -36,13 +35,13 @@ export const authOptions: NextAuthOptions = {
 
         if (user && bcrypt.compareSync(credentials.password, user.password)) {
           return {
-            id: user.id.toString(), // Ensure this matches your database structure
+            id: user.id.toString(),
             email: user.email,
             name: user.name,
           };
         }
 
-        return null; // 인증 실패
+        return null;
       },
     }),
   ],
@@ -51,20 +50,47 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60,
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.email = user.email;
         token.name = user.name;
       }
+
+      // 세션이 업데이트될 때 토큰도 업데이트
+      if (trigger === "update" && session) {
+        token.name = session.user.name;
+      }
+
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token, trigger }) {
       if (token && session.user) {
-        session.user.id = token.id as string;  // id 추가
+        session.user.id = token.id as string;
         session.user.email = token.email as string;
         session.user.name = token.name as string;
       }
+
+      // 세션 업데이트 시 DB에서 최신 데이터 가져오기
+      if (trigger === "update") {
+        const updatedUser = await prisma.user.findUnique({
+          where: { email: session.user.email },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+          },
+        });
+
+        if (updatedUser) {
+          session.user = {
+            id: updatedUser.id.toString(),
+            email: updatedUser.email,
+            name: updatedUser.name,
+          };
+        }
+      }
+
       return session;
     },
   },
@@ -72,21 +98,19 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
     error: "/auth/error",
   },
-  // 로깅 관련 설정 추가
   logger: {
     error: (code, metadata) => {
-      console.error(code, metadata)
+      console.error(code, metadata);
     },
     warn: (code) => {
-      console.warn(code)
+      console.warn(code);
     },
     debug: (code, metadata) => {
-      console.debug(code, metadata)
+      console.debug(code, metadata);
     },
   },
-  // 디버그 모드 비활성화
   debug: false,
-  secret: process.env.NEXTAUTH_SECRET
+  secret: process.env.NEXTAUTH_SECRET,
 };
 
 export default NextAuth(authOptions);

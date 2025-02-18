@@ -1,18 +1,43 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 const MyPage = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [reviewCount, setReviewCount] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(true); // 로딩 상태 추가
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/"); // 로그아웃 후 홈 페이지로 이동
     }
   }, [status, router]);
+
+  useEffect(() => {
+    const fetchReviewCount = async () => {
+      try {
+        setIsLoading(true); // 데이터 가져오기 시작할 때 로딩 상태 true
+        const response = await fetch("/api/reviews");
+        if (!response.ok) {
+          throw new Error("리뷰를 가져오는데 실패했습니다");
+        }
+        const reviews = await response.json();
+        setReviewCount(reviews.length);
+      } catch (error) {
+        console.error("리뷰 로딩 에러:", error);
+      } finally {
+        setIsLoading(false); // 성공/실패 상관없이 로딩 상태 false
+      }
+    };
+
+    if (session?.user) {
+      fetchReviewCount();
+    }
+  }, [session]);
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
@@ -47,7 +72,13 @@ const MyPage = () => {
             onClick={() => router.push("/reviews")}
           >
             <h3 className="text-lg">나의 리뷰</h3>
-            <p className="text-4xl font-bold">{}</p>
+            {isLoading ? (
+              <div className="flex justify-center items-center h-12">
+                <Loader2 className="w-6 h-6 animate-spin" />
+              </div>
+            ) : (
+              <p className="text-4xl font-bold">{reviewCount}</p>
+            )}
           </div>
         </div>
 
