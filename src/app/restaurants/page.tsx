@@ -2,19 +2,14 @@
 
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  GoogleMap,
-  InfoWindow,
-  Marker,
-  MarkerClusterer,
-} from "@react-google-maps/api";
+import { Marker, MarkerClusterer } from "@react-google-maps/api";
 import { useRouter } from "next/navigation";
 import type { Review } from "@prisma/client";
 import { Input } from "@/components/ui/input";
 import ExcelImport from "./components/excel-import";
 import { useRestaurants } from "./hooks/use-restaurants";
 import { RestaurantCard } from "../search/component/restaurant-card";
-import { Filter, MapPin, Search, Sliders } from "lucide-react";
+import { MapPin, Search, Sliders } from "lucide-react";
 import GoogleMapsProvider from "../google-maps-provider";
 import RestaurantMap from "./components/restaurant-map";
 
