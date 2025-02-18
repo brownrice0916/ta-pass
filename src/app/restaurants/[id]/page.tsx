@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,8 @@ export default function RestaurantDetail() {
   const [modalCarouselApi, setModalCarouselApi] = useState<CarouselApi | null>(
     null
   );
+
+  const mapRef = useRef<google.maps.Map | null>(null);
 
   const [imageLoading, setImageLoading] = useState(true);
 
@@ -430,6 +432,7 @@ export default function RestaurantDetail() {
               onUserLocationClick={() => {}}
               onBoundsChanged={() => {}}
               setSelectedMarker={() => {}}
+              mapRef={mapRef}
             />
           </GoogleMapsProvider>
           <p className="text-sm">{restaurant?.address}</p>
