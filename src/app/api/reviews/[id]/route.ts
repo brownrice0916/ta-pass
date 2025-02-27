@@ -5,12 +5,11 @@ import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 // 특정 리뷰 조회 API
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const id = url.pathname.split("/")[3]; // Extract the `id` from the URL
   try {
-    console.log(`[API] GET /api/reviews/${params.id} - 요청 시작`);
+    console.log(`[API] GET /api/reviews/${id} - 요청 시작`);
 
     // 세션 확인
     const session = await getServerSession(authOptions);
@@ -22,13 +21,12 @@ export async function GET(
       );
     }
 
-    const reviewId = params.id;
-    console.log(`[API] 리뷰 ID: ${reviewId}, 사용자 ID: ${session.user.id}`);
+    console.log(`[API] 리뷰 ID: ${id}, 사용자 ID: ${session.user.id}`);
 
     // 리뷰 정보 조회
     const review = await prisma.review.findUnique({
       where: {
-        id: reviewId,
+        id: id,
       },
       include: {
         restaurant: true,
@@ -44,7 +42,7 @@ export async function GET(
 
     // 리뷰가 존재하지 않는 경우
     if (!review) {
-      console.log(`[API] 리뷰를 찾을 수 없음: ${reviewId}`);
+      console.log(`[API] 리뷰를 찾을 수 없음: ${id}`);
       return NextResponse.json(
         { error: "리뷰를 찾을 수 없습니다" },
         { status: 404 }
@@ -63,7 +61,7 @@ export async function GET(
       );
     }
 
-    console.log(`[API] 리뷰 조회 성공: ${reviewId}`);
+    console.log(`[API] 리뷰 조회 성공: ${id}`);
     return NextResponse.json(review);
   } catch (error) {
     console.error(`[API] 리뷰 조회 오류:`, error);
@@ -75,12 +73,12 @@ export async function GET(
 }
 
 // 리뷰 수정 API
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: Request) {
+  const url = new URL(request.url);
+  const id = url.pathname.split("/")[3]; // Extract the `id` from the URL
+
   try {
-    console.log(`[API] PUT /api/reviews/${params.id} - 요청 시작`);
+    console.log(`[API] PUT /api/reviews/${id} - 요청 시작`);
 
     // 세션 확인
     const session = await getServerSession(authOptions);
@@ -91,7 +89,7 @@ export async function PUT(
       );
     }
 
-    const reviewId = params.id;
+    const reviewId = id;
     const body = await request.json();
     const { rating, content } = body;
 
@@ -160,12 +158,11 @@ export async function PUT(
 }
 
 // 리뷰 삭제 API
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request) {
+  const url = new URL(request.url);
+  const id = url.pathname.split("/")[3];
   try {
-    console.log(`[API] DELETE /api/reviews/${params.id} - 요청 시작`);
+    console.log(`[API] DELETE /api/reviews/${id} - 요청 시작`);
 
     // 세션 확인
     const session = await getServerSession(authOptions);
@@ -176,7 +173,7 @@ export async function DELETE(
       );
     }
 
-    const reviewId = params.id;
+    const reviewId = id;
 
     // 리뷰 존재 여부 및 권한 확인
     const existingReview = await prisma.review.findUnique({

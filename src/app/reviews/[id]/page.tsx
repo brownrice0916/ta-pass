@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -21,13 +21,10 @@ interface ReviewData {
   updatedAt: string;
 }
 
-export default function ReviewDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function ReviewDetailPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const params = useParams();
   const reviewId = params.id;
 
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
