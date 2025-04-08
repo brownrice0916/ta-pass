@@ -63,7 +63,7 @@ export async function PUT(request: Request) {
       delete updateData.password;
     }
 
-    // 이메일은 수정 불가
+
     delete updateData.email;
 
     const user = await prisma.user.update({

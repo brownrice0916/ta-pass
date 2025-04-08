@@ -1,12 +1,7 @@
 "use client";
 
-import { X } from "lucide-react";
 import Link from "next/link";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useState } from "react";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { DialogTitle } from "@radix-ui/react-dialog";
@@ -16,7 +11,7 @@ export function MainNav() {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
+      {/* <SheetTrigger asChild>
         <button className="text-primary-foreground">
           <svg
             className="w-6 h-6"
@@ -32,10 +27,9 @@ export function MainNav() {
             />
           </svg>
         </button>
-      </SheetTrigger>
+      </SheetTrigger> */}
       <SheetContent>
         {/* 상단 X 버튼 */}
-
 
         <div className="h-full overflow-y-auto p-4 space-y-6">
           {/* 접근성 컴포넌트 추가 */}
@@ -45,9 +39,7 @@ export function MainNav() {
             </VisuallyHidden>
           </DialogTitle>
           <div className="space-y-3">
-            <h2 className="text-lg font-semibold text-primary">
-              Stays & Pass
-            </h2>
+            <h2 className="text-lg font-semibold text-primary">Stays & Pass</h2>
             <div className="space-y-2">
               <Link
                 href="/about-pass"
@@ -86,10 +78,7 @@ export function MainNav() {
               >
                 Activities
               </Link>
-              <Link
-                href="/food"
-                className="block text-primary hover:underline"
-              >
+              <Link href="/food" className="block text-primary hover:underline">
                 Food
               </Link>
             </div>

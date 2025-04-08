@@ -19,8 +19,23 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
-
 import { SubmitHandler } from "react-hook-form";
+import { useState } from "react";
+import { countries } from "countries-list";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface UserFormProps {
   form: UseFormReturn<FormValues>;
@@ -49,6 +64,17 @@ export function UserForm({
   mode,
   onEmailCheck,
 }: UserFormProps) {
+  const [open, setOpen] = useState(false);
+
+  // countries-list 패키지의 데이터를 가공
+  const countryOptions = Object.entries(countries).map(([code, country]) => ({
+    value: code.toLowerCase(),
+    label: country.name,
+  }));
+
+  // 알파벳 순으로 정렬
+  countryOptions.sort((a, b) => a.label.localeCompare(b.label));
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -59,8 +85,7 @@ export function UserForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                이메일{" "}
-                {mode === "signup" && <span className="text-red-500">*</span>}
+                이메일<span className="text-red-500">*</span>
               </FormLabel>
               <div className="flex gap-2">
                 <FormControl>
@@ -71,6 +96,7 @@ export function UserForm({
                     className="placeholder:text-gray-400 text-black"
                     readOnly={mode === "edit"}
                     disabled={mode === "edit"}
+                    required
                   />
                 </FormControl>
                 {mode === "signup" && onEmailCheck && (
@@ -96,8 +122,7 @@ export function UserForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                비밀번호
-                <span className="text-red-500">*</span>
+                비밀번호<span className="text-red-500">*</span>
               </FormLabel>
               <FormControl>
                 <Input
@@ -105,6 +130,7 @@ export function UserForm({
                   type="password"
                   placeholder={"비밀번호(최소 8자리 이상)"}
                   className="placeholder:text-gray-400 text-black"
+                  required
                 />
               </FormControl>
               <FormMessage />
@@ -119,8 +145,7 @@ export function UserForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                새 비밀번호 확인
-                <span className="text-red-500">*</span>
+                비밀번호 확인<span className="text-red-500">*</span>
               </FormLabel>
               <FormControl>
                 <Input
@@ -128,6 +153,7 @@ export function UserForm({
                   type="password"
                   placeholder={"비밀번호를 다시 입력하세요"}
                   className="placeholder:text-gray-400 text-black"
+                  required
                 />
               </FormControl>
               <FormMessage />
@@ -142,14 +168,14 @@ export function UserForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                닉네임
-                <span className="text-red-500">*</span>
+                닉네임<span className="text-red-500">*</span>
               </FormLabel>
               <FormControl>
                 <Input
                   {...field}
                   placeholder="닉네임"
                   className="placeholder:text-gray-400 text-black"
+                  required
                 />
               </FormControl>
               <FormMessage />
@@ -157,34 +183,73 @@ export function UserForm({
           )}
         />
 
-        {/* 국적 */}
+        {/* 국적 - 콤보박스 */}
         <FormField
           control={form.control}
           name="country"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="flex flex-col">
               <FormLabel>
                 국적<span className="text-red-500">*</span>
               </FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger className="placeholder:text-gray-400 text-black">
-                  <SelectValue
-                    placeholder="국적 선택"
-                    className="placeholder:text-gray-400 text-black"
-                  />
-                </SelectTrigger>
-                <SelectContent className="cursor-pointer">
-                  <SelectItem className="cursor-pointer" value="kr">
-                    대한민국
-                  </SelectItem>
-                  <SelectItem className="cursor-pointer" value="jp">
-                    일본
-                  </SelectItem>
-                  <SelectItem className="cursor-pointer" value="cn">
-                    중국
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={open}
+                      className={cn(
+                        "w-full justify-between bg-white text-black",
+                        !field.value && "text-gray-500"
+                      )}
+                      disabled={isLoading}
+                    >
+                      {field.value
+                        ? countryOptions.find(
+                            (country) => country.value === field.value
+                          )?.label || "국적 선택"
+                        : "국적 선택"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-full p-0 bg-white"
+                  align="start"
+                  sideOffset={5}
+                >
+                  <Command className="rounded-lg border shadow-md">
+                    <CommandInput placeholder="국가 검색..." />
+                    <CommandEmpty className="py-3 text-center text-sm">
+                      검색 결과가 없습니다
+                    </CommandEmpty>
+                    <CommandGroup className="max-h-60 overflow-y-auto">
+                      {countryOptions.map((country) => (
+                        <CommandItem
+                          key={country.value}
+                          value={country.label}
+                          onSelect={() => {
+                            form.setValue("country", country.value);
+                            setOpen(false);
+                          }}
+                          className="text-black"
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              field.value === country.value
+                                ? "opacity-100"
+                                : "opacity-0"
+                            )}
+                          />
+                          {country.label}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
               <FormMessage />
             </FormItem>
           )}
@@ -199,14 +264,18 @@ export function UserForm({
               <FormLabel>
                 성별<span className="text-red-500">*</span>
               </FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger className="placeholder:text-gray-400 text-black">
+              <Select
+                onValueChange={field.onChange}
+                value={field.value}
+                disabled={isLoading}
+              >
+                <SelectTrigger className="bg-white text-black">
                   <SelectValue
                     placeholder="성별 선택"
-                    className="placeholder:text-gray-400 text-black"
+                    className="text-gray-500"
                   />
                 </SelectTrigger>
-                <SelectContent className="cursor-pointer">
+                <SelectContent className="bg-white text-black">
                   <SelectItem className="cursor-pointer" value="male">
                     남성
                   </SelectItem>
@@ -238,6 +307,7 @@ export function UserForm({
                     {...field}
                     className="placeholder:text-gray-400 text-black"
                     placeholder="YYYY"
+                    required
                   />
                 </FormControl>
               )}
@@ -251,6 +321,7 @@ export function UserForm({
                     {...field}
                     className="placeholder:text-gray-400 text-black"
                     placeholder="MM"
+                    required
                   />
                 </FormControl>
               )}
@@ -264,6 +335,7 @@ export function UserForm({
                     {...field}
                     className="placeholder:text-gray-400 text-black"
                     placeholder="DD"
+                    required
                   />
                 </FormControl>
               )}
