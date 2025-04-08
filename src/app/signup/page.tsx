@@ -91,37 +91,6 @@ export default function SignUpPage() {
     },
   });
 
-  const handleEmailCheck = async () => {
-    // 이메일 유효성 먼저 확인
-    const email = form.getValues("email");
-    if (!z.string().email().safeParse(email).success) {
-      form.setError("email", { message: "유효한 이메일 형식이 아닙니다." });
-      return false;
-    }
-
-    try {
-      const response = await fetch(
-        `/api/signup?email=${encodeURIComponent(email)}`
-      );
-      const data = await response.json();
-
-      if (data.exists) {
-        form.setError("email", { message: "이미 사용 중인 이메일입니다." });
-        return false;
-      }
-
-      form.clearErrors("email");
-      alert("사용 가능한 이메일입니다.");
-      return true;
-    } catch (error) {
-      console.error("이메일 확인 중 오류:", error);
-      form.setError("email", {
-        message: "이메일 중복 확인 중 오류가 발생했습니다.",
-      });
-      return false;
-    }
-  };
-
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
     try {
@@ -176,7 +145,6 @@ export default function SignUpPage() {
           onSubmit={onSubmit}
           isLoading={isLoading}
           mode="signup"
-          onEmailCheck={handleEmailCheck}
         />
       </main>
     </AuthLayout>

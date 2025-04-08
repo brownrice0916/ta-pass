@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import KoreaTrends from "./videos";
 
-
 export default function Main() {
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
@@ -20,7 +19,6 @@ export default function Main() {
     }
   };
 
-
   const categories = [
     { icon: "🛍️", label: "Fashion", color: "bg-pink-100" },
     { icon: "✨", label: "Beauty", color: "bg-purple-100" },
@@ -29,10 +27,6 @@ export default function Main() {
     { icon: "🏛️", label: "Culture", color: "bg-blue-100" },
     { icon: "🍽️", label: "Food", color: "bg-red-100" },
   ];
-
-
-
-
 
   return (
     <main className="min-h-screen bg-background pb-[72px]">
@@ -61,8 +55,12 @@ export default function Main() {
         <div>
           <Link href="/intro">
             <div className="bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600  p-5 text-center text-white shadow-lg">
-              <h2 className="text-xl font-semibold mb-1">TA PASS와 함께하는 첫 여행!</h2>
-              <p className="text-sm mb-2">지금 바로 스마트한 여행을 시작하세요</p>
+              <h2 className="text-xl font-semibold mb-1">
+                TA PASS와 함께하는 첫 여행!
+              </h2>
+              <p className="text-sm mb-2">
+                지금 바로 스마트한 여행을 시작하세요
+              </p>
               <div className="inline-flex items-center gap-2 bg-white text-blue-600 px-4 py-2 rounded-full text-sm font-medium">
                 <Plane className="w-4 h-4" />
                 <span className="text-xs">TA PASS 체험하기</span>
@@ -82,37 +80,27 @@ export default function Main() {
                 className={`flex flex-col items-center justify-center p-4 rounded-xl shadow-sm transition-all duration-300 ease-in-out ${category.color} hover:shadow-md hover:-translate-y-1`}
               >
                 <span className="text-3xl mb-2">{category.icon}</span>
-                <span className="text-xs font-medium text-gray-700">{category.label}</span>
+                <span className="text-xs font-medium text-gray-700">
+                  {category.label}
+                </span>
               </button>
             ))}
           </div>
         </div>
 
         {/* Special Offer Banner */}
-        <div className="p-4">
+        {/* <div className="p-4">
           <div className="bg-muted rounded-lg p-6 text-center">
             <p className="text-sm text-muted-foreground">Just 24h Discount</p>
             <h2 className="text-xl font-bold mt-2">Today Special Offer</h2>
           </div>
-        </div>
+        </div> */}
 
         {/* Korea Trends Section */}
-        <section className="p-4">
+        {/* <section className="p-4">
           <KoreaTrends />
-          {/* <h2 className="text-lg font-bold mb-4">
-            Want to know more about Korea Trends?
-          </h2>
-          <div className="flex overflow-x-auto gap-4 pb-4">
-            {[1, 2, 3].map((item) => (
-              <div key={item} className="flex-none w-64">
-                <div className="aspect-video bg-muted rounded-lg"></div>
-                <p className="mt-2 text-sm font-medium">
-                  Korea Trend Video #{item}
-                </p>
-              </div>
-            ))}
-          </div> */}
-        </section>
+   
+        </section> */}
       </div>
     </main>
   );

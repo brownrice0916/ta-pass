@@ -23,6 +23,16 @@ model User {
   reviews    Review[]
 }
 
+// prisma/schema.prisma
+model EmailVerification {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  code      String
+  verified  Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
 model Restaurant {
   id                     String   @id @default(cuid())
   name                   String

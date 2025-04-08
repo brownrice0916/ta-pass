@@ -1,15 +1,8 @@
-// components/UserForm.tsx
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Form,
   FormControl,
@@ -20,7 +13,6 @@ import {
 } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
 import { SubmitHandler } from "react-hook-form";
-import { useState } from "react";
 import { countries } from "countries-list";
 import {
   Command,
@@ -36,6 +28,13 @@ import {
 } from "@/components/ui/popover";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface UserFormProps {
   form: UseFormReturn<FormValues>;
@@ -57,63 +56,133 @@ interface FormValues {
   birthDay: string;
 }
 
-export function UserForm({
-  form,
-  onSubmit,
-  isLoading,
-  mode,
-  onEmailCheck,
-}: UserFormProps) {
+export function UserForm({ form, onSubmit, isLoading, mode }: UserFormProps) {
+  const [verificationCode, setVerificationCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [isCodeInputEnabled, setIsCodeInputEnabled] = useState(false);
   const [open, setOpen] = useState(false);
 
-  // countries-list 패키지의 데이터를 가공
   const countryOptions = Object.entries(countries).map(([code, country]) => ({
     value: code.toLowerCase(),
     label: country.name,
   }));
-
-  // 알파벳 순으로 정렬
   countryOptions.sort((a, b) => a.label.localeCompare(b.label));
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* 이메일 */}
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                이메일<span className="text-red-500">*</span>
-              </FormLabel>
-              <div className="flex gap-2">
-                <FormControl>
-                  <Input
-                    {...field}
-                    type="email"
-                    placeholder="이메일을 입력하세요"
-                    className="placeholder:text-gray-400 text-black"
-                    readOnly={mode === "edit"}
-                    disabled={mode === "edit"}
-                    required
-                  />
-                </FormControl>
-                {mode === "signup" && onEmailCheck && (
-                  <Button
-                    type="button"
-                    className="shrink-0"
-                    disabled={!field.value || isLoading}
-                    onClick={onEmailCheck}
-                  >
-                    중복확인
-                  </Button>
-                )}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* 1줄: 이메일 + 인증번호 전송 */}
+        <div className="flex gap-2">
+          <Input
+            type="email"
+            placeholder="이메일 입력"
+            {...form.register("email")}
+            disabled={isEmailVerified}
+            className="text-black"
+          />
+          <Button
+            type="button"
+            onClick={async () => {
+              const email = form.getValues("email");
+              if (!email || !email.includes("@")) {
+                alert("유효한 이메일을 입력해주세요.");
+                return;
+              }
+
+              setIsVerifying(true);
+              try {
+                const res = await fetch(
+                  `/api/signup?email=${encodeURIComponent(email)}`
+                );
+                const check = await res.json();
+                if (check.exists) {
+                  alert("이미 사용 중인 이메일입니다.");
+                  return;
+                }
+
+                const response = await fetch("/api/email-verification", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ email }),
+                });
+                const data = await response.json();
+                if (data.success) {
+                  setIsCodeInputEnabled(true);
+                  alert("인증 코드가 전송되었습니다.");
+                } else {
+                  alert(data.error || "인증 코드 전송 실패");
+                }
+              } catch (error) {
+                console.error(error);
+                alert("요청 중 오류가 발생했습니다.");
+              } finally {
+                setIsVerifying(false);
+              }
+            }}
+            disabled={isEmailVerified || isVerifying}
+          >
+            인증번호 전송
+          </Button>
+        </div>
+        {/* 2줄: 인증번호 입력 + 확인 */}
+        <div className="flex gap-2 items-center mt-2">
+          <Input
+            type="text"
+            placeholder="인증 코드 입력"
+            value={verificationCode}
+            onChange={(e) => setVerificationCode(e.target.value)}
+            className="text-black flex-1"
+            disabled={!isCodeInputEnabled || isEmailVerified}
+          />
+          <div className="shrink-0">
+            {isEmailVerified ? (
+              <Button
+                type="button"
+                disabled
+                className="bg-green-600 cursor-default"
+              >
+                인증완료
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={async () => {
+                  setIsVerifying(true);
+                  try {
+                    const response = await fetch("/api/email-verification", {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        email: form.getValues("email"),
+                        code: verificationCode,
+                      }),
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                      setIsEmailVerified(true);
+                      alert("이메일 인증이 완료되었습니다.");
+                    } else {
+                      alert(data.error || "인증 코드가 유효하지 않습니다.");
+                    }
+                  } catch (error) {
+                    console.error(error);
+                    alert("인증 확인 중 오류가 발생했습니다.");
+                  } finally {
+                    setIsVerifying(false);
+                  }
+                }}
+                disabled={
+                  verificationCode.length !== 6 ||
+                  isVerifying ||
+                  !isCodeInputEnabled
+                }
+              >
+                인증확인
+              </Button>
+            )}
+          </div>
+        </div>
 
         {/* 비밀번호 */}
         <FormField
@@ -128,8 +197,8 @@ export function UserForm({
                 <Input
                   {...field}
                   type="password"
-                  placeholder={"비밀번호(최소 8자리 이상)"}
-                  className="placeholder:text-gray-400 text-black"
+                  placeholder="비밀번호 입력"
+                  className="text-black"
                   required
                 />
               </FormControl>
@@ -151,8 +220,8 @@ export function UserForm({
                 <Input
                   {...field}
                   type="password"
-                  placeholder={"비밀번호를 다시 입력하세요"}
-                  className="placeholder:text-gray-400 text-black"
+                  placeholder="비밀번호 재입력"
+                  className="text-black"
                   required
                 />
               </FormControl>
@@ -173,8 +242,8 @@ export function UserForm({
               <FormControl>
                 <Input
                   {...field}
-                  placeholder="닉네임"
-                  className="placeholder:text-gray-400 text-black"
+                  placeholder="닉네임 입력"
+                  className="text-black"
                   required
                 />
               </FormControl>
@@ -183,7 +252,7 @@ export function UserForm({
           )}
         />
 
-        {/* 국적 - 콤보박스 */}
+        {/* 국적 */}
         <FormField
           control={form.control}
           name="country"
@@ -198,7 +267,6 @@ export function UserForm({
                     <Button
                       variant="outline"
                       role="combobox"
-                      aria-expanded={open}
                       className={cn(
                         "w-full justify-between bg-white text-black",
                         !field.value && "text-gray-500"
@@ -206,11 +274,10 @@ export function UserForm({
                       disabled={isLoading}
                     >
                       {field.value
-                        ? countryOptions.find(
-                            (country) => country.value === field.value
-                          )?.label || "국적 선택"
+                        ? countryOptions.find((c) => c.value === field.value)
+                            ?.label || "국적 선택"
                         : "국적 선택"}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
@@ -222,7 +289,7 @@ export function UserForm({
                   <Command className="rounded-lg border shadow-md">
                     <CommandInput placeholder="국가 검색..." />
                     <CommandEmpty className="py-3 text-center text-sm">
-                      검색 결과가 없습니다
+                      검색 결과 없음
                     </CommandEmpty>
                     <CommandGroup className="max-h-60 overflow-y-auto">
                       {countryOptions.map((country) => (
@@ -276,15 +343,9 @@ export function UserForm({
                   />
                 </SelectTrigger>
                 <SelectContent className="bg-white text-black">
-                  <SelectItem className="cursor-pointer" value="male">
-                    남성
-                  </SelectItem>
-                  <SelectItem className="cursor-pointer" value="female">
-                    여성
-                  </SelectItem>
-                  <SelectItem className="cursor-pointer" value="other">
-                    기타
-                  </SelectItem>
+                  <SelectItem value="male">남성</SelectItem>
+                  <SelectItem value="female">여성</SelectItem>
+                  <SelectItem value="other">기타</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -305,8 +366,8 @@ export function UserForm({
                 <FormControl>
                   <Input
                     {...field}
-                    className="placeholder:text-gray-400 text-black"
                     placeholder="YYYY"
+                    className="text-black"
                     required
                   />
                 </FormControl>
@@ -319,8 +380,8 @@ export function UserForm({
                 <FormControl>
                   <Input
                     {...field}
-                    className="placeholder:text-gray-400 text-black"
                     placeholder="MM"
+                    className="text-black"
                     required
                   />
                 </FormControl>
@@ -333,8 +394,8 @@ export function UserForm({
                 <FormControl>
                   <Input
                     {...field}
-                    className="placeholder:text-gray-400 text-black"
                     placeholder="DD"
+                    className="text-black"
                     required
                   />
                 </FormControl>
@@ -344,26 +405,10 @@ export function UserForm({
           <FormMessage />
         </FormItem>
 
-        {/* 버튼 */}
-        {mode === "signup" ? (
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "처리중..." : "가입하기"}
-          </Button>
-        ) : (
-          <div className="flex gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={() => window.history.back()}
-            >
-              취소
-            </Button>
-            <Button type="submit" className="flex-1" disabled={isLoading}>
-              {isLoading ? "저장 중..." : "저장"}
-            </Button>
-          </div>
-        )}
+        {/* 제출 버튼 */}
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? "처리중..." : mode === "signup" ? "가입하기" : "저장"}
+        </Button>
       </form>
     </Form>
   );

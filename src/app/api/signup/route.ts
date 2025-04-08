@@ -44,6 +44,21 @@ export async function POST(request: Request) {
   try {
     const data = await request.json();
 
+    // 이메일 인증 확인
+    const verification = await prisma.emailVerification.findFirst({
+      where: {
+        email: data.email,
+        verified: true,
+      },
+    });
+
+    if (!verification) {
+      return NextResponse.json(
+        { success: false, error: "이메일 인증이 완료되지 않았습니다." },
+        { status: 400 }
+      );
+    }
+
     // 비밀번호 해싱
     const hashedPassword = await bcrypt.hash(data.password, 10); // 10은 salt rounds
 
