@@ -42,6 +42,7 @@ model Restaurant {
   latitude               Float
   longitude              Float
   category               String?
+  subCategory            String?
   rating                 Float?   @default(0)
   specialOfferText       String   @default("")
   images                 String[] @default([])
