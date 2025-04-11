@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, Plane, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useRef, useState, useEffect } from "react";
@@ -127,22 +127,28 @@ export default function Main() {
         </div>
       </div>
 
-      {/* Blue Banner Section */}
-      <div className="bg-blue-500 py-4 px-6 text-white text-center">
-        <h2 className="text-3xl font-bold mb-2">
-          Travel smarter
-          <br />
-          with TA PASS.
-        </h2>
-        <p className="text-xl mb-2">
-          Tap to unlock local deals
-          <br />
-          and experiences.
-        </p>
-        <Link href="/register">
-          <Button className="w-full bg-white text-blue-600 hover:bg-gray-100 font-bold py-4 rounded-md text-lg">
-            Unlock My TA PASS
-          </Button>
+      <div>
+        <Link
+          href="#"
+          onClick={() => {
+            alert("준비중입니다");
+          }}
+        >
+          <div className="bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600  p-5 text-center text-white shadow-lg">
+            <h2 className="text-xl font-semibold mb-1">
+              Travel smarter with TA PASS.
+            </h2>
+            <p className="text-sm mb-2">
+              Tap to unlock local deals
+              <br />
+              and experiences.
+            </p>
+            <div className="inline-flex items-center gap-2 bg-white text-blue-600 px-4 py-2 rounded-full text-sm font-medium">
+              {/* <Plane className="w-4 h-4" /> */}
+              <span className="text-xs">Unlock My TA PASS</span>
+              <ArrowRight className="w-4 h-4" />
+            </div>
+          </div>
         </Link>
       </div>
 
