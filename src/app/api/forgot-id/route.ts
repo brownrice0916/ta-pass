@@ -28,7 +28,7 @@ export async function POST(request: Request) {
       },
     });
 
-    const resetLink = `http://localhost:3000/reset-password?token=${user.id}`;
+    const resetLink = `https://ta-pass.vercel.app/reset-password?token=${user.id}`;
 
     const mailOptions = {
       from: process.env.EMAIL_USER,

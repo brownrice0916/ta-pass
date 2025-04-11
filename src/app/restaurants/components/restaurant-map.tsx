@@ -77,30 +77,31 @@ export default function RestaurantMap({
       <MarkerClusterer averageCenter enableRetinaIcons gridSize={60}>
         {(clusterer) => (
           <>
-            {restaurants.map((restaurant) => {
-              const isHighlighted = mode
-                ? selectedMarker?.id === restaurant.id // 리스트 페이지: 선택된 마커
-                : currentId === restaurant.id; // 상세 페이지: URL ID와 일치하는 마커
+            {restaurants &&
+              restaurants.map((restaurant) => {
+                const isHighlighted = mode
+                  ? selectedMarker?.id === restaurant.id // 리스트 페이지: 선택된 마커
+                  : currentId === restaurant.id; // 상세 페이지: URL ID와 일치하는 마커
 
-              return (
-                <Marker
-                  key={restaurant.id}
-                  position={{
-                    lat: restaurant.latitude,
-                    lng: restaurant.longitude,
-                  }}
-                  onClick={() => onMarkerClick(restaurant)}
-                  clusterer={clusterer}
-                  icon={{
-                    url: isHighlighted
-                      ? "/markers/pass_red.png"
-                      : "/markers/pass_blue.png",
-                    scaledSize: new google.maps.Size(32, 32),
-                    anchor: new google.maps.Point(16, 16),
-                  }}
-                />
-              );
-            })}
+                return (
+                  <Marker
+                    key={restaurant.id}
+                    position={{
+                      lat: restaurant.latitude,
+                      lng: restaurant.longitude,
+                    }}
+                    onClick={() => onMarkerClick(restaurant)}
+                    clusterer={clusterer}
+                    icon={{
+                      url: isHighlighted
+                        ? "/markers/pass_red.png"
+                        : "/markers/pass_blue.png",
+                      scaledSize: new google.maps.Size(32, 32),
+                      anchor: new google.maps.Point(16, 16),
+                    }}
+                  />
+                );
+              })}
           </>
         )}
       </MarkerClusterer>
