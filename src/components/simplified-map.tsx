@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { GoogleMap, Marker } from "@react-google-maps/api";
-import type { Restaurant } from "@/app/restaurants/page";
+import { Restaurant } from "@/app/restaurants/components/restaurants";
 
 interface SimplifiedMapProps {
   center: { lat: number; lng: number };

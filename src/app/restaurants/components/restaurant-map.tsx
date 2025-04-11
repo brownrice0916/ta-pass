@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
-import type { Restaurant } from "@/app/restaurants/page";
+import { Restaurant } from "./restaurants";
 
 interface RestaurantMapProps {
   center: { lat: number; lng: number };
