@@ -8,7 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import GoogleMapsProvider from "@/app/google-maps-provider";
 import Image from "next/image";
-import SimplifiedMap from "./simplified-map";
+import SimplifiedMap from "./simplified-map"; // Make sure this points to your updated SimplifiedMap component
 
 export default function Main() {
   const searchParams = useSearchParams();
@@ -53,6 +53,10 @@ export default function Main() {
     }
   };
 
+  const handleMapClick = () => {
+    router.push("/restaurants");
+  };
+
   const categories = [
     {
       icon: "🛍️",
@@ -94,16 +98,13 @@ export default function Main() {
 
   return (
     <main className="min-h-screen bg-background pb-20">
-      {/* Map Section */}
-      <div className="relative">
+      {/* Map Section - Made explicitly clickable with cursor pointer */}
+      <div className="relative cursor-pointer" onClick={handleMapClick}>
         <GoogleMapsProvider>
           <SimplifiedMap
             center={center}
             userLocation={userLocation}
             mapRef={mapRef}
-            onMarkerClick={(restaurant) =>
-              router.push(`/restaurants/${restaurant.id}`)
-            }
           />
         </GoogleMapsProvider>
 
@@ -130,7 +131,8 @@ export default function Main() {
       <div>
         <Link
           href="#"
-          onClick={() => {
+          onClick={(e) => {
+            e.preventDefault();
             alert("준비중입니다");
           }}
         >
@@ -144,7 +146,6 @@ export default function Main() {
               and experiences.
             </p>
             <div className="inline-flex items-center gap-2 bg-white text-blue-600 px-4 py-2 rounded-full text-sm font-medium">
-              {/* <Plane className="w-4 h-4" /> */}
               <span className="text-xs">Unlock My TA PASS</span>
               <ArrowRight className="w-4 h-4" />
             </div>

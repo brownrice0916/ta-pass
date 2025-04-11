@@ -1,4 +1,3 @@
-// components/SimplifiedMap.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -17,6 +16,7 @@ const containerStyle = {
   height: "250px", // Adjusted height to match the design
 };
 
+// Enhanced map options to completely disable interactions
 const mapOptions = {
   disableDefaultUI: true,
   zoomControl: false,
@@ -26,6 +26,11 @@ const mapOptions = {
   rotateControl: false,
   fullscreenControl: false,
   clickableIcons: false,
+  gestureHandling: "none", // Disable all gesture handling (pan, zoom, etc.)
+  draggable: false, // Disable map dragging
+  scrollwheel: false, // Disable zooming with scroll wheel
+  disableDoubleClickZoom: true, // Disable double-click zoom
+  keyboardShortcuts: false, // Disable keyboard controls
 };
 
 export default function SimplifiedMap({
@@ -58,7 +63,7 @@ export default function SimplifiedMap({
   }, [userLocation]);
 
   return (
-    <div className="relative">
+    <div className="relative cursor-pointer">
       <GoogleMap
         mapContainerStyle={containerStyle}
         center={center}
@@ -66,6 +71,12 @@ export default function SimplifiedMap({
         options={mapOptions}
         onLoad={(map) => {
           mapRef.current = map;
+
+          // Add this to prevent the map from handling any mouse events
+          const mapDiv = map.getDiv();
+          if (mapDiv) {
+            mapDiv.style.pointerEvents = "none";
+          }
         }}
       >
         {/* User Location Marker */}
