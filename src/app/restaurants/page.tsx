@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Marker, MarkerClusterer } from "@react-google-maps/api";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { Review } from "@prisma/client";
 import { Input } from "@/components/ui/input";
 import ExcelImport from "./components/excel-import";
@@ -52,26 +52,26 @@ export interface Restaurant {
   id: string;
   name: string;
   description: string;
-  about?: string; // API에 있는 필드 추가
+  about?: string;
   address: string;
   latitude: number;
   longitude: number;
-  category: string | null; // null 허용
-  rating: number | null; // undefined 대신 null 사용
+  category: string | null;
+  rating: number | null;
   images: string[];
   distance?: number;
-  specialOfferType: string[]; // string[] 타입으로 변경
+  specialOfferType: string[];
   specialOfferText?: string;
   isOpen?: boolean;
   reviewCount?: number;
   district?: string;
   reviews?: Review[];
-  region1: string | null; // null 허용
-  region2: string | null; // null 허용
-  region3: string | null; // null 허용
-  region4: string | null; // null 허용
+  region1: string | null;
+  region2: string | null;
+  region3: string | null;
+  region4: string | null;
   tags: string[];
-  addressDetail: string | null; // null 허용
+  addressDetail: string | null;
 }
 
 const containerStyle = {
@@ -80,21 +80,53 @@ const containerStyle = {
 };
 
 export default function RestaurantsPage() {
+  // Get search params from URL
+  const searchParams = useSearchParams();
+  const initialQuery = searchParams.get("q") || "";
+  const initialCategory = searchParams.get("category") || "all";
+  const initialLocation = searchParams.get("location") || "전체";
+
   const [center, setCenter] = useState({ lat: 37.5665, lng: 126.978 });
   const [userLocation, setUserLocation] = useState<{
     lat: number;
     lng: number;
   } | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedLocation, setSelectedLocation] = useState("전체");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+  const [selectedLocation, setSelectedLocation] = useState(initialLocation);
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [selectedMarker, setSelectedMarker] = useState<Restaurant | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [tempCategory, setTempCategory] = useState("all");
-  const [tempLocation, setTempLocation] = useState("전체");
+  const [tempCategory, setTempCategory] = useState(initialCategory);
+  const [tempLocation, setTempLocation] = useState(initialLocation);
 
   const router = useRouter();
+
+  // Update state when URL parameters change
+  useEffect(() => {
+    const query = searchParams.get("q") || "";
+    const category = searchParams.get("category") || "all";
+    const location = searchParams.get("location") || "전체";
+
+    setSearchQuery(query);
+    setSelectedCategory(category);
+    setSelectedLocation(location);
+    setTempCategory(category);
+    setTempLocation(location);
+
+    // Forcibly trigger filtering when URL parameters change
+    if (
+      category !== selectedCategory ||
+      location !== selectedLocation ||
+      query !== searchQuery
+    ) {
+      console.log("Updating filters from URL params:", {
+        category,
+        location,
+        query,
+      });
+    }
+  }, [searchParams]);
 
   const {
     data: listData,
@@ -103,6 +135,7 @@ export default function RestaurantsPage() {
     isLoading,
     isFetchingNextPage,
   } = useRestaurants(center.lat, center.lng, searchQuery);
+
   const listRestaurants = useMemo(() => {
     return listData?.pages.flatMap((page) => page.restaurants) ?? [];
   }, [listData]);
@@ -121,10 +154,17 @@ export default function RestaurantsPage() {
   };
 
   const filteredRestaurants = useMemo(() => {
+    console.log("Filtering with:", {
+      selectedCategory,
+      selectedLocation,
+      searchQuery,
+    });
+
     return listRestaurants.filter((restaurant: Restaurant) => {
       // 카테고리 매칭
       const matchesCategory =
-        selectedCategory === "all" || restaurant.category === selectedCategory;
+        selectedCategory === "all" ||
+        restaurant.category?.toLowerCase() === selectedCategory.toLowerCase();
 
       // 지역 매칭
       const matchesLocation =
@@ -151,14 +191,7 @@ export default function RestaurantsPage() {
 
       return matchesCategory && matchesLocation && matchesSearch;
     });
-  }, [
-    listData,
-    selectedCategory,
-    selectedLocation,
-    searchQuery,
-    tempCategory,
-    tempLocation,
-  ]); // selectedLocation 의존성 추가
+  }, [listRestaurants, selectedCategory, selectedLocation, searchQuery]);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -192,52 +225,47 @@ export default function RestaurantsPage() {
       mapRef.current.setZoom(15);
     }
   }, [userLocation]);
-  const memoizedMapOptions = useMemo(
-    () => ({
-      disableDefaultUI: true,
-      zoomControl: false,
-      mapTypeControl: false,
-      scaleControl: false,
-      streetViewControl: false,
-      rotateControl: false,
-      fullscreenControl: false,
-      clickableIcons: false,
-    }),
-    []
-  );
 
-  // MarkerList 컴포넌트 생성
-  const MarkerList = ({
-    restaurants,
-    onMarkerClick,
-  }: {
-    restaurants: Restaurant[];
-    onMarkerClick: (restaurant: Restaurant) => void;
-  }) => {
-    return (
-      <MarkerClusterer averageCenter enableRetinaIcons gridSize={60}>
-        {(clusterer) => (
-          <>
-            {restaurants.map((restaurant: Restaurant) => (
-              <Marker
-                key={restaurant.id}
-                position={{
-                  lat: restaurant.latitude,
-                  lng: restaurant.longitude,
-                }}
-                onClick={() => onMarkerClick(restaurant)}
-                clusterer={clusterer}
-                icon={{
-                  url: "/markers/restaurant.png",
-                  scaledSize: new google.maps.Size(32, 32),
-                  anchor: new google.maps.Point(16, 16),
-                }}
-              />
-            ))}
-          </>
-        )}
-      </MarkerClusterer>
-    );
+  // Update URL when filters change
+  const updateUrlWithFilters = useCallback(() => {
+    const params = new URLSearchParams();
+    if (searchQuery) params.set("q", searchQuery);
+    if (selectedCategory !== "all") params.set("category", selectedCategory);
+    if (selectedLocation !== "전체") params.set("location", selectedLocation);
+
+    router.push(`/restaurants?${params.toString()}`);
+  }, [searchQuery, selectedCategory, selectedLocation, router]);
+
+  // Handle form submission
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateUrlWithFilters();
+  };
+
+  // Apply filters
+  const applyFilters = () => {
+    setSelectedCategory(tempCategory);
+    setSelectedLocation(tempLocation);
+    setIsFilterModalOpen(false);
+
+    // Update URL with new filters
+    const params = new URLSearchParams();
+    if (searchQuery) params.set("q", searchQuery);
+    if (tempCategory !== "all") params.set("category", tempCategory);
+    if (tempLocation !== "전체") params.set("location", tempLocation);
+
+    router.push(`/restaurants?${params.toString()}`);
+  };
+
+  const resetFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory("all");
+    setSelectedLocation("전체");
+    setTempCategory("all");
+    setTempLocation("전체");
+
+    // Clear URL params
+    router.push("/restaurants");
   };
 
   const LoaderRef = ({ onIntersect }: { onIntersect: () => void }) => {
@@ -290,30 +318,11 @@ export default function RestaurantsPage() {
     }, [ref, handler]);
   };
 
-  // 드롭다운 부분 수정
   const dropdownRef = useRef<HTMLDivElement>(null!);
 
   useOnClickOutside(dropdownRef, () => {
     setIsFilterModalOpen(false);
   });
-
-  // if (isError) {
-  //   return <div>error</div>;
-  // }
-
-  // 초기 로딩 상태
-  // if (isLoading && !isFetchingNextPage) {
-  //   return (
-  //     <div className="container mx-auto py-2 pb-16">
-  //       <div className="flex justify-center items-center min-h-[400px]">
-  //         <div className="flex flex-col items-center gap-2">
-  //           <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-  //           <span>장소를 불러오는 중...</span>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   );
-  // }
 
   const LOCATIONS = [
     { id: "전체", label: "전체" },
@@ -339,14 +348,13 @@ export default function RestaurantsPage() {
           <div className="rounded-lg p-1">
             <div className="p-2">
               <div className="relative z-100" ref={dropdownRef}>
-                <div className="relative">
+                <form onSubmit={handleSearch} className="relative">
                   <Input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="검색어를 입력해 주세요."
                     className="w-full pl-4 pr-10 py-2 border rounded-full shadow-md focus:ring-2 focus:ring-primary/20"
-                    // onClick={() => setIsFilterModalOpen(true)}
                   />
                   <button
                     type="submit"
@@ -354,7 +362,8 @@ export default function RestaurantsPage() {
                   >
                     <Search className="w-5 h-5" />
                   </button>
-                </div>
+                </form>
+
                 {/* 필터 버튼 */}
                 <Button
                   variant="outline"
@@ -413,14 +422,7 @@ export default function RestaurantsPage() {
                       </div>
                     </div>
                     {/* 확인 버튼 */}
-                    <Button
-                      className="mt-4"
-                      onClick={() => {
-                        setSelectedCategory(tempCategory);
-                        setSelectedLocation(tempLocation);
-                        setIsFilterModalOpen(false);
-                      }}
-                    >
+                    <Button className="mt-4" onClick={applyFilters}>
                       확인
                     </Button>
                   </div>
@@ -473,14 +475,7 @@ export default function RestaurantsPage() {
               <p className="text-sm text-gray-500">
                 다른 키워드나 필터로 다시 시도해보세요
               </p>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSearchQuery("");
-                  setSelectedCategory("all");
-                  setSelectedLocation("전체");
-                }}
-              >
+              <Button variant="outline" onClick={resetFilters}>
                 필터 초기화
               </Button>
             </div>
@@ -497,13 +492,6 @@ export default function RestaurantsPage() {
             onImageError={() => setImageLoading(false)}
           />
         ))}
-        {/* 추가 데이터 로딩 상태 */}
-        {/* {isFetchingNextPage && (
-          <div className="text-center py-4 flex items-center justify-center gap-2">
-            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            <span>더 많은 장소를 불러오는 중...</span>
-          </div>
-        )} */}
 
         {/* 무한 스크롤 트리거 */}
         {hasNextPage && !isFetchingNextPage && (
