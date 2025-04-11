@@ -2,7 +2,7 @@
 import { memo } from "react";
 import Image from "next/image";
 import { Card } from "@/components/ui/card";
-import { Restaurant } from "@/app/restaurants/page";
+import { Restaurant } from "@/app/restaurants/components/restaurants";
 
 // 타입은 공통으로 사용할 수 있게 별도 파일로 분리하면 좋습니다
 
@@ -46,10 +46,11 @@ export const RestaurantCard = memo(
               {restaurant.specialOfferType.map((offerType, index) => (
                 <div key={`${restaurant.id}-offer-${index}`}>
                   <span
-                    className={`inline-block px-2 py-1 rounded-full text-xs text-white mr-1 ${offerType === "Special Gift"
-                      ? "bg-pink-500"
-                      : "bg-orange-500"
-                      }`}
+                    className={`inline-block px-2 py-1 rounded-full text-xs text-white mr-1 ${
+                      offerType === "Special Gift"
+                        ? "bg-pink-500"
+                        : "bg-orange-500"
+                    }`}
                   >
                     {offerType === "Special Gift" ? "Special Gift" : "Discount"}
                   </span>
@@ -102,8 +103,9 @@ export const RestaurantCard = memo(
                     sizes="(max-width: 768px) 25vw, 25vw"
                     loading="lazy"
                     quality={75}
-                    className={`object-cover transition-opacity duration-300 ${imageLoading ? "opacity-0" : "opacity-100"
-                      }`}
+                    className={`object-cover transition-opacity duration-300 ${
+                      imageLoading ? "opacity-0" : "opacity-100"
+                    }`}
                     onLoad={onImageLoad}
                     onError={onImageError}
                   />
