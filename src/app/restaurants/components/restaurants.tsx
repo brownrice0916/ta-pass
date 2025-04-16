@@ -92,33 +92,30 @@ export default function Restaurants() {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [tempCategory, setTempCategory] = useState("all");
   const [tempLocation, setTempLocation] = useState("전체");
+  // Add a state to force refetch
+  const [forceRefetch, setForceRefetch] = useState(0);
 
   const router = useRouter();
   const mapRef = useRef<google.maps.Map | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null!);
+  const searchParams = useSearchParams();
 
-  // Custom component to handle search params
-  const SearchParamsHandler = () => {
-    const searchParams = useSearchParams();
+  // Manually handle search params
+  useEffect(() => {
+    if (!searchParams) return;
 
-    useEffect(() => {
-      if (!searchParams) return;
+    const query = searchParams.get("q") || "";
+    const category = searchParams.get("category") || "all";
+    const location = searchParams.get("location") || "전체";
 
-      const query = searchParams.get("q") || "";
-      const category = searchParams.get("category") || "all";
-      const location = searchParams.get("location") || "전체";
+    setSearchQuery(query);
+    setSelectedCategory(category);
+    setSelectedLocation(location);
+    setTempCategory(category);
+    setTempLocation(location);
 
-      setSearchQuery(query);
-      setSelectedCategory(category);
-      setSelectedLocation(location);
-      setTempCategory(category);
-      setTempLocation(location);
-
-      console.log("URL params updated:", { query, category, location });
-    }, [searchParams]);
-
-    return null;
-  };
+    console.log("URL params updated:", { query, category, location });
+  }, [searchParams]);
 
   const {
     data: listData,
@@ -126,7 +123,13 @@ export default function Restaurants() {
     hasNextPage,
     isLoading,
     isFetchingNextPage,
+    refetch, // Add refetch function to be used when needed
   } = useRestaurants(center.lat, center.lng, searchQuery);
+
+  // Force refetch when searchQuery, selectedCategory or selectedLocation changes
+  useEffect(() => {
+    refetch();
+  }, [searchQuery, selectedCategory, selectedLocation, forceRefetch, refetch]);
 
   const listRestaurants = useMemo(() => {
     return listData?.pages.flatMap((page) => page.restaurants) ?? [];
@@ -165,9 +168,9 @@ export default function Restaurants() {
         restaurant.region2?.includes(selectedLocation) ||
         restaurant.address?.includes(selectedLocation);
 
-      // 검색어 매칭
+      // 검색어 매칭 (이부분은 API가 이미 처리했을 수 있으므로 중복 필터링이 될 수 있음)
       const matchesSearch =
-        searchQuery === "" ||
+        !searchQuery || // 검색어가 없으면 모든 항목 표시
         restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         restaurant.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
         restaurant.addressDetail
@@ -216,7 +219,7 @@ export default function Restaurants() {
     }
   }, [userLocation]);
 
-  // Update URL when filters change
+  // Update URL when filters change and trigger a refetch
   const updateUrlWithFilters = useCallback(() => {
     const params = new URLSearchParams();
     if (searchQuery) params.set("q", searchQuery);
@@ -224,12 +227,16 @@ export default function Restaurants() {
     if (selectedLocation !== "전체") params.set("location", selectedLocation);
 
     router.push(`/restaurants?${params.toString()}`);
+    // Force refetch when filters change
+    setForceRefetch((prev) => prev + 1);
   }, [searchQuery, selectedCategory, selectedLocation, router]);
 
   // Handle form submission
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     updateUrlWithFilters();
+    // Force refetch after search
+    refetch();
   };
 
   // Apply filters
@@ -245,6 +252,8 @@ export default function Restaurants() {
     if (tempLocation !== "전체") params.set("location", tempLocation);
 
     router.push(`/restaurants?${params.toString()}`);
+    // Force refetch when filters are applied
+    refetch();
   };
 
   const resetFilters = () => {
@@ -256,6 +265,8 @@ export default function Restaurants() {
 
     // Clear URL params
     router.push("/restaurants");
+    // Force refetch when filters are reset
+    refetch();
   };
 
   const LoaderRef = ({ onIntersect }: { onIntersect: () => void }) => {
@@ -327,11 +338,6 @@ export default function Restaurants() {
 
   return (
     <div className="container mx-auto py-2 pb-16">
-      {/* Use ClientOnly to safely use search params */}
-      <ClientOnly>
-        <SearchParamsHandler />
-      </ClientOnly>
-
       <div className="flex justify-end mb-6">
         <ExcelImport />
       </div>

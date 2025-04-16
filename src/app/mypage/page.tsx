@@ -122,6 +122,7 @@ const MyPage = () => {
               계정 관리 &gt;
             </a>
           </div>
+
           <div className="ml-auto">
             <div
               className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-200 cursor-pointer"
@@ -166,7 +167,9 @@ const MyPage = () => {
             )}
           </div>
         </div>
-
+        <div>
+          <input type="text" />
+        </div>
         {/* Stats Section */}
         <div className="flex w-full gap-4 mb-6">
           <div

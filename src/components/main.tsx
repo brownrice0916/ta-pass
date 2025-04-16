@@ -99,17 +99,18 @@ export default function Main() {
   return (
     <main className="min-h-screen bg-background pb-20">
       {/* Map Section - Made explicitly clickable with cursor pointer */}
-      <div className="relative cursor-pointer" onClick={handleMapClick}>
-        <GoogleMapsProvider>
-          <SimplifiedMap
-            center={center}
-            userLocation={userLocation}
-            mapRef={mapRef}
-          />
-        </GoogleMapsProvider>
-
+      <div className="relative cursor-pointer">
+        <div onClick={handleMapClick}>
+          <GoogleMapsProvider>
+            <SimplifiedMap
+              center={center}
+              userLocation={userLocation}
+              mapRef={mapRef}
+            />
+          </GoogleMapsProvider>
+        </div>
         {/* Search Bar Overlay */}
-        <div className="absolute top-5 left-0 right-0 px-4 z-10">
+        <div className="absolute top-5 left-0 right-0 px-4 z-100">
           <form onSubmit={handleSearch} className="relative">
             <Input
               type="search"
@@ -129,13 +130,7 @@ export default function Main() {
       </div>
 
       <div>
-        <Link
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            alert("준비중입니다");
-          }}
-        >
+        <Link href="/intro">
           <div className="bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600  p-5 text-center text-white shadow-lg">
             <h2 className="text-xl font-semibold mb-1">
               Travel smarter with TA PASS.
