@@ -7,20 +7,41 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model SerialNumber {
+  id         String    @id @default(cuid())
+  code       String    @unique
+  isUsed     Boolean   @default(false)
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime?
+  
+  // User.id가 Int이므로 userId도 Int로 변경
+  userId     Int?
+  user       User?     @relation(fields: [userId], references: [id])
+  
+  type       String    @default("standard")
+  metadata   Json?
+  
+  @@index([code])
+  @@index([userId])
+}
+
 model User {
-  id         Int      @id @default(autoincrement())
-  email      String   @unique
-  password   String
-  name       String
-  image      String   @default("")
-  country    String   @default("")
-  gender     String   @default("")
-  birthYear  String   @default("")
-  birthMonth String   @default("")
-  birthDay   String   @default("")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  reviews    Review[]
+  id             Int            @id @default(autoincrement())
+  email          String         @unique
+  password       String
+  name           String
+  image          String         @default("")
+  country        String         @default("")
+  gender         String         @default("")
+  birthYear      String         @default("")
+  birthMonth     String         @default("")
+  birthDay       String         @default("")
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  reviews        Review[]
+  serialNumbers  SerialNumber[]
+  membershipType String         @default("free")
 }
 
 // prisma/schema.prisma
@@ -67,7 +88,7 @@ model Review {
   rating       Float
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
-  userId       Int
+  userId       Int        // String에서 Int로 다시 변경
   restaurantId String
   images       String[]
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])

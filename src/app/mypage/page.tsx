@@ -5,6 +5,8 @@ import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
+import SerialNumberInput from "./components/serial-number-input";
+import SerialNumberSection from "./components/serial-number-section";
 
 const MyPage = () => {
   const { data: session, status, update } = useSession();
@@ -167,6 +169,8 @@ const MyPage = () => {
             )}
           </div>
         </div>
+        {/* 시리얼 넘버 섹션 */}
+        <SerialNumberSection />
         <div>
           <input type="text" />
         </div>
