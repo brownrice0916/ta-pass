@@ -35,7 +35,7 @@ export default function ClientLayout({
           </Link>
           <Link href="/mypage" className="flex flex-col items-center">
             <User className="w-6 h-6" />
-            <span className="text-xs mt-1">Profile</span>
+            <span className="text-xs mt-1">My TA</span>
           </Link>
           {/* Safe Area Bottom Spacing */}
           <div className="absolute bottom-0 left-0 right-0 h-safe-bottom bg-white" />

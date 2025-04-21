@@ -242,7 +242,7 @@ export default function Main() {
               <circle cx="12" cy="7" r="4" strokeWidth="2" />
             </svg>
           </div>
-          <span className="text-xs mt-1">Profile</span>
+          <span className="text-xs mt-1">My TA Pass</span>
         </Link>
       </div>
     </main>

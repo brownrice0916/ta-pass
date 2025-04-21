@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Bookmark } from "lucide-react";
 import {
   Carousel,
   CarouselApi,
@@ -19,6 +19,8 @@ import { getNeighborhood } from "@/lib/address";
 import SocialLinks from "../components/social-links";
 import GoogleMapsProvider from "@/app/google-maps-provider";
 import RestaurantMap from "../components/restaurant-map";
+import { useSession } from "next-auth/react";
+import { toast } from "react-hot-toast";
 
 export interface Review {
   id: string;
@@ -33,6 +35,7 @@ export interface Review {
 export default function RestaurantDetail() {
   const params = useParams();
   const router = useRouter();
+  const { data: session } = useSession();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -45,9 +48,10 @@ export default function RestaurantDetail() {
   const [modalCarouselApi, setModalCarouselApi] = useState<CarouselApi | null>(
     null
   );
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
 
   const mapRef = useRef<google.maps.Map | null>(null);
-
   const [imageLoading, setImageLoading] = useState(true);
 
   // 슬라이드 변경 핸들러
@@ -75,6 +79,73 @@ export default function RestaurantDetail() {
     }
   }, [restaurant]);
 
+  // 북마크 상태 확인
+  const checkBookmarkStatus = async () => {
+    if (!session || !params.id) return;
+
+    try {
+      const response = await fetch(`/api/bookmarks/${params.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setIsBookmarked(data.isBookmarked);
+      }
+    } catch (error) {
+      console.error("Error checking bookmark status:", error);
+    }
+  };
+
+  // 북마크 토글 기능
+  const toggleBookmark = async () => {
+    if (!session) {
+      toast.error("로그인이 필요한 기능입니다.");
+      router.push("/login");
+      return;
+    }
+
+    if (!params.id) return;
+
+    setBookmarkLoading(true);
+    try {
+      if (isBookmarked) {
+        // 북마크 해제
+        const response = await fetch(`/api/bookmarks/${params.id}`, {
+          method: "DELETE",
+        });
+
+        if (response.ok) {
+          setIsBookmarked(false);
+          toast.success("북마크가 해제되었습니다.");
+        }
+      } else {
+        // 북마크 추가
+        const response = await fetch("/api/bookmarks", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ restaurantId: params.id }),
+        });
+
+        if (response.ok) {
+          setIsBookmarked(true);
+          toast.success("북마크에 추가되었습니다.");
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling bookmark:", error);
+      toast.error("북마크 처리 중 오류가 발생했습니다.");
+    } finally {
+      setBookmarkLoading(false);
+    }
+  };
+
+  // 세션 및 식당 정보 로드 시 북마크 상태 확인
+  useEffect(() => {
+    if (session && params.id) {
+      checkBookmarkStatus();
+    }
+  }, [session, params.id]);
+
   const fetchNearbyRestaurants = async (
     latitude: number,
     longitude: number
@@ -94,6 +165,7 @@ export default function RestaurantDetail() {
       setLoading(false);
     }
   };
+
   const fetchReviews = async () => {
     try {
       const response = await fetch(`/api/restaurants/${params.id}/reviews`);
@@ -133,10 +205,6 @@ export default function RestaurantDetail() {
   if (loading) return <div>Loading...</div>;
   if (!restaurant) return <div>Restaurant not found</div>;
 
-  // const handleSlideChange = (newIndex: number) => {
-  //   setCurrentSlide(newIndex);
-  // };
-
   return (
     <div className="container mx-auto p-4 pb-16 max-w-3xl">
       <Button variant="outline" className="mb-4" onClick={() => router.back()}>
@@ -149,8 +217,10 @@ export default function RestaurantDetail() {
       >
         수정하기
       </Button>
-      {restaurant.images && restaurant.images.length > 0 && (
-        <div className="relative">
+
+      {/* 이미지 슬라이더 영역 - 이미지가 없어도 공간 차지 */}
+      <div className="relative">
+        {restaurant.images && restaurant.images.length > 0 ? (
           <Carousel
             setApi={setCarouselApi}
             className="w-full"
@@ -181,6 +251,27 @@ export default function RestaurantDetail() {
               ))}
             </CarouselContent>
           </Carousel>
+        ) : (
+          // 이미지가 없을 때 보여줄 빈 공간
+          <div className="w-full aspect-square bg-gray-100 rounded-md"></div>
+        )}
+
+        {/* 북마크 버튼 */}
+        <button
+          onClick={toggleBookmark}
+          disabled={bookmarkLoading}
+          className="absolute top-4 right-4 z-10 bg-white/70 hover:bg-white p-2 rounded-full shadow-md transition-colors disabled:opacity-50"
+        >
+          <Bookmark
+            size={24}
+            className={`transition-colors ${
+              isBookmarked ? "fill-primary text-primary" : "text-gray-600"
+            }`}
+          />
+        </button>
+
+        {/* 이미지 인디케이터는 이미지가 있을 때만 표시 */}
+        {restaurant.images && restaurant.images.length > 0 && (
           <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
             {restaurant.images.map((_, index) => (
               <button
@@ -196,8 +287,8 @@ export default function RestaurantDetail() {
               />
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <div className="p-2">
         <div>
@@ -245,28 +336,8 @@ export default function RestaurantDetail() {
               <span className="text-sm ml-2 text-gray-600 ">
                 {restaurant.specialOfferText}
               </span>
-              {/* <span
-                className=" text-sm ml-2 text-primary cursor-pointer"
-                onClick={() => setShowSpecialOfferDetail(true)}
-              >
-                상세보기
-              </span> */}
             </div>
           )}
-
-          {/* {showSpecialOfferDetail && (
-            <Dialog open={true} onOpenChange={() => setShowSpecialOfferDetail(false)}>
-              <DialogTitle>Special Offer Detail</DialogTitle>
-              <DialogContent>
-                <pre className="text-xs">{restaurant.specialOfferTextDetail}</pre>
-              </DialogContent>
-              <DialogClose aria-label="Close" />
-            </Dialog>
-          )} */}
-          {/* <div className="mt-2">
-              <span className="text-lg font-bold">36,000원</span>
-              <span className="text-sm text-red-500 ml-2">20% 할인</span>
-              </div> */}
         </div>
         {restaurant.socialLinks && (
           <div className="p-2">
@@ -389,10 +460,12 @@ export default function RestaurantDetail() {
         />
         {/* About Section */}
         <div className="mb-6 mt-4">
-          <h2 className="text-lg font-semibold mb-2">About</h2>
+          <h2 className="text-lg font-semibold mb-2">가게 소개</h2>
           <Card className="bg-gray-50">
             <CardContent className="p-4">
-              <p>{restaurant?.description || "서비스 소개"}</p>
+              <p className="text-sm">
+                {restaurant?.description || "서비스 소개"}
+              </p>
               <div className="mt-10 text-gray-500 text-sm">
                 {restaurant.tags.map((tag, index) => (
                   <span key={index}>
@@ -407,10 +480,10 @@ export default function RestaurantDetail() {
           </Card>
         </div>
         <div>
-          <h2 className="text-lg font-semibold mb-2">Special Offer</h2>
+          <h2 className="text-lg font-semibold mb-2">패스 제공 혜택</h2>
           <Card className="bg-gray-50">
             <CardContent className="p-4">
-              <pre className="text-xs whitespace-pre-wrap word-wrap break-words">
+              <pre className="text-sm whitespace-pre-wrap word-wrap break-words">
                 {restaurant.specialOfferTextDetail}
               </pre>
             </CardContent>
@@ -437,14 +510,6 @@ export default function RestaurantDetail() {
           </GoogleMapsProvider>
           <p className="text-sm">{restaurant?.address}</p>
         </div>
-        {/* <div className="mt-8">
-          <h2 className="text-xl font-bold mb-4">Reviews</h2>
-
-          <ReviewForm
-            restaurantId={restaurant.id}
-            onReviewAdded={fetchReviews}
-          />
-        </div> */}
       </div>
     </div>
   );

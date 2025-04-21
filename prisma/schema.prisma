@@ -15,7 +15,6 @@ model SerialNumber {
   createdAt  DateTime  @default(now())
   expiresAt  DateTime?
   
-  // User.id가 Int이므로 userId도 Int로 변경
   userId     Int?
   user       User?     @relation(fields: [userId], references: [id])
   
@@ -42,9 +41,9 @@ model User {
   reviews        Review[]
   serialNumbers  SerialNumber[]
   membershipType String         @default("free")
+  bookmarks      Bookmark[]     // 추가: 북마크 관계
 }
 
-// prisma/schema.prisma
 model EmailVerification {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -55,31 +54,32 @@ model EmailVerification {
 }
 
 model Restaurant {
-  id                     String   @id @default(cuid())
+  id                     String     @id @default(cuid())
   name                   String
-  description            String   @default("")
-  about                  String   @default("")
+  description            String     @default("")
+  about                  String     @default("")
   address                String
   latitude               Float
   longitude              Float
   category               String?
   subCategory            String?
-  rating                 Float?   @default(0)
-  specialOfferText       String   @default("")
-  images                 String[] @default([])
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
-  addressDetail          String   @default("")
-  languages              String[] @default([])
-  region1                String?  @default("")
-  region2                String?  @default("")
-  region3                String?  @default("")
+  rating                 Float?     @default(0)
+  specialOfferText       String     @default("")
+  images                 String[]   @default([])
+  createdAt              DateTime   @default(now())
+  updatedAt              DateTime   @updatedAt
+  addressDetail          String     @default("")
+  languages              String[]   @default([])
+  region1                String?    @default("")
+  region2                String?    @default("")
+  region3                String?    @default("")
   region4                String?
   socialLinks            Json?
-  tags                   String[] @default([])
-  specialOfferType       String[] @default([])
-  specialOfferTextDetail String   @default("")
+  tags                   String[]   @default([])
+  specialOfferType       String[]   @default([])
+  specialOfferTextDetail String     @default("")
   reviews                Review[]
+  bookmarks              Bookmark[] // 추가: 북마크 관계
 }
 
 model Review {
@@ -88,9 +88,23 @@ model Review {
   rating       Float
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
-  userId       Int        // String에서 Int로 다시 변경
+  userId       Int
   restaurantId String
   images       String[]
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
   user         User       @relation(fields: [userId], references: [id])
+}
+
+// 추가: 북마크 모델
+model Bookmark {
+  id           String     @id @default(cuid())
+  userId       Int
+  restaurantId String
+  createdAt    DateTime   @default(now())
+  user         User       @relation(fields: [userId], references: [id])
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@unique([userId, restaurantId]) // 한 사용자가 같은 식당을 중복 북마크하지 않도록
+  @@index([userId])
+  @@index([restaurantId])
 }
