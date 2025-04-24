@@ -9,13 +9,9 @@ const SerialNumberSchema = z.object({
   code: z.string().min(6).max(20),
 });
 
-// GET: 사용자의 등록된 시리얼 넘버 목록
+// GET: 사용자의 등록된 시리얼 넘버 1개만 반환
 export async function GET(req: NextRequest) {
-  // 세션 확인 - 로그인한 사용자만 접근 가능
-  console.log("✅ GET /api/serial reached");
   const session = await getServerSession(authOptions);
-
-  console.log("Session:", session);
 
   if (!session || !session.user) {
     return NextResponse.json(
@@ -25,22 +21,29 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // session.user.id가 문자열인지 숫자인지 확인
     const userId =
       typeof session.user.id === "string"
         ? parseInt(session.user.id)
         : session.user.id;
 
-    console.log("Looking for serialNumbers with userId:", userId);
-
-    const serialNumbers = await prisma.serialNumber.findMany({
+    const serialNumber = await prisma.serialNumber.findFirst({
       where: { userId: userId },
       orderBy: { usedAt: "desc" },
     });
 
-    console.log("Found serialNumbers:", serialNumbers);
+    // 자동 비활성화 체크
+    if (
+      serialNumber?.activatedUntil &&
+      new Date() > serialNumber.activatedUntil
+    ) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { membershipType: "free" },
+      });
+      return NextResponse.json([]); // 비활성화된 경우 null 처리
+    }
 
-    return NextResponse.json(serialNumbers);
+    return NextResponse.json(serialNumber ? [serialNumber] : []);
   } catch (error) {
     console.error("시리얼 넘버 조회 오류:", error);
     return NextResponse.json(
@@ -52,11 +55,7 @@ export async function GET(req: NextRequest) {
 
 // POST: 시리얼 넘버 등록
 export async function POST(req: NextRequest) {
-  // 세션 확인 - 로그인한 사용자만 접근 가능
-  console.log("✅ POST /api/serial reached");
   const session = await getServerSession(authOptions);
-
-  console.log("Session:", session);
 
   if (!session || !session.user) {
     return NextResponse.json(
@@ -67,18 +66,12 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    console.log("Request body:", body);
-
     const { code } = SerialNumberSchema.parse(body);
 
-    // 시리얼 넘버 검색
     const serialNumber = await prisma.serialNumber.findUnique({
       where: { code },
     });
 
-    console.log("Found serialNumber:", serialNumber);
-
-    // 존재하지 않는 시리얼 넘버
     if (!serialNumber) {
       return NextResponse.json(
         { error: "유효하지 않은 시리얼 넘버입니다." },
@@ -86,7 +79,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 이미 사용된 시리얼 넘버
     if (serialNumber.isUsed) {
       return NextResponse.json(
         { error: "이미 사용된 시리얼 넘버입니다." },
@@ -94,7 +86,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 만료된 시리얼 넘버 체크
     if (serialNumber.expiresAt && new Date() > serialNumber.expiresAt) {
       return NextResponse.json(
         { error: "만료된 시리얼 넘버입니다." },
@@ -102,25 +93,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // session.user.id가 문자열인지 숫자인지 확인
     const userId =
       typeof session.user.id === "string"
         ? parseInt(session.user.id)
         : session.user.id;
 
-    console.log("Updating serialNumber for userId:", userId);
+    const now = new Date();
+    const activatedUntil = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7일 후
 
     // 시리얼 넘버 사용 처리
-    const updatedSerialNumber = await prisma.serialNumber.update({
+    await prisma.serialNumber.update({
       where: { id: serialNumber.id },
       data: {
         isUsed: true,
-        usedAt: new Date(),
+        usedAt: now,
         userId: userId,
+        activatedUntil,
       },
     });
 
-    // 사용자 등급 업데이트 (시리얼 넘버 타입에 따라)
     await prisma.user.update({
       where: { id: userId },
       data: {
@@ -132,10 +123,11 @@ export async function POST(req: NextRequest) {
       success: true,
       message: "시리얼 넘버가 성공적으로 등록되었습니다.",
       type: serialNumber.type,
+      activatedAt: now,
+      activatedUntil,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error("Validation error:", error.errors);
       return NextResponse.json(
         { error: "유효하지 않은 입력입니다.", details: error.errors },
         { status: 400 }

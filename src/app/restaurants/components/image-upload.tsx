@@ -72,7 +72,7 @@ export default function ImageUpload({
         <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF (최대 5MB)</p>
       </div>
       {error && <p className="text-red-500 text-sm mt-1">{error.message}</p>}
-      {value.length > 0 && (
+      {(value?.length ?? 0) > 0 && (
         <div className="mt-4 grid grid-cols-2 gap-4">
           {value.map((image, index) => (
             <div key={index} className="relative aspect-square">

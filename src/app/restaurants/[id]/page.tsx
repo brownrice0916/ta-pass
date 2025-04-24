@@ -24,7 +24,7 @@ import { toast } from "react-hot-toast";
 
 export interface Review {
   id: string;
-  user: { name: string; avatar: string };
+  user: { name: string; avatar: string; image: string };
   rating: number;
   createdAt: string;
   content: string;

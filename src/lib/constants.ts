@@ -1,34 +1,34 @@
 export const CATEGORIES = [
   { id: "all", label: "All", value: "all" },
   {
-    id: "fashion",
+    id: "Fashion",
     label: "Fashion",
-    value: "fashion",
+    value: "Fashion",
     types: ["clothing_store", "shopping_mall"],
   },
   {
     id: "beauty",
     label: "Beauty",
-    value: "beauty",
+    value: "Beauty",
     types: ["beauty_salon", "hair_care"],
   },
   {
     id: "luxury",
     label: "Luxury",
-    value: "luxury",
+    value: "Luxury",
     types: ["jewelry_store", "shopping_mall"],
   },
   {
     id: "activities",
     label: "Activities",
-    value: "activities",
+    value: "Activities",
     types: ["gym", "park", "amusement_park"],
   },
   {
     id: "culture",
     label: "Culture",
-    value: "culture",
+    value: "Culture",
     types: ["museum", "art_gallery", "movie_theater"],
   },
-  { id: "food", label: "Food", value: "food", types: ["restaurant", "cafe"] },
+  { id: "food", label: "Food", value: "Food", types: ["restaurant", "cafe"] },
 ];

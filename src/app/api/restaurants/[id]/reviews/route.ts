@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
         user: {
           select: {
             name: true,
+            image: true,
           },
         },
       },

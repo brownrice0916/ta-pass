@@ -46,19 +46,27 @@ const formSchema = z.object({
   tags: z.array(z.string()).optional(),
   addressDetail: z.string().optional(),
   description: z.string().optional(),
+  specialOfferText: z.string().optional(),
   about: z.string().optional(),
   rating: z.number().min(0).max(5).optional(),
-  specialOfferType: z.enum(["none", "gift", "discount"]).optional(),
-  specialOfferText: z.string().optional(),
-  images: z.array(z.union([z.instanceof(File), z.string()])).optional(),
+  specialOfferType: z
+    .array(z.enum(["none", "Special Gift", "Discount"]))
+    .optional(),
+
+  images: z
+    .array(z.union([z.instanceof(File), z.string()]))
+    .optional()
+    .default([]),
+
   socialLinks: z.array(
     z.object({
       platform: z.string().min(1, "플랫폼을 선택해주세요"),
       url: z
         .string()
-        .min(1, "URL을 입력해주세요")
+        .optional()
         .refine(
           (url) => {
+            if (!url) return true; // 빈 값 허용
             try {
               if (!url.startsWith("http://") && !url.startsWith("https://")) {
                 url = `https://${url}`;
@@ -109,7 +117,7 @@ export default function RestaurantForm({
     initialData?.category || ""
   );
   const [socialLinks, setSocialLinks] = useState<
-    Array<{ platform: string; url: string }>
+    Array<{ platform?: string; url?: string }>
   >(initialData?.socialLinks || []);
   const [tagInput, setTagInput] = useState("");
   const addressInputRef = useRef<HTMLInputElement>(null);
@@ -122,6 +130,7 @@ export default function RestaurantForm({
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: "onChange",
     defaultValues: {
       category: initialData?.category ?? "",
       name: initialData?.name ?? "",
@@ -132,7 +141,7 @@ export default function RestaurantForm({
       latitude: initialData?.latitude ?? 37.5665,
       longitude: initialData?.longitude ?? 126.978,
       rating: initialData?.rating ?? 0,
-      specialOfferType: initialData?.specialOfferType ?? "none",
+      specialOfferType: initialData?.specialOfferType ?? [],
       specialOfferText: initialData?.specialOfferText ?? "",
       images: initialData?.images ?? [],
       languages: initialData?.languages ?? ["ko"],
@@ -231,7 +240,7 @@ export default function RestaurantForm({
   const addSocialLink = () => {
     const updatedLinks = [...socialLinks, { platform: "", url: "" }];
     setSocialLinks(updatedLinks);
-    setValue("socialLinks", updatedLinks, {
+    setValue("socialLinks", updatedLinks as any, {
       shouldValidate: true,
       shouldDirty: true,
     });
@@ -240,7 +249,7 @@ export default function RestaurantForm({
   const removeSocialLink = (index: number) => {
     const updatedLinks = socialLinks.filter((_, i) => i !== index);
     setSocialLinks(updatedLinks);
-    setValue("socialLinks", updatedLinks, {
+    setValue("socialLinks", updatedLinks as any, {
       shouldValidate: true,
       shouldDirty: true,
     });
@@ -349,6 +358,7 @@ export default function RestaurantForm({
                     <Select
                       onValueChange={(value) => {
                         field.onChange(value);
+
                         setSelectedCategory(value);
                       }}
                       value={field.value}
@@ -559,18 +569,18 @@ export default function RestaurantForm({
                                 }}
                                 className={cn(
                                   form.formState.errors.socialLinks?.[index] &&
-                                  "border-destructive"
+                                    "border-destructive"
                                 )}
                               />
                               {form.formState.errors.socialLinks?.[index]
                                 ?.url && (
-                                  <p className="text-sm font-medium text-destructive mt-1">
-                                    {
-                                      form.formState.errors.socialLinks[index]
-                                        ?.url?.message
-                                    }
-                                  </p>
-                                )}
+                                <p className="text-sm font-medium text-destructive mt-1">
+                                  {
+                                    form.formState.errors.socialLinks[index]
+                                      ?.url?.message
+                                  }
+                                </p>
+                              )}
                             </div>
                             <Button
                               type="button"
@@ -732,65 +742,68 @@ export default function RestaurantForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>특별 혜택 유형</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="특별 혜택 유형을 선택하세요" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">없음</SelectItem>
-                        <SelectItem value="gift">Welcome Gift</SelectItem>
-                        <SelectItem value="discount">Discount</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="flex gap-4 flex-wrap">
+                      {["Special Gift", "Discount"].map((type) => (
+                        <label
+                          key={type}
+                          className="flex items-center space-x-2"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={field.value?.includes(type as any)}
+                            onChange={() => {
+                              const value = field.value || [];
+                              if (value.includes(type as any)) {
+                                field.onChange(value.filter((v) => v !== type));
+                              } else {
+                                field.onChange([...value, type]);
+                              }
+                            }}
+                          />
+                          <span>
+                            {type === "Special Gift"
+                              ? "Special Gift"
+                              : "Discount"}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              {specialOfferType && specialOfferType !== "none" && (
-                <FormField
-                  control={control}
-                  name="specialOfferText"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>혜택 내용</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder={
-                            specialOfferType === "gift"
-                              ? "예: 무료 고메기, 무료 포장비닐, 무료 QR CODE"
-                              : "예: 오전 11시까지 방문 시 전 메뉴 30% 할인혜택"
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
 
-              <Controller
-                name="images"
+              <FormField
                 control={control}
-                render={({
-                  field: { onChange, value },
-                  fieldState: { error },
-                }) => (
+                name="specialOfferText"
+                render={({ field }) => (
                   <FormItem>
-                    <FormLabel>이미지 추가 (최대 5개)</FormLabel>
+                    <FormLabel>혜택 내용</FormLabel>
                     <FormControl>
-                      <ImageUpload
-                        onChange={onChange}
-                        value={value || []} // Provide a default value of an empty array
-                        error={error}
+                      <Input
+                        {...field}
+                        placeholder={
+                          "예: 오전 11시까지 방문 시 전 메뉴 30% 할인혜택"
+                        }
                       />
                     </FormControl>
-                    {error && <FormMessage>{error.message}</FormMessage>}
+                    <FormMessage />
                   </FormItem>
                 )}
               />
+              <Controller
+                name="images"
+                control={control}
+                render={({ field }) => (
+                  <ImageUpload
+                    value={field.value}
+                    onChange={(val) => {
+                      field.onChange(val); // 폼 값 변경 반영
+                    }}
+                  />
+                )}
+              />
+
               <div className="flex gap-3 pt-4">
                 <Button
                   type="button"

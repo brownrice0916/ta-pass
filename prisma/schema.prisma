@@ -14,7 +14,7 @@ model SerialNumber {
   usedAt     DateTime?
   createdAt  DateTime  @default(now())
   expiresAt  DateTime?
-  
+  activatedUntil DateTime? // 👈 이거 추가해줘!
   userId     Int?
   user       User?     @relation(fields: [userId], references: [id])
   

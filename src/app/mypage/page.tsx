@@ -114,6 +114,7 @@ const MyPage = () => {
       {/* Main Content */}
       <div className="flex flex-col items-center p-4">
         {/* Profile Section */}
+        {/* 
         <div className="flex items-center w-full bg-white p-4 rounded-lg shadow-md mb-4">
           <div className="flex flex-col items-start">
             <h2 className="text-lg font-bold">안녕하세요</h2>
@@ -168,12 +169,10 @@ const MyPage = () => {
               </p>
             )}
           </div>
-        </div>
+        </div> */}
         {/* 시리얼 넘버 섹션 */}
         <SerialNumberSection />
-        <div>
-          <input type="text" />
-        </div>
+
         {/* Stats Section */}
         <div className="flex w-full gap-4 mb-6">
           <div

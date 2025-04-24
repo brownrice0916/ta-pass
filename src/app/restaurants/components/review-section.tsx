@@ -40,9 +40,8 @@ interface ReviewCardProps {
 export function ReviewCard({ review, onOpenDetail }: ReviewCardProps) {
   const { data: session } = useSession();
 
-  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${
-    session?.user?.email || "default"
-  }`;
+  const random = `https://api.dicebear.com/7.x/avataaars/png?seed=${"default"}`;
+  const avatarUrl = review ? review.user.image : random;
 
   return (
     <Card
@@ -92,15 +91,13 @@ export function ReviewCard({ review, onOpenDetail }: ReviewCardProps) {
         <div>
           <div className="flex justify-between items-center mb-1">
             <div>
-              <div className="font-medium text-sm flex items-center">
+              <div className="relative w-6 h-6 rounded-full overflow-hidden">
                 <Image
                   src={avatarUrl}
                   alt="Profile"
-                  width={24}
-                  height={24}
-                  className="rounded-full mr-2"
+                  fill
+                  className="object-cover"
                 />
-                {review.user.name}
               </div>
               {/* <div className="text-xs text-gray-500">{review.user.country}</div> */}
             </div>

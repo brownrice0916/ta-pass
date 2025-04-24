@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { UserForm } from "../signup/component/user-form";
+import ProfileImageUploader from "../mypage/components/profile-image-uploader";
 
 export default function AccountPage() {
   const router = useRouter();
@@ -106,9 +107,25 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="mx-auto max-w-md p-4">
-        <main className="bg-white shadow-md rounded-lg p-6">
+    <div className="min-h-screen bg-gray-50 mb-20">
+      <div className="mx-auto max-w-lg p-4">
+        <div className="bg-gradient-to-br from-white to-gray-50 shadow-lg rounded-xl p-6 border border-gray-100">
+          <h1 className="text-xl font-semibold text-gray-800 mb-4 text-center">
+            ✨ 프로필 수정
+          </h1>
+
+          <div className="flex justify-center mb-6">
+            <ProfileImageUploader />
+          </div>
+
+          {/* 추가 콘텐츠가 있다면 여기에 삽입 */}
+          <div className="text-center text-sm text-gray-500">
+            이미지를 클릭해서 프로필 사진을 변경하세요
+          </div>
+        </div>
+      </div>
+      <div className="mx-auto max-w-md p-4 pt-0">
+        <main className="bg-white shadow-md rounded-xl p-6">
           <h1 className="text-2xl font-bold mb-6">계정 관리</h1>
 
           <UserForm
