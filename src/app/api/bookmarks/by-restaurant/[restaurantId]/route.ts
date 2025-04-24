@@ -4,10 +4,10 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 // 예: /api/bookmarks/by-restaurant/[restaurantId]/route.ts
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { restaurantId: string } }
-) {
+export async function GET(req: NextRequest) {
+  const url = new URL(req.url);
+  const restaurantId = url.pathname.split("/")[3];
+
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -21,7 +21,7 @@ export async function GET(
     where: {
       userId_restaurantId: {
         userId: user!.id,
-        restaurantId: params.restaurantId,
+        restaurantId: restaurantId,
       },
     },
   });

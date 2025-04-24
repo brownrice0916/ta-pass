@@ -14,6 +14,13 @@ declare module "next-auth" {
       membershipType?: string; // 멤버십 타입 필드 추가
     };
   }
+  interface User {
+    id: string;
+    email: string;
+    name?: string | null;
+    image?: string | null;
+    membershipType?: string;
+  }
 }
 
 export const authOptions: NextAuthOptions = {
