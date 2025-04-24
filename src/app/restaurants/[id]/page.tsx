@@ -28,12 +28,13 @@ export interface Review {
   rating: number;
   createdAt: string;
   content: string;
-  images: string[]; // 리뷰 이미지 배열 추가
+  images: string[];
   restaurant?: Restaurant;
 }
 
 export default function RestaurantDetail() {
   const params = useParams();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const router = useRouter();
   const { data: session } = useSession();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
@@ -50,51 +51,55 @@ export default function RestaurantDetail() {
   );
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
-
+  const [bookmarkId, setBookmarkId] = useState<string | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
 
-  // 슬라이드 변경 핸들러
   const handleSlideChange = useCallback(() => {
     if (carouselApi) {
       setCurrentSlide(carouselApi.selectedScrollSnap());
     }
   }, [carouselApi]);
 
-  // Carousel API 이벤트 연결
   useEffect(() => {
     if (carouselApi) {
-      carouselApi.on("scroll", handleSlideChange); // 스크롤 이벤트 핸들러 등록
-      handleSlideChange(); // 초기 상태 설정
+      carouselApi.on("scroll", handleSlideChange);
+      handleSlideChange();
     }
-
     return () => {
-      carouselApi?.off("scroll", handleSlideChange); // 클린업
+      carouselApi?.off("scroll", handleSlideChange);
     };
   }, [carouselApi, handleSlideChange]);
 
   useEffect(() => {
     if (restaurant) {
-      fetchNearbyRestaurants(restaurant!.latitude, restaurant!.longitude);
+      fetchNearbyRestaurants(restaurant.latitude, restaurant.longitude);
     }
   }, [restaurant]);
 
-  // 북마크 상태 확인
   const checkBookmarkStatus = async () => {
-    if (!session || !params.id) return;
-
+    if (!session || !id) return;
     try {
-      const response = await fetch(`/api/bookmarks/${params.id}`);
+      const response = await fetch(`/api/bookmarks/by-restaurant/${id}`);
       if (response.ok) {
         const data = await response.json();
+        console.log("bookmark data", data);
         setIsBookmarked(data.isBookmarked);
+        if (data.bookmark) {
+          setBookmarkId(data.bookmark.id);
+        }
+      } else {
+        const localBookmarks = localStorage.getItem("userBookmarks");
+        if (localBookmarks) {
+          const bookmarksArray = JSON.parse(localBookmarks);
+          setIsBookmarked(bookmarksArray.includes(id));
+        }
       }
     } catch (error) {
       console.error("Error checking bookmark status:", error);
     }
   };
 
-  // 북마크 토글 기능
   const toggleBookmark = async () => {
     if (!session) {
       toast.error("로그인이 필요한 기능입니다.");
@@ -102,65 +107,94 @@ export default function RestaurantDetail() {
       return;
     }
 
-    if (!params.id) return;
+    if (!id) return;
+
+    // ✨ 여기에서 bookmarkId 없으면 중단
+    if (isBookmarked && !bookmarkId) {
+      toast.error("북마크 ID를 찾을 수 없습니다.");
+      return;
+    }
 
     setBookmarkLoading(true);
     try {
-      if (isBookmarked) {
-        // 북마크 해제
-        const response = await fetch(`/api/bookmarks/${params.id}`, {
-          method: "DELETE",
-        });
+      const method = isBookmarked ? "DELETE" : "POST";
+      const endpoint =
+        isBookmarked && bookmarkId
+          ? `/api/bookmarks/${bookmarkId}` // ✅ bookmarkId 필요
+          : "/api/bookmarks";
 
-        if (response.ok) {
-          setIsBookmarked(false);
-          toast.success("북마크가 해제되었습니다.");
-        }
-      } else {
-        // 북마크 추가
-        const response = await fetch("/api/bookmarks", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ restaurantId: params.id }),
-        });
-
-        if (response.ok) {
-          setIsBookmarked(true);
-          toast.success("북마크에 추가되었습니다.");
-        }
+      if (isBookmarked && !bookmarkId) {
+        console.warn("bookmarkId is null while trying to DELETE");
+        return;
       }
+
+      const options: RequestInit = {
+        method,
+        headers: { "Content-Type": "application/json" },
+        ...(method === "POST" && {
+          body: JSON.stringify({ restaurantId: id }),
+        }),
+      };
+
+      const response = await fetch(endpoint, options);
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err?.error || "북마크 처리 실패");
+      }
+
+      const localBookmarks = JSON.parse(
+        localStorage.getItem("userBookmarks") || "[]"
+      );
+      const updatedBookmarks = isBookmarked
+        ? localBookmarks.filter((bid: string) => bid !== id)
+        : [...new Set([...localBookmarks, id])];
+      localStorage.setItem("userBookmarks", JSON.stringify(updatedBookmarks));
+
+      toast.success(
+        isBookmarked ? "북마크가 해제되었습니다." : "북마크에 추가되었습니다."
+      );
+      setIsBookmarked(!isBookmarked);
+      setBookmarkId(isBookmarked ? null : bookmarkId);
     } catch (error) {
-      console.error("Error toggling bookmark:", error);
       toast.error("북마크 처리 중 오류가 발생했습니다.");
+      console.error("Bookmark toggle error:", error);
     } finally {
       setBookmarkLoading(false);
     }
   };
 
-  // 세션 및 식당 정보 로드 시 북마크 상태 확인
   useEffect(() => {
-    if (session && params.id) {
-      checkBookmarkStatus();
+    if (session && id) checkBookmarkStatus();
+  }, [session, id]);
+
+  useEffect(() => {
+    if (restaurant && session && id) checkBookmarkStatus();
+  }, [restaurant, session, id]);
+
+  useEffect(() => {
+    if (id) {
+      const localBookmarks = localStorage.getItem("userBookmarks");
+      if (localBookmarks) {
+        const bookmarksArray = JSON.parse(localBookmarks);
+        if (bookmarksArray.includes(id)) {
+          setIsBookmarked(true);
+        }
+      }
     }
-  }, [session, params.id]);
+  }, [id]);
 
   const fetchNearbyRestaurants = async (
     latitude: number,
     longitude: number
   ) => {
     try {
-      const response = await fetch(
+      const res = await fetch(
         `/api/restaurants?latitude=${latitude}&longitude=${longitude}&radius=1`
       );
-      if (!response.ok) throw new Error("Failed to fetch restaurants");
-      const data = await response.json();
-      // API 응답이 { restaurants: [], metadata: {} } 구조이므로 restaurants 배열만 설정
+      const data = await res.json();
       setRestaurants(data.restaurants || []);
-      console.log("data", data);
-    } catch (err) {
-      console.error("Error fetching restaurants:", err);
+    } catch (e) {
+      console.error("Error fetching nearby restaurants:", e);
     } finally {
       setLoading(false);
     }
@@ -168,39 +202,32 @@ export default function RestaurantDetail() {
 
   const fetchReviews = async () => {
     try {
-      const response = await fetch(`/api/restaurants/${params.id}/reviews`);
-      if (!response.ok) throw new Error("Failed to fetch reviews");
-      const data = await response.json();
+      const res = await fetch(`/api/restaurants/${id}/reviews`);
+      const data = await res.json();
       setReviews(data);
-    } catch (error) {
-      console.error("Error:", error);
+    } catch (e) {
+      console.error("Error fetching reviews:", e);
     }
   };
 
   useEffect(() => {
-    if (params.id) {
-      fetchReviews();
-    }
-  }, [params.id]);
+    if (id) fetchReviews();
+  }, [id]);
 
   useEffect(() => {
     const fetchRestaurant = async () => {
       try {
-        const response = await fetch(`/api/restaurants/${params.id}`);
-        if (!response.ok) throw new Error("Failed to fetch restaurant");
-        const data = await response.json();
+        const res = await fetch(`/api/restaurants/${id}`);
+        const data = await res.json();
         setRestaurant(data);
-      } catch (error) {
-        console.error("Error:", error);
+      } catch (e) {
+        console.error("Error fetching restaurant:", e);
       } finally {
         setLoading(false);
       }
     };
-
-    if (params.id) {
-      fetchRestaurant();
-    }
-  }, [params.id]);
+    if (id) fetchRestaurant();
+  }, [id]);
 
   if (loading) return <div>Loading...</div>;
   if (!restaurant) return <div>Restaurant not found</div>;

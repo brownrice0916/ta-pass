@@ -28,13 +28,9 @@ export async function DELETE(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const restaurantId = params.id;
-
-    // 북마크 삭제
-    await prisma.bookmark.deleteMany({
+    await prisma.bookmark.delete({
       where: {
-        userId: user.id,
-        restaurantId,
+        id: params.id, // 여기는 진짜 북마크 id가 와야 함
       },
     });
 
