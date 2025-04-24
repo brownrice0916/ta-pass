@@ -109,8 +109,10 @@ export default function RestaurantDetail() {
 
     if (!id) return;
 
-    // ✨ 여기에서 bookmarkId 없으면 중단
-    if (isBookmarked && !bookmarkId) {
+    const currentId = id;
+    const currentBookmarkId = bookmarkId; // ✅ 현 bookmarkId 복사
+
+    if (isBookmarked && !currentBookmarkId) {
       toast.error("북마크 ID를 찾을 수 없습니다.");
       return;
     }
@@ -118,45 +120,34 @@ export default function RestaurantDetail() {
     setBookmarkLoading(true);
     try {
       const method = isBookmarked ? "DELETE" : "POST";
-      const endpoint =
-        isBookmarked && bookmarkId
-          ? `/api/bookmarks/${bookmarkId}` // ✅ bookmarkId 필요
-          : "/api/bookmarks";
+      const endpoint = isBookmarked
+        ? `/api/bookmarks/${currentBookmarkId}`
+        : "/api/bookmarks";
 
-      if (isBookmarked && !bookmarkId) {
-        console.warn("bookmarkId is null while trying to DELETE");
-        return;
-      }
-
-      const options: RequestInit = {
+      const response = await fetch(endpoint, {
         method,
         headers: { "Content-Type": "application/json" },
         ...(method === "POST" && {
-          body: JSON.stringify({ restaurantId: id }),
+          body: JSON.stringify({ restaurantId: currentId }),
         }),
-      };
+      });
 
-      const response = await fetch(endpoint, options);
       if (!response.ok) {
         const err = await response.json();
         throw new Error(err?.error || "북마크 처리 실패");
       }
 
-      const localBookmarks = JSON.parse(
-        localStorage.getItem("userBookmarks") || "[]"
-      );
-      const updatedBookmarks = isBookmarked
-        ? localBookmarks.filter((bid: string) => bid !== id)
-        : [...new Set([...localBookmarks, id])];
-      localStorage.setItem("userBookmarks", JSON.stringify(updatedBookmarks));
+      if (!isBookmarked) {
+        const data = await response.json(); // 북마크 ID 받아오기
+        setBookmarkId(data.bookmark.id);
+      } else {
+        setBookmarkId(null);
+      }
 
-      toast.success(
-        isBookmarked ? "북마크가 해제되었습니다." : "북마크에 추가되었습니다."
-      );
       setIsBookmarked(!isBookmarked);
-      setBookmarkId(isBookmarked ? null : bookmarkId);
+      toast.success(isBookmarked ? "북마크 해제됨" : "북마크 추가됨");
     } catch (error) {
-      toast.error("북마크 처리 중 오류가 발생했습니다.");
+      toast.error("북마크 처리 중 오류 발생");
       console.error("Bookmark toggle error:", error);
     } finally {
       setBookmarkLoading(false);

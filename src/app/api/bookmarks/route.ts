@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json(bookmark, { status: 201 });
+    return NextResponse.json({ bookmark }, { status: 200 });
   } catch (error) {
     console.error("Error creating bookmark:", error);
     return NextResponse.json(

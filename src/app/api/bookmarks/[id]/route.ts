@@ -5,10 +5,9 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 // DELETE - 북마크 삭제
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest) {
+  const url = new URL(req.url);
+  const id = url.pathname.split("/")[3];
   try {
     // 인증 확인
     const session = await getServerSession(authOptions);
@@ -30,7 +29,7 @@ export async function DELETE(
 
     await prisma.bookmark.delete({
       where: {
-        id: params.id, // 여기는 진짜 북마크 id가 와야 함
+        id: id, // 여기는 진짜 북마크 id가 와야 함
       },
     });
 
@@ -48,10 +47,9 @@ export async function DELETE(
 }
 
 // GET - 식당이 사용자에 의해 북마크 되었는지 확인
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest) {
+  const url = new URL(req.url);
+  const id = url.pathname.split("/")[3];
   try {
     // 인증 확인
     const session = await getServerSession(authOptions);
@@ -71,7 +69,7 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const restaurantId = params.id;
+    const restaurantId = id;
 
     // 북마크 확인
     const bookmark = await prisma.bookmark.findUnique({
