@@ -39,7 +39,7 @@ const SerialNumberSection = () => {
   const ADMIN_EMAILS = [
     "brownrice0916@gmail.com",
     "rice@naver.com",
-    "dergelbeflsus@gmail.com",
+    "dergelbefluss@gmail.com",
   ];
 
   // 내 시리얼 넘버 목록 가져오기
