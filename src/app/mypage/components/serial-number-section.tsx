@@ -15,7 +15,6 @@ import {
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { SerialNumber } from "@prisma/client";
-import { ADMIN_EMAILS } from "@/app/api/admin/serial/route";
 
 const SerialNumberSection = () => {
   const [serialNumber, setSerialNumber] = useState("");
@@ -36,6 +35,12 @@ const SerialNumberSection = () => {
   const [count, setCount] = useState(5);
   const [type, setType] = useState("standard");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const ADMIN_EMAILS = [
+    "brownrice0916@gmail.com",
+    "rice@naver.com",
+    "dergelbeflsus@gmail.com",
+  ];
 
   // 내 시리얼 넘버 목록 가져오기
   const fetchMySerialNumbers = async () => {
