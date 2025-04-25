@@ -532,48 +532,182 @@ const SerialNumberSection = () => {
         👀
       </p>
       {isExpandSerial && (
-        <div>
-          <h2 className="text-xl font-bold mb-4">시리얼 넘버 관리</h2>
-          <div className="bg"></div>
-          {/* 시리얼 넘버 등록 섹션 */}
-          <div className="w-full bg-white p-4 rounded-lg shadow-md mb-4">
-            {/* 사용 가능한 시리얼 넘버 목록 */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-sm font-medium text-gray-600">
-                  사용 가능한 시리얼 넘버
-                </h4>
-                <button
-                  onClick={fetchUnusedSerialNumbers}
-                  className="text-xs text-blue-500 flex items-center"
-                  disabled={isLoading}
-                >
-                  <RefreshCw
-                    className={`w-3 h-3 mr-1 ${
-                      isLoading ? "animate-spin" : ""
-                    }`}
+        <>
+          <div>
+            <h2 className="text-xl font-bold mb-4">시리얼 넘버 관리</h2>
+            <div className="bg"></div>
+            {/* 시리얼 넘버 등록 섹션 */}
+            <div className="w-full bg-white p-4 rounded-lg shadow-md mb-4">
+              {/* 사용 가능한 시리얼 넘버 목록 */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-medium text-gray-600">
+                    사용 가능한 시리얼 넘버
+                  </h4>
+                  <button
+                    onClick={fetchUnusedSerialNumbers}
+                    className="text-xs text-blue-500 flex items-center"
+                    disabled={isLoading}
+                  >
+                    <RefreshCw
+                      className={`w-3 h-3 mr-1 ${
+                        isLoading ? "animate-spin" : ""
+                      }`}
+                    />
+                    불러오기
+                  </button>
+                </div>
+
+                {availableSerials.length > 0 ? (
+                  <div className="bg-gray-50 p-2 rounded-md max-h-40 overflow-y-auto">
+                    <ul className="space-y-1">
+                      {availableSerials.map((serial) => (
+                        <li
+                          key={serial.id}
+                          className="text-sm border-b pb-1 cursor-pointer hover:bg-gray-100 p-1 rounded flex justify-between items-center"
+                        >
+                          <span
+                            className="flex-1"
+                            onClick={() => handleSerialClick(serial.code)}
+                          >
+                            <code className="font-mono">{serial.code}</code>
+                            <span className="text-xs text-gray-500 ml-2">
+                              ({getMembershipLabel(serial.type)})
+                            </span>
+                          </span>
+                          <button
+                            onClick={() =>
+                              copyToClipboard(serial.code, serial.id)
+                            }
+                            className="text-gray-500 hover:text-blue-500 p-1"
+                            title="복사하기"
+                          >
+                            {copiedId === serial.id ? (
+                              <Check className="w-4 h-4 text-green-500" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 bg-gray-50 p-3 rounded-md">
+                    사용 가능한 시리얼 넘버가 없습니다. '불러오기'를 클릭하거나
+                    아래에서 새로 생성하세요.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 p-4 bg-white rounded-lg shadow-md">
+            <div className="flex items-center mb-3">
+              <KeyRound className="w-5 h-5 mr-2 text-blue-500" />
+              <h3 className="text-lg font-semibold">
+                시리얼 넘버 생성 (테스트용)
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  개수
+                </label>
+                <div className="flex">
+                  <button
+                    className="bg-gray-200 px-3 py-1 rounded-l-md"
+                    onClick={() => setCount((prev) => Math.max(1, prev - 1))}
+                    disabled={count <= 1}
+                  >
+                    -
+                  </button>
+                  <input
+                    type="number"
+                    value={count}
+                    onChange={(e) =>
+                      setCount(
+                        Math.min(10, Math.max(1, parseInt(e.target.value) || 1))
+                      )
+                    }
+                    className="w-12 text-center border-y"
+                    min="1"
+                    max="10"
                   />
-                  불러오기
-                </button>
+                  <button
+                    className="bg-gray-200 px-3 py-1 rounded-r-md"
+                    onClick={() => setCount((prev) => Math.min(10, prev + 1))}
+                    disabled={count >= 10}
+                  >
+                    +
+                  </button>
+                </div>
               </div>
 
-              {availableSerials.length > 0 ? (
-                <div className="bg-gray-50 p-2 rounded-md max-h-40 overflow-y-auto">
-                  <ul className="space-y-1">
-                    {availableSerials.map((serial) => (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  타입
+                </label>
+                <select
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                  className="w-full border rounded-md p-2"
+                >
+                  <option value="standard">기본</option>
+                  <option value="premium">프리미엄</option>
+                  <option value="lifetime">평생회원권</option>
+                </select>
+              </div>
+            </div>
+
+            <button
+              onClick={generateSerialNumbers}
+              className="mb-4 w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-blue-300 flex items-center justify-center"
+              disabled={isGenerating}
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  생성 중...
+                </>
+              ) : (
+                <>
+                  <KeyRound className="w-4 h-4 mr-2" />
+                  시리얼 넘버 생성
+                </>
+              )}
+            </button>
+
+            {generateError && (
+              <div className="mb-4 p-2 bg-red-100 text-red-700 rounded-md">
+                {generateError}
+              </div>
+            )}
+
+            {generatedSerials.length > 0 && (
+              <div>
+                <div className="flex items-center mb-2">
+                  <List className="w-4 h-4 mr-2 text-gray-500" />
+                  <h4 className="font-medium text-gray-700">
+                    생성된 시리얼 넘버
+                  </h4>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-md max-h-60 overflow-y-auto">
+                  <ul className="space-y-2">
+                    {generatedSerials.map((serial) => (
                       <li
                         key={serial.id}
-                        className="text-sm border-b pb-1 cursor-pointer hover:bg-gray-100 p-1 rounded flex justify-between items-center"
+                        className="flex items-center justify-between border-b pb-2"
                       >
-                        <span
-                          className="flex-1"
-                          onClick={() => handleSerialClick(serial.code)}
-                        >
-                          <code className="font-mono">{serial.code}</code>
-                          <span className="text-xs text-gray-500 ml-2">
-                            ({getMembershipLabel(serial.type)})
+                        <div>
+                          <code className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
+                            {serial.code}
+                          </code>
+                          <span className="ml-2 text-xs text-gray-500">
+                            {getMembershipLabel(serial.type)}
                           </span>
-                        </span>
+                        </div>
                         <button
                           onClick={() =>
                             copyToClipboard(serial.code, serial.id)
@@ -591,147 +725,15 @@ const SerialNumberSection = () => {
                     ))}
                   </ul>
                 </div>
-              ) : (
-                <p className="text-sm text-gray-500 bg-gray-50 p-3 rounded-md">
-                  사용 가능한 시리얼 넘버가 없습니다. '불러오기'를 클릭하거나
-                  아래에서 새로 생성하세요.
+                <p className="mt-2 text-xs text-gray-500">
+                  * 시리얼 넘버는 복사하여 위 입력란에 붙여넣으면 사용할 수
+                  있습니다.
                 </p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-      {/* 시리얼 넘버 생성 섹션 */}
-      {/* {
-        <div className="mt-4 p-4 bg-white rounded-lg shadow-md">
-          <div className="flex items-center mb-3">
-            <KeyRound className="w-5 h-5 mr-2 text-blue-500" />
-            <h3 className="text-lg font-semibold">
-              시리얼 넘버 생성 (테스트용)
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                개수
-              </label>
-              <div className="flex">
-                <button
-                  className="bg-gray-200 px-3 py-1 rounded-l-md"
-                  onClick={() => setCount((prev) => Math.max(1, prev - 1))}
-                  disabled={count <= 1}
-                >
-                  -
-                </button>
-                <input
-                  type="number"
-                  value={count}
-                  onChange={(e) =>
-                    setCount(
-                      Math.min(10, Math.max(1, parseInt(e.target.value) || 1))
-                    )
-                  }
-                  className="w-12 text-center border-y"
-                  min="1"
-                  max="10"
-                />
-                <button
-                  className="bg-gray-200 px-3 py-1 rounded-r-md"
-                  onClick={() => setCount((prev) => Math.min(10, prev + 1))}
-                  disabled={count >= 10}
-                >
-                  +
-                </button>
               </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                타입
-              </label>
-              <select
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-                className="w-full border rounded-md p-2"
-              >
-                <option value="standard">기본</option>
-                <option value="premium">프리미엄</option>
-                <option value="lifetime">평생회원권</option>
-              </select>
-            </div>
-          </div>
-
-          <button
-            onClick={generateSerialNumbers}
-            className="mb-4 w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-blue-300 flex items-center justify-center"
-            disabled={isGenerating}
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                생성 중...
-              </>
-            ) : (
-              <>
-                <KeyRound className="w-4 h-4 mr-2" />
-                시리얼 넘버 생성
-              </>
             )}
-          </button>
-
-          {generateError && (
-            <div className="mb-4 p-2 bg-red-100 text-red-700 rounded-md">
-              {generateError}
-            </div>
-          )}
-
-          {generatedSerials.length > 0 && (
-            <div>
-              <div className="flex items-center mb-2">
-                <List className="w-4 h-4 mr-2 text-gray-500" />
-                <h4 className="font-medium text-gray-700">
-                  생성된 시리얼 넘버
-                </h4>
-              </div>
-              <div className="bg-gray-50 p-3 rounded-md max-h-60 overflow-y-auto">
-                <ul className="space-y-2">
-                  {generatedSerials.map((serial) => (
-                    <li
-                      key={serial.id}
-                      className="flex items-center justify-between border-b pb-2"
-                    >
-                      <div>
-                        <code className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
-                          {serial.code}
-                        </code>
-                        <span className="ml-2 text-xs text-gray-500">
-                          {getMembershipLabel(serial.type)}
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => copyToClipboard(serial.code, serial.id)}
-                        className="text-gray-500 hover:text-blue-500 p-1"
-                        title="복사하기"
-                      >
-                        {copiedId === serial.id ? (
-                          <Check className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <Copy className="w-4 h-4" />
-                        )}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <p className="mt-2 text-xs text-gray-500">
-                * 시리얼 넘버는 복사하여 위 입력란에 붙여넣으면 사용할 수
-                있습니다.
-              </p>
-            </div>
-          )}
-        </div>
-      } */}
+          </div>
+        </>
+      )}
     </div>
   );
 };

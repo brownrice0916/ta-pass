@@ -5,7 +5,11 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import crypto from "crypto";
 
-const ADMIN_EMAILS = ["brownrice0916@gmail.com"];
+const ADMIN_EMAILS = [
+  "brownrice0916@gmail.com",
+  "rice@naver.com",
+  "dergelbeflsus@gmail.com",
+];
 
 const GenerateSerialSchema = z.object({
   count: z.number().int().min(1).max(1000).default(1),
