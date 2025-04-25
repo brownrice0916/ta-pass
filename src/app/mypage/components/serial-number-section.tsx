@@ -15,6 +15,7 @@ import {
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { SerialNumber } from "@prisma/client";
+import { ADMIN_EMAILS } from "@/app/api/admin/serial/route";
 
 const SerialNumberSection = () => {
   const [serialNumber, setSerialNumber] = useState("");
@@ -448,6 +449,8 @@ const SerialNumberSection = () => {
   if (!isLoadingSerial) {
     return;
   }
+
+  const isAdmin = ADMIN_EMAILS.includes(session?.user.email || "");
   return (
     <div className="w-full">
       <div
@@ -523,14 +526,16 @@ const SerialNumberSection = () => {
           </div>
         </div>
       </div>
-      <p
-        className="cursor-pointer"
-        onClick={() => {
-          setIsExpandSerial((prev) => !prev);
-        }}
-      >
-        👀
-      </p>
+      {isAdmin && (
+        <p
+          className="cursor-pointer"
+          onClick={() => {
+            setIsExpandSerial((prev) => !prev);
+          }}
+        >
+          👀
+        </p>
+      )}
       {isExpandSerial && (
         <>
           <div>

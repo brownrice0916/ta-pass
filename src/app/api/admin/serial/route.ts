@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import crypto from "crypto";
 
-const ADMIN_EMAILS = [
+export const ADMIN_EMAILS = [
   "brownrice0916@gmail.com",
   "rice@naver.com",
   "dergelbeflsus@gmail.com",
