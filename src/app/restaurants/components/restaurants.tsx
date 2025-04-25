@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { Review } from "@prisma/client";
 import { Input } from "@/components/ui/input";
 
-import { MapPin, Search, Sliders } from "lucide-react";
+import { MapPin, Search, Sliders, X } from "lucide-react";
 
 import { ClientOnly } from "@/components/client-only";
 import { useRestaurants } from "../hooks/use-restaurants";
@@ -239,6 +239,18 @@ export default function Restaurants() {
     refetch();
   };
 
+  // Function to clear search query
+  const clearSearchQuery = () => {
+    setSearchQuery("");
+    // Also update the URL and trigger a refetch
+    const params = new URLSearchParams();
+    if (selectedCategory !== "all") params.set("category", selectedCategory);
+    if (selectedLocation !== "전체") params.set("location", selectedLocation);
+
+    router.push(`/restaurants?${params.toString()}`);
+    refetch();
+  };
+
   // Apply filters
   const applyFilters = () => {
     setSelectedCategory(tempCategory);
@@ -353,8 +365,18 @@ export default function Restaurants() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="검색어를 입력해 주세요."
-                    className="w-full pl-4 pr-10 py-2 border rounded-full shadow-md focus:ring-2 focus:ring-primary/20"
+                    className="w-full pl-4 pr-16 py-2 border rounded-full shadow-md focus:ring-2 focus:ring-primary/20"
                   />
+                  {/* 검색어 지우기 버튼 */}
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={clearSearchQuery}
+                      className="absolute right-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
                   <button
                     type="submit"
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-primary"
@@ -384,6 +406,14 @@ export default function Restaurants() {
                     ref={dropdownRef}
                     className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border p-4 z-50"
                   >
+                    {/* 필터 모달 닫기 버튼 */}
+                    <button
+                      onClick={() => setIsFilterModalOpen(false)}
+                      className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+
                     <div className="mb-4">
                       <h3 className="text-sm font-medium mb-2">지역</h3>
                       <div className="flex flex-wrap gap-2">
