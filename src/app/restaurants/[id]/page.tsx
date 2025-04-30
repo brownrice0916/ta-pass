@@ -78,21 +78,30 @@ export default function RestaurantDetail() {
   }, [restaurant]);
 
   const checkBookmarkStatus = async () => {
-    if (!session || !id) return;
+    const currentId = id;
+    if (!currentId) return;
+
+    // localStorage 먼저 확인
+    const localBookmarks = localStorage.getItem("userBookmarks");
+    if (localBookmarks) {
+      const bookmarksArray = JSON.parse(localBookmarks);
+      if (bookmarksArray.includes(currentId)) {
+        setIsBookmarked(true);
+      }
+    }
+
+    // 로그인한 경우 서버에서 다시 확인
+    if (!session) return;
+
     try {
-      const response = await fetch(`/api/bookmarks/by-restaurant/${id}`);
+      console.log("id", currentId);
+      const response = await fetch(`/api/bookmarks/by-restaurant/${currentId}`);
       if (response.ok) {
         const data = await response.json();
-        console.log("bookmark data", data);
         setIsBookmarked(data.isBookmarked);
+        console.log("data", data);
         if (data.bookmark) {
           setBookmarkId(data.bookmark.id);
-        }
-      } else {
-        const localBookmarks = localStorage.getItem("userBookmarks");
-        if (localBookmarks) {
-          const bookmarksArray = JSON.parse(localBookmarks);
-          setIsBookmarked(bookmarksArray.includes(id));
         }
       }
     } catch (error) {
@@ -155,12 +164,9 @@ export default function RestaurantDetail() {
   };
 
   useEffect(() => {
-    if (session && id) checkBookmarkStatus();
-  }, [session, id]);
-
-  useEffect(() => {
-    if (restaurant && session && id) checkBookmarkStatus();
-  }, [restaurant, session, id]);
+    if (!session || !restaurant || !id) return;
+    checkBookmarkStatus();
+  }, [session, restaurant, id]);
 
   useEffect(() => {
     if (id) {

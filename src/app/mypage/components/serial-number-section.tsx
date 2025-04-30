@@ -447,8 +447,8 @@ const SerialNumberSection = () => {
     : "기간 없음";
   const userImage = session?.user?.image || "/avatar/default-user.png";
   const serialCardBg = isActive
-    ? "/pass/pass-bg-green.png"
-    : "/pass/pass-bg-gray.png";
+    ? "/pass/pass-bg-green_old.png"
+    : "/pass/pass-bg-gray_old.png";
 
   const [isExpandSerial, setIsExpandSerial] = useState(false);
   if (!isLoadingSerial) {
@@ -515,13 +515,14 @@ const SerialNumberSection = () => {
             )}
           </form>
         )}
-        <div className="mt-4 text-left flex items-center gap-2 absolute bottom-8 left-7">
+        <div className="mt-4 text-left flex items-center gap-3 absolute bottom-5 left-7">
           <Image
             src={userImage}
             alt="사용자 이미지"
             width={40}
             height={40}
-            className="rounded-full"
+            style={{ aspectRatio: "1 / 1" }}
+            className="rounded-full object-cover"
           />
           <div>
             <p className="text-sm">{session?.user?.name || "이름"}</p>

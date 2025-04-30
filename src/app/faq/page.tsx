@@ -29,18 +29,10 @@ export default function FAQPage() {
     };
   } = {
     tourists: {
-      title: "TA PASS",
-      subtitle: "Your Trip Ambassador,",
-      description: "Unlocking Exclusive Benefits",
-      icons: (
-        <div className="flex items-center justify-center gap-4 mb-8">
-          <ShoppingCart size={32} className="text-gray-600" />
-          <span className="text-2xl">+</span>
-          <ShoppingBag size={32} className="text-gray-600" />
-          <span className="text-2xl">=</span>
-          <Gift size={32} className="text-gray-600" />
-        </div>
-      ),
+      title: "FAQ",
+      subtitle: "자주 묻는 질문",
+      description: "처음이사라면 여기를 먼저 확인해 주세요!",
+      icons: <></>,
     },
     partners: {
       title: "TA PASS Partners",

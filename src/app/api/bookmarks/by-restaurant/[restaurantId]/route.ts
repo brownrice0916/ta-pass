@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 // 예: /api/bookmarks/by-restaurant/[restaurantId]/route.ts
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
-  const restaurantId = url.pathname.split("/")[3];
+  const restaurantId = url.pathname.split("/")[4];
 
   const session = await getServerSession(authOptions);
   if (!session?.user) {
