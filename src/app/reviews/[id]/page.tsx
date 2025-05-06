@@ -1,384 +1,417 @@
+// 수정/삭제 기능 및 이모지 포함 + 이전/다음 리뷰 이동 + 이미지 캐러셀 + 수정 시 파일 업로드 및 기존 이미지 삭제 포함
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ReviewData {
   id: string;
   content: string;
   rating: number;
   images: string[];
+  tags: string[];
   restaurantId: string;
+  userId: string;
   restaurant: {
     id: string;
     name: string;
     address: string;
   };
+  user: {
+    id: string;
+    name: string;
+    image: string;
+  };
   createdAt: string;
-  updatedAt: string;
 }
 
-export default function ReviewDetailPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const params = useParams();
-  const reviewId = params.id;
+const emojiMap: { [key: string]: string } = {
+  "완전 마음에 들었어요!": "😍",
+  친절했어요: "😊",
+  "가성비 최고였어요": "💰",
+  "찾기 쉬웠어요": "📍",
+  "진짜 로컬 느낌이에요": "✨",
+  "또 방문하고 싶어요": "🔁",
+  "혜택을 잘 받았어요": "🎁",
+  "상품 구성이 독특했어요": "🛍️",
+  "사진 찍기 좋은 곳이었어요": "📸",
+  "다른 사람에게도 추천하고 싶어요": "📢",
+};
 
-  const [reviewData, setReviewData] = useState<ReviewData | null>(null);
+const ReviewDetailPage = () => {
+  const { data: session } = useSession();
+  const params = useParams();
+  const router = useRouter();
+  const reviewId = params.id as string;
+
+  const [review, setReview] = useState<ReviewData | null>(null);
   const [content, setContent] = useState("");
   const [rating, setRating] = useState(0);
+  const [images, setImages] = useState<string[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
   const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [prevId, setPrevId] = useState<string | null>(null);
+  const [nextId, setNextId] = useState<string | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]); // 추가
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  // 리뷰 불러올 때 초기화
   useEffect(() => {
-    if (status === "authenticated" && session?.user && reviewId) {
-      setIsLoading(true);
-      console.log(`리뷰 상세 정보 요청: ${reviewId}`);
-
-      fetch(`/api/reviews/${reviewId}`)
-        .then((res) => {
-          if (!res.ok) {
-            console.error("리뷰 상세 요청 실패:", res.status, res.statusText);
-            throw new Error(`리뷰를 불러오는데 실패했습니다 (${res.status})`);
-          }
-          return res.json();
-        })
-        .then((data) => {
-          console.log("리뷰 상세 데이터:", data);
-          setReviewData(data);
-          setContent(data.content);
-          setRating(data.rating);
-          setIsLoading(false);
-        })
-        .catch((error) => {
-          setError("리뷰를 불러오는 중 오류가 발생했습니다");
-          console.error("리뷰 상세 로딩 오류:", error);
-          setIsLoading(false);
-        });
-    } else if (status === "unauthenticated") {
-      router.push("/login");
+    if (session?.user?.id) {
+      fetchReview();
     }
-  }, [reviewId, status, session, router]);
+  }, [reviewId, session?.user?.id]);
 
-  const handleUpdateReview = async () => {
-    if (isSubmitting) return;
-
-    setIsSubmitting(true);
-    setError(null);
-
+  const fetchReview = async () => {
     try {
-      const response = await fetch(`/api/reviews/${reviewId}`, {
+      const res = await fetch(`/api/reviews/${reviewId}`);
+      if (res.status === 403) {
+        setError("해당 리뷰에 접근할 수 없습니다.");
+        return;
+      }
+      if (!res.ok) throw new Error("리뷰 정보를 불러오지 못했습니다.");
+      const data = await res.json();
+      setSelectedTags(data.tags || []);
+      setReview(data);
+      setContent(data.content);
+      setRating(data.rating);
+      setImages(data.images || []);
+
+      if (!session?.user?.id) return;
+
+      const allRes = await fetch("/api/reviews/me");
+      if (allRes.ok) {
+        const allReviews = await allRes.json();
+        const sorted = allReviews.sort(
+          (a: any, b: any) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        const idx = sorted.findIndex((r: any) => r.id === reviewId);
+        if (idx >= 0) {
+          setNextId(idx > 0 ? sorted[idx - 1]?.id : null);
+          setPrevId(idx < sorted.length - 1 ? sorted[idx + 1]?.id : null);
+        } else {
+          setNextId(null);
+          setPrevId(null);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      setError("리뷰 로드 실패");
+    }
+  };
+
+  const handleUpdate = async () => {
+    try {
+      setIsSubmitting(true);
+
+      let uploadedImageUrls: string[] = [];
+      if (files.length > 0) {
+        const formData = new FormData();
+        files.forEach((file) => formData.append("files", file));
+        const res = await fetch("/api/upload?kind=reviews", {
+          method: "POST",
+          body: formData,
+        });
+        const uploaded = await res.json();
+        uploadedImageUrls = uploaded.map((img: any) => img.url);
+      }
+
+      const finalImages = [...images, ...uploadedImageUrls].slice(0, 5);
+
+      const res = await fetch(`/api/reviews/${reviewId}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content,
           rating,
+          tags: selectedTags,
+          images: finalImages,
         }),
       });
-
-      if (!response.ok) {
-        throw new Error("리뷰 업데이트에 실패했습니다");
-      }
-
-      const updatedReview = await response.json();
-      setReviewData(updatedReview);
+      if (!res.ok) throw new Error("수정 실패");
+      const updated = await res.json();
+      setReview(updated);
+      setImages(updated.images || []);
+      setFiles([]);
       setIsEditing(false);
-    } catch (error) {
-      console.error("리뷰 업데이트 오류:", error);
-      setError("리뷰 수정 중 오류가 발생했습니다");
+    } catch (err) {
+      console.error(err);
+      setError("수정 중 오류");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDeleteReview = async () => {
-    if (window.confirm("정말로 이 리뷰를 삭제하시겠습니까?")) {
-      try {
-        const response = await fetch(`/api/reviews/${reviewId}`, {
-          method: "DELETE",
-        });
-
-        if (!response.ok) {
-          throw new Error("리뷰 삭제에 실패했습니다");
-        }
-
-        router.push("/reviews");
-      } catch (error) {
-        console.error("리뷰 삭제 오류:", error);
-        setError("리뷰 삭제 중 오류가 발생했습니다");
-      }
+  const handleDelete = async () => {
+    try {
+      const confirmed = window.confirm("삭제하시겠습니까?");
+      if (!confirmed) return;
+      const res = await fetch(`/api/reviews/${reviewId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("삭제 실패");
+      router.push("/");
+    } catch (err) {
+      console.error(err);
+      setError("삭제 중 오류");
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="w-full max-w-md mx-auto bg-white min-h-screen p-4 flex items-center justify-center">
-        <p>리뷰를 불러오는 중...</p>
-      </div>
-    );
-  }
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
 
-  if (error && !reviewData) {
-    return (
-      <div className="w-full max-w-md mx-auto bg-white min-h-screen p-4 flex items-center justify-center">
-        <p className="text-red-500">{error}</p>
-      </div>
-    );
-  }
+  const navigateImage = (dir: "prev" | "next") => {
+    if (!images) return;
+    setCurrentImageIndex((prev) => {
+      const total = images.length;
+      return dir === "prev" ? (prev - 1 + total) % total : (prev + 1) % total;
+    });
+  };
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchReview();
+    }
+  }, [reviewId, session?.user?.id]);
+
+  if (error) return <div className="p-4 text-red-500">{error}</div>;
+  if (!review) return <div className="p-4">로딩 중...</div>;
+
+  const isMine = session?.user?.id?.toString() === review.userId.toString();
 
   return (
-    <div className="w-full max-w-md mx-auto bg-white min-h-screen pb-16">
-      {/* 리뷰 내용 */}
-      <div className="p-4">
-        {/* 음식점 정보 */}
-        <div className="mb-4">
-          <h2 className="text-xl font-bold">
-            {reviewData?.restaurant?.name || "음식점"}
-          </h2>
-          <p className="text-sm text-gray-500">
-            {reviewData?.restaurant?.address || ""}
-          </p>
-          <p className="text-sm text-gray-500">
-            작성일:{" "}
-            {new Date(reviewData?.createdAt || "").toLocaleDateString("ko-KR")}
-          </p>
-        </div>
+    <div className="bg-white rounded-lg p-4 max-w-md mx-auto mb-20">
+      <h1 className="text-lg font-semibold mb-2">{review.restaurant.name}</h1>
+      <p className="text-sm text-gray-500 mb-4">{review.restaurant.address}</p>
 
-        {/* 이미지 영역 */}
-        {reviewData?.images && reviewData.images.length > 0 && (
-          <div className="mb-4">
-            <div className="h-64 bg-gray-200 relative rounded overflow-hidden">
-              <Image
-                src={reviewData.images[0]}
-                alt="리뷰 이미지"
-                fill
-                className="object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src =
-                    "https://via.placeholder.com/400x300?text=이미지+로드+실패";
-                }}
-              />
-            </div>
-            {reviewData.images.length > 1 && (
-              <div className="flex mt-2 space-x-2 overflow-x-auto">
-                {reviewData.images.slice(1).map((image, index) => (
-                  <div
-                    key={index}
-                    className="w-16 h-16 bg-gray-200 relative flex-shrink-0 rounded overflow-hidden"
-                  >
-                    <Image
-                      src={image}
-                      alt={`리뷰 이미지 ${index + 2}`}
-                      fill
-                      className="object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = "https://via.placeholder.com/64?text=오류";
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* 별점 표시 */}
-        <div className="mb-4">
-          <div className="flex">
-            {isEditing ? (
-              // 수정 모드일 때 별점 선택
-              <div>
-                <p className="text-sm font-medium mb-1">평점</p>
-                <div className="flex">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setRating(star)}
-                      className="text-2xl focus:outline-none"
-                    >
-                      {star <= rating ? "★" : "☆"}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              // 읽기 모드일 때 별점 표시
-              <div>
-                <p className="text-sm font-medium mb-1">평점</p>
-                {reviewData && (
-                  <div className="flex text-2xl text-yellow-500">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <span key={star}>
-                        {star <= reviewData.rating ? "★" : "☆"}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* 리뷰 내용 */}
-        {isEditing ? (
-          // 수정 모드
-          <div className="mb-4">
-            <label htmlFor="content" className="block text-sm font-medium mb-1">
-              리뷰 내용
-            </label>
-            <textarea
-              id="content"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="w-full border rounded p-2 min-h-[100px]"
-              placeholder="리뷰 내용을 입력하세요"
-            />
-          </div>
-        ) : (
-          // 읽기 모드
-          <div className="mb-4">
-            <p className="text-sm font-medium mb-1">리뷰 내용</p>
-            <p className="p-2 bg-gray-50 rounded min-h-[100px]">
-              {reviewData?.content}
-            </p>
-          </div>
-        )}
-
-        {error && <p className="text-red-500 mb-4">{error}</p>}
-
-        {/* 수정/삭제 버튼 */}
-        <div className="mt-6 flex space-x-2">
-          {isEditing ? (
+      {images.length > 0 && (
+        <div className="relative mb-4 h-60">
+          <Image
+            src={images[currentImageIndex]}
+            alt="리뷰 이미지"
+            fill
+            className="object-cover rounded"
+          />
+          {images.length > 1 && (
             <>
               <button
-                onClick={() => setIsEditing(false)}
-                className="w-1/2 py-2 bg-gray-200 rounded"
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 p-1 rounded-full"
+                onClick={() => navigateImage("prev")}
               >
-                취소
+                <ChevronLeft className="text-white" />
               </button>
               <button
-                onClick={handleUpdateReview}
-                disabled={isSubmitting}
-                className="w-1/2 py-2 bg-blue-600 text-white rounded"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 p-1 rounded-full"
+                onClick={() => navigateImage("next")}
               >
-                {isSubmitting ? "저장 중..." : "저장하기"}
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={handleDeleteReview}
-                className="w-1/2 py-2 bg-red-50 text-red-500 rounded"
-              >
-                삭제하기
-              </button>
-              <button
-                onClick={() => setIsEditing(true)}
-                className="w-1/2 py-2 bg-blue-600 text-white rounded"
-              >
-                수정하기
+                <ChevronRight className="text-white" />
               </button>
             </>
           )}
         </div>
-      </div>
+      )}
+      {isEditing ? (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {Object.keys(emojiMap).map((tag) => {
+            const removeEmoji = (str: string) =>
+              str.replace(/^[^\p{L}\p{N}]+/u, "").trim();
 
-      {/* 하단 네비게이션 */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-between p-4">
-        <Link href="#" className="flex flex-col items-center text-gray-500">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+            const isSelected = selectedTags.some(
+              (selected) => removeEmoji(selected) === tag
+            );
+            return (
+              <button
+                key={tag}
+                type="button"
+                style={{
+                  padding: "0.25rem 0.75rem",
+                  borderRadius: "9999px",
+                  fontSize: "0.875rem",
+                  border: "1px solid",
+                  borderColor: isSelected ? "#60a5fa" : "#e5e7eb",
+                  backgroundColor: isSelected ? "#dbeafe" : "white",
+                  color: isSelected ? "#2563eb" : "#4b5563",
+                  transition: "all 0.2s",
+                }}
+                onClick={() =>
+                  setSelectedTags((prev) =>
+                    prev.includes(tag)
+                      ? prev.filter((t) => t !== tag)
+                      : [...prev, tag]
+                  )
+                }
+              >
+                {emojiMap[tag]} {tag}
+              </button>
+            );
+          })}
+        </div>
+      ) : selectedTags.length > 0 ? (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {selectedTags.map((tag) => (
+            <span
+              key={tag}
+              style={{
+                backgroundColor: "#f3f4f6",
+                color: "#374151",
+                padding: "0.25rem 0.75rem",
+                borderRadius: "9999px",
+                fontSize: "0.875rem",
+              }}
+            >
+              {emojiMap[tag]} {tag}
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      {isEditing ? (
+        <>
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            className="w-full p-2 border rounded mb-2"
+          />
+
+          <div className="grid grid-cols-3 gap-2 mb-2">
+            {images.map((img, idx) => (
+              <div key={idx} className="relative aspect-square">
+                <img
+                  src={img}
+                  className="w-full h-full object-cover rounded"
+                  alt={`existing-${idx}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeImage(idx)}
+                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            ref={fileInputRef}
+            onChange={(e) =>
+              setFiles((prev) =>
+                [...prev, ...Array.from(e.target.files || [])].slice(
+                  0,
+                  5 - images.length
+                )
+              )
+            }
+            className="mb-2 hidden"
+          />
+
+          {images.length + files.length < 5 && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              className="mb-2 w-full"
+            >
+              사진 추가하기
+            </Button>
+          )}
+
+          <div className="grid grid-cols-3 gap-2 mb-2">
+            {files.map((file, index) => (
+              <div key={index} className="relative aspect-square">
+                <img
+                  src={URL.createObjectURL(file)}
+                  alt={`preview-${index}`}
+                  className="w-full h-full object-cover rounded"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFiles((prev) => prev.filter((_, i) => i !== index))
+                  }
+                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={handleUpdate}
+            disabled={isSubmitting}
+            className="w-full py-2 bg-blue-600 text-white rounded"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-        </Link>
-        <Link href="#" className="flex flex-col items-center text-gray-500">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+            저장
+          </button>
+        </>
+      ) : (
+        <p className="mb-4 whitespace-pre-line">{review.content}</p>
+      )}
+
+      {isMine && !isEditing && (
+        <div className="flex gap-2">
+          <button
+            onClick={() => setIsEditing(true)}
+            className="w-full py-2 bg-gray-200 rounded"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-            />
-          </svg>
-        </Link>
-        <Link href="/" className="flex flex-col items-center text-gray-500">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+            수정
+          </button>
+          <button
+            onClick={handleDelete}
+            className="w-full py-2 bg-red-500 text-white rounded"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-            />
-          </svg>
-        </Link>
-        <Link href="#" className="flex flex-col items-center text-gray-500">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-            />
-          </svg>
-        </Link>
-        <Link
-          href="/mypage"
-          className="flex flex-col items-center text-gray-500"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-            />
-          </svg>
-        </Link>
-      </div>
+            삭제
+          </button>
+        </div>
+      )}
+
+      {(prevId || nextId) && (
+        <div className="flex justify-between mt-6 text-sm text-blue-600">
+          {prevId ? (
+            <button
+              onClick={() => router.push(`/reviews/${prevId}`)}
+              className="flex items-center gap-1"
+            >
+              <ChevronLeft size={16} /> 이전 리뷰
+            </button>
+          ) : (
+            <div />
+          )}
+          {nextId ? (
+            <button
+              onClick={() => router.push(`/reviews/${nextId}`)}
+              className="flex items-center gap-1"
+            >
+              다음 리뷰 <ChevronRight size={16} />
+            </button>
+          ) : (
+            <div />
+          )}
+        </div>
+      )}
+      {isSubmitting && (
+        <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-50">
+          <span className="text-blue-600 font-semibold text-sm animate-pulse">
+            저장 중입니다...
+          </span>
+        </div>
+      )}
+      {error && <p className="text-red-500 mt-4">{error}</p>}
     </div>
   );
-}
+};
+
+export default ReviewDetailPage;

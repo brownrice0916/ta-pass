@@ -136,19 +136,45 @@ export function ReviewDetailDialog({
   open,
   onClose,
   restaurant,
+  reviews,
 }: {
   review: Review | null;
   open: boolean;
   onClose: () => void;
   restaurant: Restaurant;
+  reviews: Review[];
 }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
+  const [prevReview, setPrevReview] = useState<Review | null>(null);
+  const [nextReview, setNextReview] = useState<Review | null>(null);
   const { data: session } = useSession();
+
+  const emojiMap: { [key: string]: string } = {
+    "완전 마음에 들었어요!": "😍",
+    친절했어요: "😊",
+    "가성비 최고였어요": "💰",
+    "찾기 쉬웠어요": "📍",
+    "진짜 로컬 느낌이에요": "✨",
+    "또 방문하고 싶어요": "🔁",
+    "혜택을 잘 받았어요": "🎁",
+    "상품 구성이 독특했어요": "🛍️",
+    "사진 찍기 좋은 곳이었어요": "📸",
+    "다른 사람에게도 추천하고 싶어요": "📢",
+  };
 
   const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${
     session?.user?.email || "default"
   }`;
+
+  useEffect(() => {
+    if (review && reviews.length > 0) {
+      console.log(reviews);
+      const idx = reviews.findIndex((r) => r.id === review.id);
+      setPrevReview(idx < reviews.length - 1 ? reviews[idx + 1] : null);
+      setNextReview(idx > 0 ? reviews[idx - 1] : null);
+    }
+  }, [review, reviews]);
 
   // 슬라이드 변경 핸들러
   const handleSlideChange = useCallback(() => {
@@ -169,10 +195,12 @@ export function ReviewDetailDialog({
     };
   }, [carouselApi, handleSlideChange]);
 
+  // 이미지가 없을 경우 상단 영역 확장
+
   if (!review) return null;
 
-  // 이미지가 없을 경우 상단 영역 확장
-  const hasImages = review.images.length > 0;
+  const { images = [] } = review;
+  const hasImages = images.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={() => onClose()}>
@@ -287,6 +315,70 @@ export function ReviewDetailDialog({
             <span className="ml-2 text-xs text-gray-500">Likes</span>
           </div>
         </div>
+        <div className="flex flex-wrap gap-2 mt-2 px-4">
+          {review.tags?.map((tag) => (
+            <span
+              key={tag}
+              style={{
+                backgroundColor: "#f3f4f6",
+                color: "#374151",
+                padding: "0.25rem 0.75rem",
+                borderRadius: "9999px",
+                fontSize: "0.75rem",
+              }}
+            >
+              {emojiMap[tag]} {tag}
+            </span>
+          ))}
+        </div>
+
+        {(prevReview || nextReview) && (
+          <div className="flex justify-between items-center mt-4 px-4 pb-4 text-sm text-blue-600">
+            {prevReview ? (
+              <button
+                onClick={() => {
+                  setCurrentSlide(0);
+                  setPrevReview(null);
+                  setNextReview(null);
+                  onClose();
+                  setTimeout(() => {
+                    // 딜레이 후 열기
+                    document.dispatchEvent(
+                      new CustomEvent("open-review-dialog", {
+                        detail: prevReview,
+                      })
+                    );
+                  }, 100);
+                }}
+              >
+                ← 이전 리뷰
+              </button>
+            ) : (
+              <div />
+            )}
+            {nextReview ? (
+              <button
+                onClick={() => {
+                  setCurrentSlide(0);
+                  setPrevReview(null);
+                  setNextReview(null);
+                  onClose();
+                  setTimeout(() => {
+                    document.dispatchEvent(
+                      new CustomEvent("open-review-dialog", {
+                        detail: nextReview,
+                      })
+                    );
+                  }, 100);
+                }}
+              >
+                다음 리뷰 →
+              </button>
+            ) : (
+              <div />
+            )}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -311,6 +403,13 @@ export default function ReviewSection({
     onReviewsChange();
     // TODO: 리뷰 목록 새로고침 로직 추가
   };
+
+  useEffect(() => {
+    const handler = (e: any) => setSelectedReview(e.detail);
+    document.addEventListener("open-review-dialog", handler);
+    return () => document.removeEventListener("open-review-dialog", handler);
+  }, []);
+
   return (
     <div className="p-1">
       <div className="flex justify-between items-center mb-4">
@@ -381,6 +480,7 @@ export default function ReviewSection({
 
       {/* 리뷰 상세 Dialog */}
       <ReviewDetailDialog
+        reviews={reviews}
         restaurant={restaurant}
         review={selectedReview}
         open={!!selectedReview}

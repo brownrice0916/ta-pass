@@ -110,53 +110,59 @@ const ReviewsPage = () => {
           <div className=" text-center text-red-500">{error}</div>
         ) : reviews && reviews.length > 0 ? (
           <div>
-            {reviews.map((review) => (
-              <div
-                key={review.id}
-                className="p-2 border-b cursor-pointer"
-                onClick={() => handleReviewClick(review.id)}
-              >
-                <div className="flex">
-                  <div className="w-20 h-20 bg-gray-200 rounded mr-3 overflow-hidden flex-shrink-0">
-                    {review.images && review.images.length > 0 ? (
-                      <Image
-                        src={review.images[0]}
-                        alt={review.restaurant?.name || "음식점"}
-                        width={80}
-                        height={80}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src =
-                            "https://via.placeholder.com/80?text=No+Image";
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                        이미지 없음
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium">
-                      {review.restaurant?.name || "장소 정보 없음"}
-                    </h4>
-                    <p className="text-sm text-gray-600 line-clamp-2 mt-1">
-                      {review.content}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {new Date(review.createdAt)
-                        .toLocaleDateString("ko-KR", {
-                          year: "numeric",
-                          month: "2-digit",
-                          day: "2-digit",
-                        })
-                        .replace(/\./g, ".")}
-                    </p>
+            {reviews
+              .sort(
+                (a: any, b: any) =>
+                  new Date(b.createdAt).getTime() -
+                  new Date(a.createdAt).getTime()
+              )
+              .map((review) => (
+                <div
+                  key={review.id}
+                  className="p-2 border-b cursor-pointer"
+                  onClick={() => handleReviewClick(review.id)}
+                >
+                  <div className="flex">
+                    <div className="w-20 h-20 bg-gray-200 rounded mr-3 overflow-hidden flex-shrink-0">
+                      {review.images && review.images.length > 0 ? (
+                        <Image
+                          src={review.images[0]}
+                          alt={review.restaurant?.name || "음식점"}
+                          width={80}
+                          height={80}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src =
+                              "https://via.placeholder.com/80?text=No+Image";
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                          이미지 없음
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium">
+                        {review.restaurant?.name || "장소 정보 없음"}
+                      </h4>
+                      <p className="text-sm text-gray-600 line-clamp-2 mt-1">
+                        {review.content}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date(review.createdAt)
+                          .toLocaleDateString("ko-KR", {
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                          })
+                          .replace(/\./g, ".")}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         ) : (
           <div className="p-4 text-center text-gray-500">
