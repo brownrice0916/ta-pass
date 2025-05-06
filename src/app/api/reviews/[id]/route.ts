@@ -2,18 +2,18 @@
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest) {
+  const url = new URL(request.url);
+  const id = url.pathname.split("/")[3]; // Extract the `id` from the URL
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.id)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const review = await prisma.review.findUnique({
-    where: { id: params.id },
+    where: { id: id },
     include: {
       restaurant: true,
       user: { select: { id: true, name: true, image: true } },
@@ -30,16 +30,15 @@ export async function GET(
   return NextResponse.json({ ...review, userId: review.user.id }); // userId 추가로 전달
 }
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest) {
+  const url = new URL(request.url);
+  const id = url.pathname.split("/")[3];
   const session = await getServerSession(authOptions);
   if (!session?.user?.id)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const review = await prisma.review.findUnique({ where: { id: params.id } });
+  const review = await prisma.review.findUnique({ where: { id: id } });
 
   if (!review)
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -49,7 +48,7 @@ export async function PUT(
   }
 
   const updated = await prisma.review.update({
-    where: { id: params.id },
+    where: { id: id },
     data: {
       content: body.content,
       rating: body.rating,
@@ -66,15 +65,14 @@ export async function PUT(
   return NextResponse.json({ ...updated, userId: updated.user.id });
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request) {
+  const url = new URL(request.url);
+  const id = url.pathname.split("/")[3];
   const session = await getServerSession(authOptions);
   if (!session?.user?.id)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const review = await prisma.review.findUnique({ where: { id: params.id } });
+  const review = await prisma.review.findUnique({ where: { id: id } });
 
   if (!review)
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -83,7 +81,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  await prisma.review.delete({ where: { id: params.id } });
+  await prisma.review.delete({ where: { id: id } });
 
   return NextResponse.json({ success: true });
 }

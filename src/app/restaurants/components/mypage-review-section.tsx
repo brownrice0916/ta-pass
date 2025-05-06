@@ -64,6 +64,7 @@ export default function MyPageReviewSection({
       </div>
 
       <ReviewDetailDialog
+        reviews={reviews}
         restaurant={selectedReview?.restaurant as Restaurant}
         review={selectedReview}
         open={!!selectedReview}
