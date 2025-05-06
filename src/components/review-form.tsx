@@ -2,12 +2,15 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, X } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 interface ReviewFormProps {
   restaurantId: string;
   onReviewAdded: () => void;
   onClose?: () => void;
 }
+
+// 이모지 매핑 객체 생성
 
 export function ReviewForm({
   restaurantId,
@@ -19,8 +22,10 @@ export function ReviewForm({
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [images, setImages] = useState<File[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  //const { data: session } = useSession();
+  const { data: session } = useSession();
+
   const handlePrevStep = () => {
     if (step > 1) {
       setStep(step - 1);
@@ -40,12 +45,26 @@ export function ReviewForm({
   };
 
   const handleSubmit = async () => {
+    // Skip submission if no tags selected
+    if (selectedTags.length === 0) {
+      return;
+    }
+
     setIsSubmitting(true);
 
     const formData = new FormData();
     formData.append("restaurantId", restaurantId);
     formData.append("rating", rating.toString());
-    formData.append("content", content);
+    // Content is now optional from the screenshot
+    if (content.trim()) {
+      formData.append("content", content);
+    } else {
+      formData.append("content", ""); // Send empty string if no content
+    }
+
+    // Add selected tags as JSON string
+    formData.append("tags", JSON.stringify(selectedTags));
+
     images.forEach((image) => {
       formData.append("images", image);
     });
@@ -61,8 +80,17 @@ export function ReviewForm({
       setContent("");
       setRating(5);
       setImages([]);
-      onReviewAdded();
-      onClose?.();
+      setSelectedTags([]);
+      setStep(4); // Show success screen
+
+      // Call onReviewAdded after a delay to update the parent component
+      setTimeout(() => {
+        onReviewAdded();
+        // Only close after showing success message for a moment
+        setTimeout(() => {
+          onClose?.();
+        }, 2000);
+      }, 500);
     } catch (error) {
       console.error("Error submitting review:", error);
     } finally {
@@ -72,16 +100,27 @@ export function ReviewForm({
 
   const handleNextStep = () => {
     if (step === 3) {
-      // images.length > 0 조건 제거
       handleSubmit();
       return;
     }
     setStep(step + 1);
   };
 
-  // if (!session) {
-  //   return null;
-  // }
+  if (!session?.user) {
+    return (
+      <div className="bg-white rounded-lg p-6 text-center">
+        <h2 className="text-lg font-semibold mb-4">
+          리뷰를 작성하려면 로그인이 필요합니다
+        </h2>
+        <Button
+          onClick={() => (window.location.href = "/api/auth/signin")}
+          className="w-full"
+        >
+          로그인하기
+        </Button>
+      </div>
+    );
+  }
 
   const renderStepContent = () => {
     switch (step) {
@@ -98,6 +137,7 @@ export function ReviewForm({
                     value <= rating ? "text-yellow-500" : "text-gray-300"
                   }`}
                   onClick={() => setRating(value)}
+                  aria-label={`별점 ${value}점`}
                 >
                   ★
                 </button>
@@ -111,25 +151,66 @@ export function ReviewForm({
 
       case 2:
         return (
-          <div className="flex flex-col p-6">
-            <h2 className="text-lg font-semibold mb-4">
-              방문후기를 작성해주세요.
-            </h2>
-            <Textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={6}
-              placeholder="다른 고객들에게 도움이 되도록 자세한 후기를 남겨주세요 :)"
-              className="mb-4 resize-none"
-              required
-            />
-            <div className="text-right text-sm text-gray-500 mb-4">
-              {content.length}/3000
+          <div className="flex flex-col p-6 text-center">
+            <h2 className="text-lg font-semibold mb-4">어떤 점이 좋았나요?</h2>
+            <div className="text-sm text-gray-600 mb-6 center ">
+              더 많은 여행자에게 도움이 될 수 있도록, <br />
+              좋았던 점을 1개 이상 선택해 주세요.
             </div>
+
+            <div className="flex flex-wrap gap-2 mb-10 px-5 ">
+              {[
+                { text: "😍 완전 마음에 들었어요!" },
+                { text: "😊 친절했어요" },
+                { text: "💰 가성비 최고였어요" },
+                { text: "📍 찾기 쉬웠어요" },
+                { text: "✨ 진짜 로컬 느낌이에요" },
+                { text: "🔁 또 방문하고 싶어요" },
+                { text: "🎁 혜택을 잘 받았어요" },
+                { text: "🛍️ 상품 구성이 독특했어요" },
+                { text: "📸 사진 찍기 좋은 곳이었어요" },
+                { text: "📢 다른 사람에게도 추천하고 싶어요" },
+              ].map((tag) => {
+                // 글자수에 따라 레이아웃 결정 (이모지 제외하고 계산)
+                const textWithoutEmoji = tag.text
+                  .replace(/\p{Emoji}/gu, "")
+                  .trim();
+                const isLongText = textWithoutEmoji.length > 14;
+
+                return (
+                  <button
+                    key={tag.text}
+                    type="button"
+                    style={{
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      borderColor: selectedTags.includes(tag.text)
+                        ? "#60a5fa"
+                        : "#e5e7eb",
+                    }}
+                    className={`py-2 px-3 rounded-full border text-sm ${
+                      selectedTags.includes(tag.text)
+                        ? "bg-blue-50 border-blue-400 text-blue-600"
+                        : "border-gray-200 text-gray-700"
+                    } ${isLongText ? "" : ""}`}
+                    onClick={() => {
+                      setSelectedTags((prev) =>
+                        prev.includes(tag.text)
+                          ? prev.filter((t) => t !== tag.text)
+                          : [...prev, tag.text]
+                      );
+                    }}
+                  >
+                    {tag.text}
+                  </button>
+                );
+              })}
+            </div>
+
             <Button
               className="w-full"
               onClick={handleNextStep}
-              disabled={!content}
+              disabled={selectedTags.length === 0}
             >
               다음
             </Button>
@@ -140,8 +221,26 @@ export function ReviewForm({
         return (
           <div className="flex flex-col p-6">
             <h2 className="text-lg font-semibold mb-4">
-              방문하신 사진이 있다면 공유해주세요 :)
+              한 줄 리뷰를 작성해 주세요 (선택사항)
             </h2>
+
+            <Textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={6}
+              placeholder="여러분의 소중한 경험을 공유해주세요"
+              className="mb-4 resize-none"
+              style={{
+                borderWidth: "1px",
+                borderStyle: "solid",
+                borderColor: "#e5e7eb",
+              }}
+            />
+            <div className="text-right text-sm text-gray-500 mb-4">
+              {content.length}/3000
+            </div>
+
+            <h2 className="text-lg font-semibold mb-4">사진 추가 (선택사항)</h2>
             <input
               type="file"
               accept="image/*"
@@ -193,7 +292,7 @@ export function ReviewForm({
                   </div>
                 )}
               </div>
-              <p className="text-sm text-gray-500 text-center">
+              <p className="text-sm text-gray-500 text-right">
                 최대 5장까지 업로드 가능합니다
               </p>
             </div>
@@ -201,7 +300,7 @@ export function ReviewForm({
             <Button
               className="w-full"
               onClick={handleSubmit}
-              disabled={isSubmitting} // images.length 조건 제거
+              disabled={isSubmitting}
             >
               {isSubmitting ? "작성 중..." : "작성 완료"}
             </Button>
@@ -236,11 +335,11 @@ export function ReviewForm({
       </div>
 
       {step === 4 ? (
-        <div className="fixed inset-0 flex items-center justify-center bg-white">
+        <div className="p-10 flex items-center justify-center">
           <div className="text-center space-y-4">
-            <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <div className="w-24 h-24 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
               <svg
-                className="w-12 h-12 text-primary"
+                className="w-12 h-12 text-blue-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -253,7 +352,9 @@ export function ReviewForm({
                 />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-primary">리뷰 작성 완료!</h2>
+            <h2 className="text-2xl font-bold text-blue-600">
+              리뷰 작성 완료!
+            </h2>
             <p className="text-gray-500">소중한 리뷰 감사합니다 :)</p>
           </div>
         </div>

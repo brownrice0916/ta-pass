@@ -21,6 +21,7 @@ import { Restaurant } from "@prisma/client";
 import { Review } from "../[id]/page";
 import { ReviewForm } from "@/components/review-form";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 // interface Review {
 //   id: string;
@@ -320,7 +321,7 @@ export default function ReviewSection({
             아직 등록된 리뷰가 없습니다
           </p>
         )}
-        <button
+        <div
           onClick={() => {
             if (!session) {
               if (confirm("로그인이 필요합니다. 로그인하시겠습니까?")) {
@@ -330,11 +331,16 @@ export default function ReviewSection({
               setIsReviewFormOpen(true);
             }
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors"
         >
-          <Plus className="h-4 w-4" />
-          리뷰 작성
-        </button>
+          {/* <Plus className="h-4 w-4" /> */}
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-xs border-blue-500 text-blue-600"
+          >
+            + 리뷰 작성
+          </Button>
+        </div>
       </div>
 
       {reviews.length > 0 ? (

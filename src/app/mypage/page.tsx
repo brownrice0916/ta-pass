@@ -170,6 +170,7 @@ const MyPage = () => {
             )}
           </div>
         </div> */}
+        
         {/* 시리얼 넘버 섹션 */}
         <SerialNumberSection />
 
