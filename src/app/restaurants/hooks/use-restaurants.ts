@@ -17,7 +17,10 @@ interface RestaurantPage {
 export function useRestaurants(
   latitude: number,
   longitude: number,
-  searchQuery?: string // 검색어 파라미터 추가
+  searchQuery?: string,
+  mainCategory?: string,
+  subCategory?: string,
+  region?: string
 ) {
   const fetchRestaurants = useCallback(
     async ({ pageParam = 1 }) => {
@@ -29,9 +32,17 @@ export function useRestaurants(
         limit: ITEMS_PER_PAGE.toString(),
       });
 
-      // 검색어가 있는 경우에만 추가
       if (searchQuery) {
         searchParams.append("q", searchQuery);
+      }
+      if (mainCategory && mainCategory !== "전체") {
+        searchParams.append("category", mainCategory);
+      }
+      if (subCategory && subCategory !== "전체") {
+        searchParams.append("subCategory", subCategory);
+      }
+      if (region && region !== "지역 전체") {
+        searchParams.append("region", region);
       }
 
       const response = await fetch(
@@ -40,11 +51,19 @@ export function useRestaurants(
       if (!response.ok) throw new Error("Failed to fetch restaurants");
       return response.json() as Promise<RestaurantPage>;
     },
-    [latitude, longitude, searchQuery]
+    [latitude, longitude, searchQuery, mainCategory, subCategory, region]
   );
 
   return useInfiniteQuery({
-    queryKey: ["restaurants", latitude, longitude, searchQuery] as const,
+    queryKey: [
+      "restaurants",
+      latitude,
+      longitude,
+      searchQuery,
+      mainCategory,
+      subCategory,
+      region,
+    ] as const,
     queryFn: fetchRestaurants,
     getNextPageParam: (lastPage, allPages) =>
       lastPage.metadata.hasMore ? allPages.length + 1 : undefined,

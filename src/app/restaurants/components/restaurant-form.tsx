@@ -47,6 +47,7 @@ const formSchema = z.object({
   addressDetail: z.string().optional(),
   description: z.string().optional(),
   specialOfferText: z.string().optional(),
+  specialOfferTextDetail: z.string().optional(),
   about: z.string().optional(),
   rating: z.number().min(0).max(5).optional(),
   specialOfferType: z
@@ -143,6 +144,7 @@ export default function RestaurantForm({
       rating: initialData?.rating ?? 0,
       specialOfferType: initialData?.specialOfferType ?? [],
       specialOfferText: initialData?.specialOfferText ?? "",
+      specialOfferTextDetail: initialData?.specialOfferTextDetail ?? "",
       images: initialData?.images ?? [],
       languages: initialData?.languages ?? ["ko"],
       socialLinks: initialData?.socialLinks ?? [],
@@ -782,6 +784,25 @@ export default function RestaurantForm({
                     <FormControl>
                       <Input
                         {...field}
+                        placeholder={
+                          "예: 오전 11시까지 방문 시 전 메뉴 30% 할인혜택"
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={control}
+                name="specialOfferTextDetail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>혜택 안내</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        className="h-[500px] text-sm"
                         placeholder={
                           "예: 오전 11시까지 방문 시 전 메뉴 30% 할인혜택"
                         }

@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
-import { put } from "@vercel/blob";
 
-// GET /api/restaurants
-// GET /api/restaurants
+// GET /api/category
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
+
+  // 기본 필터링 매개변수
   const lat = parseFloat(searchParams.get("latitude") || "0");
   const lng = parseFloat(searchParams.get("longitude") || "0");
   const query = searchParams.get("q");
@@ -14,23 +14,35 @@ export async function GET(request: Request) {
   const limit = parseInt(searchParams.get("limit") || "10");
   const skip = (page - 1) * limit;
 
+  // 카테고리 필터링 매개변수
   const category = searchParams.get("category");
   const subCategory = searchParams.get("subCategory");
   const region = searchParams.get("region");
 
+  // 지도 경계값 (사용하는 경우)
   const neLat = parseFloat(searchParams.get("neLat") || "0");
   const neLng = parseFloat(searchParams.get("neLng") || "0");
   const swLat = parseFloat(searchParams.get("swLat") || "0");
   const swLng = parseFloat(searchParams.get("swLng") || "0");
 
+  console.log("Category API Parameters:", {
+    category,
+    subCategory,
+    region,
+    query,
+    page,
+    limit,
+  });
+
   try {
+    // SQL 필터 구성
     const subCategoryFilter =
-      subCategory && subCategory !== "전체"
+      subCategory && subCategory !== "all"
         ? Prisma.sql`AND "subCategory" = ${subCategory}`
         : Prisma.sql``;
 
     const categoryFilter =
-      category && category !== "전체"
+      category && category !== ""
         ? Prisma.sql`AND "category" = ${category}`
         : Prisma.sql``;
 
@@ -39,8 +51,7 @@ export async function GET(request: Request) {
         ? Prisma.sql`AND (name ILIKE ${`%${query}%`} OR "subCategory" ILIKE ${`%${query}%`})`
         : Prisma.sql``;
 
-    // 수정된 지역 필터: region1, region2, region3 중 어느 하나라도
-    // 지정된 region을 포함하는 경우 결과에 포함
+    // 지역 필터: region1, region2, region3 또는 주소에 지역명 포함
     const regionFilter =
       region && region !== "지역 전체"
         ? Prisma.sql`AND (
@@ -55,6 +66,7 @@ export async function GET(request: Request) {
     let totalCount;
 
     if (neLat && neLng && swLat && swLng) {
+      // 지도 경계 내의 장소 검색 (경계값이 제공된 경우)
       restaurants = await prisma.$queryRaw`
         SELECT *,
           (6371 * acos(
@@ -78,8 +90,8 @@ export async function GET(request: Request) {
         where: {
           latitude: { gte: swLat, lte: neLat },
           longitude: { gte: swLng, lte: neLng },
-          ...(category && category !== "전체" ? { category } : {}),
-          ...(subCategory && subCategory !== "전체" ? { subCategory } : {}),
+          ...(category ? { category } : {}),
+          ...(subCategory && subCategory !== "all" ? { subCategory } : {}),
           ...(region && region !== "지역 전체"
             ? {
                 OR: [
@@ -101,6 +113,7 @@ export async function GET(request: Request) {
         },
       });
     } else {
+      // 일반 검색 (경계값 없는 경우)
       restaurants = await prisma.$queryRaw`
         SELECT *,
           (6371 * acos(
@@ -121,8 +134,8 @@ export async function GET(request: Request) {
 
       totalCount = await prisma.restaurant.count({
         where: {
-          ...(category && category !== "전체" ? { category } : {}),
-          ...(subCategory && subCategory !== "전체" ? { subCategory } : {}),
+          ...(category ? { category } : {}),
+          ...(subCategory && subCategory !== "all" ? { subCategory } : {}),
           ...(region && region !== "지역 전체"
             ? {
                 OR: [
@@ -145,6 +158,7 @@ export async function GET(request: Request) {
       });
     }
 
+    // 각 식당에 대한 리뷰 수 가져오기
     const restaurantIds = restaurants.map((restaurant) => restaurant.id);
     const reviewCounts = await prisma.review.groupBy({
       by: ["restaurantId"],
@@ -152,6 +166,7 @@ export async function GET(request: Request) {
       where: { restaurantId: { in: restaurantIds } },
     });
 
+    // 최종 결과에 리뷰 수 포함
     restaurants = restaurants.map((restaurant) => {
       const reviewCount = reviewCounts.find(
         (count) => count.restaurantId === restaurant.id
@@ -159,6 +174,7 @@ export async function GET(request: Request) {
       return { ...restaurant, reviewCount: reviewCount?._count?.id || 0 };
     });
 
+    // 응답 반환
     return NextResponse.json({
       restaurants,
       metadata: {
@@ -169,66 +185,9 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Error fetching restaurants:", error);
+    console.error("Error fetching category data:", error);
     return NextResponse.json(
-      { error: "Failed to fetch restaurants" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function POST(request: Request) {
-  try {
-    const formData = await request.formData();
-    const placeDataStr = formData.get("data") as string;
-    const imageFiles = formData.getAll("images") as File[];
-
-    if (!placeDataStr) {
-      return NextResponse.json(
-        { error: "No place data provided" },
-        { status: 400 }
-      );
-    }
-
-    const placeData = JSON.parse(placeDataStr);
-
-    // 기존 placeData에서 region 정보를 직접 받도록 수정
-    const { region1, region2, region3, region4 } = placeData;
-
-    // Upload images
-    const imageUrls = await Promise.all(
-      imageFiles.map(async (file) => {
-        const filename = `${Date.now()}_${file.name.replace(
-          /[^a-zA-Z0-9.]/g,
-          ""
-        )}`;
-        const blob = await put(`restaurants/${filename}`, file, {
-          access: "public",
-        });
-        return blob.url;
-      })
-    );
-
-    // Create restaurant with region information
-    const restaurant = await prisma.restaurant.create({
-      data: {
-        ...placeData,
-        region1,
-        region2,
-        region3,
-        region4,
-        images: imageUrls,
-        languages: placeData.languages || [],
-        socialLinks: placeData.socialLinks || [],
-        tags: [...(placeData.tags || []), region1, region2, region3], // 지역 정보를 태그에도 추가
-      },
-    });
-
-    return NextResponse.json(restaurant);
-  } catch (error) {
-    console.error("Error creating restaurant:", error);
-    return NextResponse.json(
-      { error: "Failed to create restaurant" },
+      { error: "Failed to fetch category data" },
       { status: 500 }
     );
   }

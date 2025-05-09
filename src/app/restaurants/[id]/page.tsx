@@ -556,17 +556,8 @@ export default function RestaurantDetail() {
           </p>
           <p className="flex">
             <span className="mr-2">🕒 </span>
-            <span>
-              월 00:00 - 24:00 <br />
-              화 00:00 - 24:00 <br />
-              수 00:00 - 24:00 <br />
-              <br />
-              브레이크타임 <br />
-              15:00 - 17:00
-              <br />
-              <br />
-              임시데이터입니다.
-            </span>
+
+            {restaurant.openingHoursText || "영업 시간 정보 없음"}
           </p>
         </div>
       </div>
@@ -652,10 +643,10 @@ export default function RestaurantDetail() {
                   >
                     <div
                       className="relative aspect-[16/9] cursor-pointer overflow-hidden"
-                      style={{
-                        borderTopLeftRadius: "0.75rem",
-                        borderBottomLeftRadius: "0.75rem",
-                      }}
+                      // style={{
+                      //   borderTopLeftRadius: "0.75rem",
+                      //   borderBottomLeftRadius: "0.75rem",
+                      // }}
                       onClick={() => setSelectedImageIndex(imgIndex)}
                     >
                       <Image

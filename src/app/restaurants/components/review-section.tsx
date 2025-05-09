@@ -88,7 +88,7 @@ export function ReviewCard({ review, onOpenDetail }: ReviewCardProps) {
         </>
       )}
       {/* 오른쪽: 컨텐츠 */}
-      <div className="flex flex-col justify-between w-full pl-3">
+      <div className="flex flex-col justify-between w-full pl-3 h-20">
         <div>
           <div className="flex justify-between items-center mb-1">
             <div>
@@ -106,7 +106,7 @@ export function ReviewCard({ review, onOpenDetail }: ReviewCardProps) {
               {new Date(review.createdAt).toLocaleDateString()}
             </div>
           </div>
-          <p className="text-xs text-gray-700 line-clamp-4 mb-1">
+          <p className="text-xs text-gray-700 line-clamp-2 mb-1">
             {review.content}
           </p>
           <div className="flex items-center">
@@ -121,10 +121,6 @@ export function ReviewCard({ review, onOpenDetail }: ReviewCardProps) {
               />
             ))}
           </div>
-        </div>
-        <div className="mt-auto flex items-center ml-auto">
-          <Heart className="h-4 w-4 text-blue-500" />
-          <span className="ml-2 text-xs text-gray-500">Likes</span>
         </div>
       </div>
     </Card>
@@ -248,7 +244,7 @@ export function ReviewDetailDialog({
                       src={image}
                       alt={`Popup review image ${index + 1}`}
                       fill
-                      className="object-cover rounded-md"
+                      className="object-cover "
                     />
                   </div>
                 </CarouselItem>
@@ -308,11 +304,6 @@ export function ReviewDetailDialog({
                 />
               ))}
             </div>
-          </div>
-
-          <div className="mt-auto flex items-center ml-auto">
-            <Heart className="h-4 w-4 text-blue-500" />
-            <span className="ml-2 text-xs text-gray-500">Likes</span>
           </div>
         </div>
         <div className="flex flex-wrap gap-2 mt-2 px-4">

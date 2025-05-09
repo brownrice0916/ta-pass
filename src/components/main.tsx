@@ -59,40 +59,47 @@ export default function Main() {
 
   const categories = [
     {
+      icon: "🍽️",
+      label: "맛집",
+      color: "bg-[#FDF1F7]",
+      tag: "맛집, 카페, 길거리 음식",
+      href: "/category?category=Food",
+    },
+    {
       icon: "🛍️",
-      label: "Fashion",
-      color: "bg-pink-100",
-      href: "/restaurants?category=fashion",
+      label: "쇼핑",
+      color: "bg-[#F9F4FD]",
+      tag: "패션, 뷰티, 쇼핑몰",
+      href: "/category?category=Shopping",
     },
     {
-      icon: "✨",
-      label: "Beauty",
-      color: "bg-purple-100",
-      href: "/restaurants?category=beauty",
+      icon: "🎨",
+      label: "체험",
+      color: "bg-[#FFFBEF]",
+      tag: "한복, 쿠킹클래스, 레저",
+      href: "/category?category=Experience",
     },
-    {
-      icon: "👑",
-      label: "Luxury",
-      color: "bg-yellow-100",
-      href: "/restaurants?category=luxury",
-    },
-    {
-      icon: "⛰️",
-      label: "Activities",
-      color: "bg-green-100",
-      href: "/restaurants?category=activities",
-    },
+
     {
       icon: "🏛️",
-      label: "Culture",
-      color: "bg-blue-100",
-      href: "/restaurants?category=culture",
+      label: "공연/전시",
+      color: "bg-[#EFFBF2]",
+      tag: "궁, 박물관, 전시, 공연",
+      href: "/category?category=Attraction",
     },
     {
-      icon: "🍽️",
-      label: "Food",
-      color: "bg-red-100",
-      href: "/restaurants?category=food",
+      icon: "💆‍♀️",
+      label: "웰니스",
+      color: "bg-[#ECFEFE]",
+      tag: "스파, 요가, 뷰티케어",
+      href: "/category?category=Wellness",
+    },
+    {
+      icon: "🌙",
+      label: "나이트라이프",
+      color: "bg-yellow-100",
+      tag: "클럽, 바, 포장마차",
+      href: "/category?category=Nightlife",
     },
   ];
 
@@ -129,9 +136,28 @@ export default function Main() {
         </div>
       </div>
 
-      <div>
+      {/* Categories Section */}
+      <div className="px-2 pt-6 pb-6">
+        <h2 className="text-2xl font-bold mb-4">카테고리</h2>
+        <div className="grid grid-cols-3 gap-2">
+          {categories.map((category, index) => (
+            <Link
+              key={index}
+              href={category.href}
+              className={`flex flex-col items-center justify-center pt-3 pb-4 rounded-xl ${category.color}`}
+            >
+              <span className="text-3xl mb-2">{category.icon}</span>
+              <span className="text-lg  font-bold text-gray-700">
+                {category.label}
+              </span>
+              <span className="text-[10px]">{category.tag}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+      <div className="pb-20">
         <Link href="/intro">
-          <div className="bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600  p-5 text-center text-white shadow-lg">
+          <div className="bg-blue-500 p-5 text-center text-white shadow-lg">
             <h2 className="text-xl font-semibold mb-1">
               Travel smarter with TA PASS.
             </h2>
@@ -146,25 +172,6 @@ export default function Main() {
             </div>
           </div>
         </Link>
-      </div>
-
-      {/* Categories Section */}
-      <div className="px-4 pt-6 pb-20">
-        <h2 className="text-2xl font-bold mb-4">Categories</h2>
-        <div className="grid grid-cols-3 gap-4">
-          {categories.map((category, index) => (
-            <Link
-              key={index}
-              href={category.href}
-              className={`flex flex-col items-center justify-center p-6 rounded-xl ${category.color}`}
-            >
-              <span className="text-3xl mb-2">{category.icon}</span>
-              <span className="text-sm font-medium text-gray-700">
-                {category.label}
-              </span>
-            </Link>
-          ))}
-        </div>
       </div>
 
       {/* Bottom Navigation */}
