@@ -9,7 +9,8 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-
+import { Restaurant } from "@prisma/client";
+import { Star, MessageSquare } from "lucide-react";
 const Category = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -136,6 +137,8 @@ const Category = () => {
           ) || "전체"
         : "전체";
 
+    const sortParam = searchParams.get("sort") || "distance";
+    setSort(sortParam);
     // 상태 업데이트
     setActiveMainCategory(korCategory);
     setActiveSubcategory(korSubCategory);
@@ -143,7 +146,13 @@ const Category = () => {
     setPage(1);
 
     // 데이터 가져오기
-    fetchLocations(false, engCategory, engSubCategory, region);
+    fetchLocations(
+      false,
+      engCategory,
+      engSubCategory,
+      region,
+      sortParam as any
+    );
   };
 
   // 데이터 가져오기 함수
@@ -151,7 +160,8 @@ const Category = () => {
     loadMore = false,
     overrideCategory = null,
     overrideSubCategory = null,
-    overrideRegion = null
+    overrideRegion = null,
+    overrideSort = null
   ) => {
     if (isLoading) return;
 
@@ -161,6 +171,8 @@ const Category = () => {
       // API 파라미터 구성
       const params = new URLSearchParams();
 
+      const sortOption = overrideSort || sort;
+      params.append("sort", sortOption);
       // 카테고리 파라미터 (override 또는 현재 상태 사용)
       const category =
         overrideCategory ||
@@ -235,7 +247,9 @@ const Category = () => {
   // URL 업데이트 함수
   const updateQueryParams = (key: any, value: any) => {
     const params = new URLSearchParams(searchParams.toString());
-
+    if (key === "sort") {
+      params.set(key, value);
+    }
     if (value === "전체") {
       params.delete(key);
     } else {
@@ -389,6 +403,8 @@ const Category = () => {
     ],
   } as any;
 
+  const [sort, setSort] = useState("distance");
+
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       {/* 헤더 */}
@@ -497,6 +513,22 @@ const Category = () => {
         {/* 오른쪽 컨텐츠 영역 */}
         <div className="flex-1 flex flex-col">
           {/* 장소 목록 */}
+          <div className="bg-white px-4 py-2 border-b flex justify-end">
+            <select
+              value={sort}
+              onChange={(e) => {
+                const newSort = e.target.value;
+                setSort(newSort);
+                updateQueryParams("sort", newSort); // ✅ URL에도 반영
+              }}
+              className="text-sm border rounded px-2 py-1"
+            >
+              <option value="distance">거리순</option>
+              <option value="rating">평점순</option>
+              <option value="bookmark">북마크순</option>
+              <option value="review">리뷰순</option>
+            </select>
+          </div>
           <div
             className="flex-1 overflow-y-auto p-2 bg-gray-100"
             onScroll={(e) => {
@@ -510,7 +542,7 @@ const Category = () => {
               locations.map((location: any) => (
                 <div
                   key={location.id}
-                  className="bg-white rounded-lg mb-4 p-4 flex"
+                  className="bg-white rounded-lg mb-2 p-4 flex"
                 >
                   <div className="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden mr-4 flex-shrink-0">
                     {location.images && location.images.length > 0 ? (
@@ -531,13 +563,28 @@ const Category = () => {
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="font-bold text-lg">{location.name}</h3>
-                        <p className="text-gray-600 text-sm mt-1">
+                        <p className="text-gray-600 text-xs mt-1">
                           {location.address}
                         </p>
-                        <p className="text-gray-500 text-sm mt-1">
+                        <span className="px-1 text-xs py-0.5 bg-gray-100 text-blue-800 rounded-full">
                           {location.category}
+                        </span>
+                        <p className="text-sm text-gray-700 flex items-center space-x-4">
+                          <span className="flex items-center space-x-1">
+                            <Star className="w-4 h-4 text-yellow-400" />
+                            <span>{location.rating?.toFixed(1) ?? "0.0"}</span>
+                          </span>
+                          <span className="flex items-center space-x-1">
+                            <Bookmark className="w-4 h-4 text-pink-500" />
+                            <span>{location.bookmarkCount}</span>
+                          </span>
+                          <span className="flex items-center space-x-1">
+                            <MessageSquare className="w-4 h-4 text-gray-500" />
+                            <span>{location.reviewCount}</span>
+                          </span>
                         </p>
                       </div>
+                      {/* {location.bookmarks.length} */}
                       <Bookmark className="w-5 h-5 text-blue-500" />
                     </div>
                   </div>

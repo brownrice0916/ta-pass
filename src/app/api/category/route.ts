@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
+import { Prisma, Restaurant } from "@prisma/client";
 
 // GET /api/category
 export async function GET(request: Request) {
@@ -25,6 +25,8 @@ export async function GET(request: Request) {
   const swLat = parseFloat(searchParams.get("swLat") || "0");
   const swLng = parseFloat(searchParams.get("swLng") || "0");
 
+  const sort = searchParams.get("sort") || "distance"; // 기본값은 거리순
+
   console.log("Category API Parameters:", {
     category,
     subCategory,
@@ -32,162 +34,228 @@ export async function GET(request: Request) {
     query,
     page,
     limit,
+    sort,
   });
 
   try {
-    // SQL 필터 구성
-    const subCategoryFilter =
-      subCategory && subCategory !== "all"
-        ? Prisma.sql`AND "subCategory" = ${subCategory}`
-        : Prisma.sql``;
+    // 1. 기본 where 조건 구성
+    const whereCondition: Prisma.RestaurantWhereInput = {};
 
-    const categoryFilter =
-      category && category !== ""
-        ? Prisma.sql`AND "category" = ${category}`
-        : Prisma.sql``;
-
-    const queryFilter =
-      query && query.trim()
-        ? Prisma.sql`AND (name ILIKE ${`%${query}%`} OR "subCategory" ILIKE ${`%${query}%`})`
-        : Prisma.sql``;
-
-    // 지역 필터: region1, region2, region3 또는 주소에 지역명 포함
-    const regionFilter =
-      region && region !== "지역 전체"
-        ? Prisma.sql`AND (
-            region1 ILIKE ${`%${region}%`} OR 
-            region2 ILIKE ${`%${region}%`} OR 
-            region3 ILIKE ${`%${region}%`} OR
-            address ILIKE ${`%${region}%`}
-          )`
-        : Prisma.sql``;
-
-    let restaurants: any[];
-    let totalCount;
-
-    if (neLat && neLng && swLat && swLng) {
-      // 지도 경계 내의 장소 검색 (경계값이 제공된 경우)
-      restaurants = await prisma.$queryRaw`
-        SELECT *,
-          (6371 * acos(
-            cos(radians(${lat})) * cos(radians(latitude)) *
-            cos(radians(longitude) - radians(${lng})) +
-            sin(radians(${lat})) * sin(radians(latitude))
-          )) AS distance
-        FROM "Restaurant"
-        WHERE latitude BETWEEN ${swLat} AND ${neLat}
-          AND longitude BETWEEN ${swLng} AND ${neLng}
-          ${categoryFilter}
-          ${subCategoryFilter}
-          ${queryFilter}
-          ${regionFilter}
-        ORDER BY distance
-        LIMIT ${limit}
-        OFFSET ${skip}
-      `;
-
-      totalCount = await prisma.restaurant.count({
-        where: {
-          latitude: { gte: swLat, lte: neLat },
-          longitude: { gte: swLng, lte: neLng },
-          ...(category ? { category } : {}),
-          ...(subCategory && subCategory !== "all" ? { subCategory } : {}),
-          ...(region && region !== "지역 전체"
-            ? {
-                OR: [
-                  { region1: { contains: region, mode: "insensitive" } },
-                  { region2: { contains: region, mode: "insensitive" } },
-                  { region3: { contains: region, mode: "insensitive" } },
-                  { address: { contains: region, mode: "insensitive" } },
-                ],
-              }
-            : {}),
-          ...(query
-            ? {
-                OR: [
-                  { name: { contains: query, mode: "insensitive" } },
-                  { subCategory: { contains: query, mode: "insensitive" } },
-                ],
-              }
-            : {}),
-        },
-      });
-    } else {
-      // 일반 검색 (경계값 없는 경우)
-      restaurants = await prisma.$queryRaw`
-        SELECT *,
-          (6371 * acos(
-            cos(radians(${lat})) * cos(radians(latitude)) *
-            cos(radians(longitude) - radians(${lng})) +
-            sin(radians(${lat})) * sin(radians(latitude))
-          )) AS distance
-        FROM "Restaurant"
-        WHERE 1=1
-          ${categoryFilter}
-          ${subCategoryFilter}
-          ${queryFilter}
-          ${regionFilter}
-        ORDER BY distance
-        LIMIT ${limit}
-        OFFSET ${skip}
-      `;
-
-      totalCount = await prisma.restaurant.count({
-        where: {
-          ...(category ? { category } : {}),
-          ...(subCategory && subCategory !== "all" ? { subCategory } : {}),
-          ...(region && region !== "지역 전체"
-            ? {
-                OR: [
-                  { region1: { contains: region, mode: "insensitive" } },
-                  { region2: { contains: region, mode: "insensitive" } },
-                  { region3: { contains: region, mode: "insensitive" } },
-                  { address: { contains: region, mode: "insensitive" } },
-                ],
-              }
-            : {}),
-          ...(query
-            ? {
-                OR: [
-                  { name: { contains: query, mode: "insensitive" } },
-                  { subCategory: { contains: query, mode: "insensitive" } },
-                ],
-              }
-            : {}),
-        },
-      });
+    // 2. 카테고리 필터
+    if (category && category !== "") {
+      whereCondition.category = category;
     }
 
-    // 각 식당에 대한 리뷰 수 가져오기
-    const restaurantIds = restaurants.map((restaurant) => restaurant.id);
+    // 3. 서브카테고리 필터
+    if (subCategory && subCategory !== "all") {
+      whereCondition.subCategory = subCategory;
+    }
+
+    // 4. 검색어 필터
+    if (query && query.trim()) {
+      whereCondition.OR = [
+        { name: { contains: query, mode: "insensitive" } },
+        { subCategory: { contains: query, mode: "insensitive" } },
+      ] as Prisma.RestaurantWhereInput[];
+    }
+
+    // 5. 지역 필터
+    if (region && region !== "지역 전체") {
+      // 타입 명시
+      const regionCondition: Prisma.RestaurantWhereInput[] = [
+        {
+          region1: {
+            contains: region,
+            mode: "insensitive" as Prisma.QueryMode,
+          },
+        },
+        {
+          region2: {
+            contains: region,
+            mode: "insensitive" as Prisma.QueryMode,
+          },
+        },
+        {
+          region3: {
+            contains: region,
+            mode: "insensitive" as Prisma.QueryMode,
+          },
+        },
+        {
+          address: {
+            contains: region,
+            mode: "insensitive" as Prisma.QueryMode,
+          },
+        },
+      ];
+
+      // OR 조건이 이미 있는 경우 처리
+      if (whereCondition.OR) {
+        // 기존 OR 조건을 저장
+        const existingOR = whereCondition.OR;
+        // AND 조건으로 변환 (하나는 기존 OR, 하나는 지역 OR)
+        whereCondition.AND = [
+          { OR: existingOR },
+          { OR: regionCondition },
+        ] as Prisma.RestaurantWhereInput[];
+        // 원래 OR 삭제
+        delete whereCondition.OR;
+      } else {
+        whereCondition.OR = regionCondition;
+      }
+    }
+
+    // 6. 지도 경계 필터
+    if (neLat && neLng && swLat && swLng) {
+      whereCondition.latitude = { gte: swLat, lte: neLat };
+      whereCondition.longitude = { gte: swLng, lte: neLng };
+    }
+
+    // 총 개수 계산
+    const totalCount = await prisma.restaurant.count({
+      where: whereCondition,
+    });
+
+    // 일단 필요한 모든 레스토랑 ID를 먼저 가져오기
+    const allRestaurants = await prisma.restaurant.findMany({
+      where: whereCondition,
+      select: { id: true },
+    });
+
+    const restaurantIds = allRestaurants.map((r) => r.id);
+
+    // 북마크 및 리뷰 수 가져오기
+    const bookmarkCounts = await prisma.bookmark.groupBy({
+      by: ["restaurantId"],
+      _count: { id: true },
+      where: { restaurantId: { in: restaurantIds } },
+    });
+
     const reviewCounts = await prisma.review.groupBy({
       by: ["restaurantId"],
       _count: { id: true },
       where: { restaurantId: { in: restaurantIds } },
     });
 
-    // 최종 결과에 리뷰 수 포함
-    restaurants = restaurants.map((restaurant) => {
-      const reviewCount = reviewCounts.find(
-        (count) => count.restaurantId === restaurant.id
-      );
-      return { ...restaurant, reviewCount: reviewCount?._count?.id || 0 };
+    // 데이터 매핑
+    const bookmarkMap = new Map<string, number>();
+    bookmarkCounts.forEach((bc) => {
+      bookmarkMap.set(bc.restaurantId, Number(bc._count.id));
     });
 
-    // 응답 반환
-    return NextResponse.json({
-      restaurants,
-      metadata: {
-        currentPage: page,
-        totalPages: Math.ceil(totalCount / limit),
-        totalCount,
-        hasMore: skip + restaurants.length < totalCount,
-      },
+    const reviewMap = new Map<string, number>();
+    reviewCounts.forEach((rc) => {
+      reviewMap.set(rc.restaurantId, Number(rc._count.id));
     });
-  } catch (error) {
+
+    // 거리 계산 함수
+    function calculateDistance(
+      lat1: number,
+      lon1: number,
+      lat2: number,
+      lon2: number
+    ): number {
+      const R = 6371; // 지구 반경 (km)
+      const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      const dLon = ((lon2 - lon1) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((lat1 * Math.PI) / 180) *
+          Math.cos((lat2 * Math.PI) / 180) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    // 모든 레스토랑 상세 정보 가져오기
+    const restaurantsDetails = await prisma.restaurant.findMany({
+      where: { id: { in: restaurantIds } },
+    });
+
+    // 확장된 레스토랑 인터페이스 정의
+    interface EnrichedRestaurant extends Restaurant {
+      bookmarkCount: number;
+      reviewCount: number;
+      distance: number;
+    }
+
+    // 모든 레스토랑에 북마크/리뷰 수 및 거리 추가
+    const enrichedRestaurants: EnrichedRestaurant[] = restaurantsDetails.map(
+      (restaurant) => {
+        const distance = calculateDistance(
+          lat,
+          lng,
+          restaurant.latitude,
+          restaurant.longitude
+        );
+        return {
+          ...restaurant,
+          bookmarkCount: bookmarkMap.get(restaurant.id) || 0,
+          reviewCount: reviewMap.get(restaurant.id) || 0,
+          distance,
+        };
+      }
+    );
+
+    // 전체 데이터 정렬
+    let sortedRestaurants = [...enrichedRestaurants];
+
+    switch (sort) {
+      case "rating":
+        sortedRestaurants.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        break;
+      case "bookmark":
+        sortedRestaurants.sort((a, b) => b.bookmarkCount - a.bookmarkCount);
+        break;
+      case "review":
+        sortedRestaurants.sort((a, b) => b.reviewCount - a.reviewCount);
+        break;
+      default: // distance
+        sortedRestaurants.sort((a, b) => a.distance - b.distance);
+    }
+
+    // 페이지네이션 적용
+    const paginatedResults = sortedRestaurants.slice(skip, skip + limit);
+
+    // JSON 직렬화 전에 모든 BigInt 값을 Number로 변환하는 함수
+    function replaceBigInt(key: string, value: any): any {
+      if (typeof value === "bigint") {
+        return Number(value);
+      }
+      return value;
+    }
+
+    // BigInt를 Number로 변환하여 JSON 직렬화
+    return new NextResponse(
+      JSON.stringify(
+        {
+          restaurants: paginatedResults,
+          metadata: {
+            currentPage: page,
+            totalPages: Math.ceil(Number(totalCount) / limit),
+            totalCount: Number(totalCount),
+            hasMore: skip + paginatedResults.length < Number(totalCount),
+          },
+        },
+        replaceBigInt
+      ),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (error: any) {
+    // 타입 지정
     console.error("Error fetching category data:", error);
     return NextResponse.json(
-      { error: "Failed to fetch category data" },
+      {
+        error: "Failed to fetch category data",
+        details: error.message,
+        stack: error.stack,
+      },
       { status: 500 }
     );
   }
