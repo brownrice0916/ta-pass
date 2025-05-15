@@ -104,7 +104,7 @@ export async function PUT(request: Request) {
         images: imageUrls.length > 0 ? imageUrls : undefined,
         languages: placeData.languages || [], // 추가
         socialLinks: placeData.socialLinks || [], // 추가
-        tags: placeData.tags || [],  // 추가된 부분
+        tags: placeData.tags || [], // 추가된 부분
         region1: placeData.region1,
         region2: placeData.region2,
         region3: placeData.region3,

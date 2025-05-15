@@ -269,7 +269,19 @@ const Category = () => {
   const handleMainCategoryClick = (name: any) => {
     setActiveMainCategory(name);
     setActiveSubcategory("전체");
-    updateQueryParams("category", name);
+
+    // URL 파라미터 업데이트 (메인 카테고리와 서브카테고리 동시에)
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (name === "전체") {
+      params.delete("category");
+      params.delete("subCategory"); // 메인 카테고리가 '전체'면 서브카테고리도 제거
+    } else {
+      params.set("category", categoryMap[name] || name);
+      params.set("subCategory", "all"); // 서브카테고리를 항상 'all'로 설정
+    }
+
+    router.push(`?${params.toString()}`);
     setShowCategoryDropdown(false);
   };
 

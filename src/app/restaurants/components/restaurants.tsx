@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { Review } from "@prisma/client";
 import { Input } from "@/components/ui/input";
 
-import { MapPin, Search, Sliders, X } from "lucide-react";
+import { MapPin, Search, Sliders, X, ChevronDown } from "lucide-react";
 
 import { ClientOnly } from "@/components/client-only";
 import { useRestaurants } from "../hooks/use-restaurants";
@@ -15,7 +15,17 @@ import ExcelImport from "./excel-import";
 import GoogleMapsProvider from "@/app/google-maps-provider";
 import RestaurantMap from "./restaurant-map";
 import { RestaurantCard } from "@/app/search/component/restaurant-card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+// 정렬 옵션
+const SORT_OPTIONS = [
+  { id: "distance", label: "거리순" },
+  { id: "rating", label: "별점순" },
+  { id: "bookmark", label: "북마크순" },
+  { id: "latest", label: "최신등록순" },
+];
+
+// 카테고리 목록
 const CATEGORIES = [
   { id: "all", label: "All", value: "all" },
   {
@@ -51,6 +61,48 @@ const CATEGORIES = [
   { id: "food", label: "Food", value: "Food", types: ["restaurant", "cafe"] },
 ];
 
+// 지역 목록
+const LOCATIONS = [
+  { id: "전체", label: "전체" },
+  { id: "홍대", label: "홍대" },
+  { id: "명동", label: "명동" },
+  { id: "인사동", label: "인사동" },
+  { id: "강남", label: "강남" },
+  { id: "이태원", label: "이태원" },
+  { id: "한남", label: "한남" },
+  { id: "합정", label: "합정" },
+  { id: "성수", label: "성수" },
+  { id: "여의도", label: "여의도" },
+];
+
+// emojiMap: 실제 저장된 태그 → 이모지
+const emojiMap: { [key: string]: string } = {
+  "완전 마음에 들었어요!": "😍",
+  친절했어요: "😊",
+  "가성비 최고였어요": "💰",
+  "찾기 쉬웠어요": "📍",
+  "진짜 로컬 느낌이에요": "✨",
+  "또 방문하고 싶어요": "🔁",
+  "혜택을 잘 받았어요": "🎁",
+  "상품 구성이 독특했어요": "🛍️",
+  "사진 찍기 좋은 곳이었어요": "📸",
+  "다른 사람에게도 추천하고 싶어요": "📢",
+};
+
+// TAG_FILTERS 정의 (기존과 동일)
+const TAG_FILTERS = [
+  { id: "만족도", label: "만족도", icon: "😍" },
+  { id: "가성비", label: "가성비", icon: "💰" },
+  { id: "혜택만족", label: "혜택만족", icon: "🎁" },
+  { id: "위치편의성", label: "위치편의성", icon: "📍" },
+  { id: "상품특색", label: "상품특색", icon: "🛍️" },
+  { id: "로컬감성", label: "로컬감성", icon: "✨" },
+  { id: "사진맛집", label: "사진맛집", icon: "📸" },
+  { id: "친절함", label: "친절함", icon: "😊" },
+  { id: "재방문의사", label: "재방문의사", icon: "🔁" },
+  { id: "추천의향", label: "추천의향", icon: "🧹📢" },
+];
+
 export interface Restaurant {
   id: string;
   name: string;
@@ -75,6 +127,8 @@ export interface Restaurant {
   region4: string | null;
   tags: string[];
   addressDetail: string | null;
+  bookmarkCount?: number;
+  createdAt?: Date;
 }
 
 export default function Restaurants() {
@@ -92,13 +146,48 @@ export default function Restaurants() {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [tempCategory, setTempCategory] = useState("all");
   const [tempLocation, setTempLocation] = useState("전체");
-  // Add a state to force refetch
   const [forceRefetch, setForceRefetch] = useState(0);
 
+  // 새로운 필터 상태
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [tempTags, setTempTags] = useState<string[]>([]);
+  const [sortOption, setSortOption] = useState("distance");
+  const [locationMode, setLocationMode] = useState("user"); // 'user' 또는 'map'
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [specialOfferTypes, setSpecialOfferTypes] = useState<string[]>([]);
   const router = useRouter();
   const mapRef = useRef<google.maps.Map | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null!);
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
+
+  // 지도 경계 상태 추가
+  const [mapBounds, setMapBounds] = useState<{
+    neLat: number;
+    neLng: number;
+    swLat: number;
+    swLng: number;
+  } | null>(null);
+
+  const toggleOfferType = (type: string) => {
+    setSpecialOfferTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+    );
+
+    const params = new URLSearchParams(searchParams.toString());
+    const newTypes = specialOfferTypes.includes(type)
+      ? specialOfferTypes.filter((t) => t !== type)
+      : [...specialOfferTypes, type];
+
+    if (newTypes.length > 0) {
+      params.set("specialOfferType", newTypes.join(","));
+    } else {
+      params.delete("specialOfferType");
+    }
+
+    router.push(`/restaurants?${params.toString()}`);
+    refetch();
+  };
 
   // Manually handle search params
   useEffect(() => {
@@ -107,29 +196,58 @@ export default function Restaurants() {
     const query = searchParams.get("q") || "";
     const category = searchParams.get("category") || "all";
     const location = searchParams.get("location") || "전체";
+    const sort = searchParams.get("sort") || "distance";
+    const tags = searchParams.get("tags")?.split(",") || [];
+    const mode = searchParams.get("mode") || "user";
 
     setSearchQuery(query);
     setSelectedCategory(category);
     setSelectedLocation(location);
     setTempCategory(category);
     setTempLocation(location);
+    setSortOption(sort);
+    setLocationMode(mode);
 
-    console.log("URL params updated:", { query, category, location });
+    if (tags.length > 0) {
+      setSelectedTags(tags);
+      setTempTags(tags);
+    }
   }, [searchParams]);
 
+  // useRestaurants 훅 호출 수정
   const {
     data: listData,
     fetchNextPage,
     hasNextPage,
     isLoading,
     isFetchingNextPage,
-    refetch, // Add refetch function to be used when needed
-  } = useRestaurants(center.lat, center.lng, searchQuery);
+    refetch,
+  } = useRestaurants(
+    center.lat,
+    center.lng,
+    searchQuery,
+    sortOption,
+    locationMode,
+    selectedCategory,
+    undefined, // subCategory
+    selectedLocation,
+    selectedTags,
+    locationMode === "map" ? mapBounds || undefined : undefined
+  );
 
-  // Force refetch when searchQuery, selectedCategory or selectedLocation changes
+  // Force refetch when filters change
   useEffect(() => {
     refetch();
-  }, [searchQuery, selectedCategory, selectedLocation, forceRefetch, refetch]);
+  }, [
+    searchQuery,
+    selectedCategory,
+    selectedLocation,
+    selectedTags,
+    sortOption,
+    locationMode,
+    forceRefetch,
+    refetch,
+  ]);
 
   const listRestaurants = useMemo(() => {
     return listData?.pages.flatMap((page) => page.restaurants) ?? [];
@@ -141,20 +259,58 @@ export default function Restaurants() {
     const ne = bounds.getNorthEast();
     const sw = bounds.getSouthWest();
 
-    const response = await fetch(
-      `/api/restaurants?neLat=${ne.lat()}&neLng=${ne.lng()}&swLat=${sw.lat()}&swLng=${sw.lng()}`
-    );
-    const data = await response.json();
-    setMapRestaurants(data.restaurants);
+    // 지도 경계를 상태로 저장
+    const newBounds = {
+      neLat: ne.lat(),
+      neLng: ne.lng(),
+      swLat: sw.lat(),
+      swLng: sw.lng(),
+    };
+
+    // 지도 경계 상태 업데이트
+    setMapBounds(newBounds);
+
+    // locationMode가 map일 때는 useRestaurants에 의해 자동으로 데이터를 가져오므로,
+    // 여기서는 별도로 API 호출을 하지 않음
+    if (locationMode === "map") {
+      refetch();
+      return;
+    }
+
+    const params = new URLSearchParams();
+    params.append("neLat", ne.lat().toString());
+    params.append("neLng", ne.lng().toString());
+    params.append("swLat", sw.lat().toString());
+    params.append("swLng", sw.lng().toString());
+    params.append("latitude", center.lat.toString()); // 중심점 위도 추가
+    params.append("longitude", center.lng.toString()); // 중심점 경도 추가
+    params.append("mode", "map"); // 중요: mode=map 명시
+
+    // 추가 필터 적용
+    if (selectedCategory !== "all") {
+      params.append("category", selectedCategory);
+    }
+    if (selectedLocation !== "전체") {
+      params.append("location", selectedLocation);
+    }
+    if (selectedTags.length > 0) {
+      params.append("tags", selectedTags.join(","));
+    }
+    if (sortOption) {
+      params.append("sort", sortOption);
+    }
+
+    try {
+      const response = await fetch(`/api/restaurants?${params.toString()}`);
+      const data = await response.json();
+
+      setMapRestaurants(data.restaurants || []);
+    } catch (error) {
+      console.error("Error fetching map markers:", error);
+    }
   };
 
   const filteredRestaurants = useMemo(() => {
-    console.log("Filtering with:", {
-      selectedCategory,
-      selectedLocation,
-      searchQuery,
-    });
-
     return listRestaurants.filter((restaurant: Restaurant) => {
       // 카테고리 매칭
       const matchesCategory =
@@ -168,7 +324,9 @@ export default function Restaurants() {
         restaurant.region2?.includes(selectedLocation) ||
         restaurant.address?.includes(selectedLocation);
 
-      // 검색어 매칭 (이부분은 API가 이미 처리했을 수 있으므로 중복 필터링이 될 수 있음)
+      // 태그 매칭
+      const matchesTags = true;
+      // 검색어 매칭
       const matchesSearch =
         !searchQuery || // 검색어가 없으면 모든 항목 표시
         restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -184,9 +342,43 @@ export default function Restaurants() {
         restaurant.region3?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         restaurant.region4?.toLowerCase().includes(searchQuery.toLowerCase());
 
-      return matchesCategory && matchesLocation && matchesSearch;
+      return matchesCategory && matchesLocation && matchesTags && matchesSearch;
     });
-  }, [listRestaurants, selectedCategory, selectedLocation, searchQuery]);
+  }, [
+    listRestaurants,
+    selectedCategory,
+    selectedLocation,
+    selectedTags,
+    searchQuery,
+  ]);
+
+  // 지도 경계 변경 이벤트 리스너 추가
+  useEffect(() => {
+    if (mapRef.current) {
+      // 이벤트 리스너 설정
+      const listener = mapRef.current.addListener("idle", () => {
+        const bounds = mapRef.current?.getBounds();
+        if (bounds) {
+          fetchRestaurantsInBounds(bounds);
+        }
+      });
+
+      // 클린업 함수
+      return () => {
+        if (listener) {
+          google.maps.event.removeListener(listener);
+        }
+      };
+    }
+  }, [mapRef.current, locationMode]);
+
+  // locationMode 변경 감지 및 처리
+  useEffect(() => {
+    if (locationMode === "map" && mapBounds) {
+      // map 모드로 변경되었고 지도 경계 정보가 있을 경우, 데이터 다시 가져오기
+      refetch();
+    }
+  }, [locationMode]);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -216,8 +408,17 @@ export default function Restaurants() {
     if (userLocation && mapRef.current) {
       mapRef.current.panTo(userLocation);
       mapRef.current.setZoom(15);
+      setLocationMode("user");
+      updateUrlWithFilters();
     }
   }, [userLocation]);
+
+  const handleCenterOnMap = useCallback(() => {
+    if (mapRef.current) {
+      setLocationMode("map");
+      updateUrlWithFilters();
+    }
+  }, []);
 
   // Update URL when filters change and trigger a refetch
   const updateUrlWithFilters = useCallback(() => {
@@ -225,59 +426,103 @@ export default function Restaurants() {
     if (searchQuery) params.set("q", searchQuery);
     if (selectedCategory !== "all") params.set("category", selectedCategory);
     if (selectedLocation !== "전체") params.set("location", selectedLocation);
+    if (selectedTags.length > 0) params.set("tags", selectedTags.join(","));
+    if (sortOption !== "distance") params.set("sort", sortOption);
+    if (locationMode !== "user") params.set("mode", locationMode);
 
     router.push(`/restaurants?${params.toString()}`);
-    // Force refetch when filters change
     setForceRefetch((prev) => prev + 1);
-  }, [searchQuery, selectedCategory, selectedLocation, router]);
+  }, [
+    searchQuery,
+    selectedCategory,
+    selectedLocation,
+    selectedTags,
+    sortOption,
+    locationMode,
+    router,
+  ]);
 
   // Handle form submission
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     updateUrlWithFilters();
-    // Force refetch after search
     refetch();
   };
 
   // Function to clear search query
   const clearSearchQuery = () => {
     setSearchQuery("");
-    // Also update the URL and trigger a refetch
     const params = new URLSearchParams();
     if (selectedCategory !== "all") params.set("category", selectedCategory);
     if (selectedLocation !== "전체") params.set("location", selectedLocation);
+    if (selectedTags.length > 0) params.set("tags", selectedTags.join(","));
+    if (sortOption !== "distance") params.set("sort", sortOption);
+    if (locationMode !== "user") params.set("mode", locationMode);
 
     router.push(`/restaurants?${params.toString()}`);
     refetch();
+  };
+
+  // Tag filter toggle
+  const toggleTag = (tagId: string) => {
+    setTempTags((prev) =>
+      prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId]
+    );
   };
 
   // Apply filters
   const applyFilters = () => {
     setSelectedCategory(tempCategory);
     setSelectedLocation(tempLocation);
+    setSelectedTags(tempTags);
     setIsFilterModalOpen(false);
 
-    // Update URL with new filters
     const params = new URLSearchParams();
     if (searchQuery) params.set("q", searchQuery);
     if (tempCategory !== "all") params.set("category", tempCategory);
     if (tempLocation !== "전체") params.set("location", tempLocation);
+    if (tempTags.length > 0) params.set("tags", tempTags.join(","));
+    if (sortOption !== "distance") params.set("sort", sortOption);
+    if (locationMode !== "user") params.set("mode", locationMode);
 
     router.push(`/restaurants?${params.toString()}`);
-    // Force refetch when filters are applied
     refetch();
   };
 
+  // Reset filters
   const resetFilters = () => {
     setSearchQuery("");
     setSelectedCategory("all");
     setSelectedLocation("전체");
+    setSelectedTags([]);
     setTempCategory("all");
     setTempLocation("전체");
+    setTempTags([]);
+    setSortOption("distance");
+    setLocationMode("user");
 
-    // Clear URL params
     router.push("/restaurants");
-    // Force refetch when filters are reset
+    refetch();
+  };
+
+  // Sort option change
+  const handleSortChange = (option: string) => {
+    setSortOption(option);
+    setShowSortDropdown(false);
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("sort", option);
+    router.push(`/restaurants?${params.toString()}`);
+    refetch();
+  };
+
+  // Location mode change
+  const handleLocationModeChange = (mode: string) => {
+    setLocationMode(mode);
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("mode", mode);
+    router.push(`/restaurants?${params.toString()}`);
     refetch();
   };
 
@@ -335,18 +580,37 @@ export default function Restaurants() {
     setIsFilterModalOpen(false);
   });
 
-  const LOCATIONS = [
-    { id: "전체", label: "전체" },
-    { id: "홍대", label: "홍대" },
-    { id: "명동", label: "명동" },
-    { id: "인사동", label: "인사동" },
-    { id: "강남", label: "강남" },
-    { id: "이태원", label: "이태원" },
-    { id: "한남", label: "한남" },
-    { id: "합정", label: "합정" },
-    { id: "성수", label: "성수" },
-    { id: "여의도", label: "여의도" },
-  ];
+  useOnClickOutside(sortDropdownRef || document.createElement("div"), () => {
+    setShowSortDropdown(false);
+  });
+
+  const handleTagFilterClick = (tagId: string) => {
+    const newTags = selectedTags.includes(tagId)
+      ? selectedTags.filter((t) => t !== tagId)
+      : [...selectedTags, tagId];
+
+    setSelectedTags(newTags);
+
+    // URL 파라미터 업데이트
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (newTags.length > 0) {
+      params.set("tags", newTags.join(","));
+      // 태그가 선택되면 정렬 방식을 'tag_count'로 변경
+      params.set("sort", "tag_count");
+      setSortOption("tag_count");
+    } else {
+      params.delete("tags");
+      // 모든 태그가 해제되면 기본 정렬로 돌아감
+      if (sortOption === "tag_count") {
+        params.set("sort", "distance");
+        setSortOption("distance");
+      }
+    }
+
+    router.push(`/restaurants?${params.toString()}`);
+    refetch();
+  };
 
   return (
     <div className="container mx-auto py-2 pb-16">
@@ -354,7 +618,7 @@ export default function Restaurants() {
         <ExcelImport />
       </div>
 
-      <div className="mb-4 relative ">
+      <div className="mb-4 relative">
         <div className="absolute top-1 left-1 right-1 space-y-4 z-20">
           <div className="rounded-lg p-1">
             <div className="p-2">
@@ -367,7 +631,6 @@ export default function Restaurants() {
                     placeholder="검색어를 입력해 주세요."
                     className="w-full pl-4 pr-16 py-2 border rounded-full shadow-md focus:ring-2 focus:ring-primary/20"
                   />
-                  {/* 검색어 지우기 버튼 */}
                   {searchQuery && (
                     <button
                       type="button"
@@ -386,27 +649,39 @@ export default function Restaurants() {
                 </form>
 
                 {/* 필터 버튼 */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-2"
-                  onClick={() => {
-                    setTempCategory(selectedCategory);
-                    setTempLocation(selectedLocation);
-                    setIsFilterModalOpen(true);
-                  }}
-                >
-                  <Sliders className="w-4 h-4 mr-2" />
-                  필터
-                </Button>
+                <div className="flex mt-2 space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setTempCategory(selectedCategory);
+                      setTempLocation(selectedLocation);
+                      setTempTags(selectedTags);
+                      setIsFilterModalOpen(true);
+                    }}
+                  >
+                    <Sliders className="w-4 h-4 mr-2" />
+                    필터
+                  </Button>
+                </div>
+
+                {/* 현재 선택된 태그를 기준으로 정렬 중임을 표시 */}
+                {selectedTags.length > 0 && sortOption === "tag_count" && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    <span className="font-medium">
+                      {selectedTags
+                        .map(
+                          (t) => TAG_FILTERS.find((tf) => tf.id === t)?.label
+                        )
+                        .join(", ")}
+                      기준으로 정렬됨
+                    </span>
+                  </div>
+                )}
 
                 {/* 필터 모달 */}
                 {isFilterModalOpen && (
-                  <div
-                    ref={dropdownRef}
-                    className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border p-4 z-50"
-                  >
-                    {/* 필터 모달 닫기 버튼 */}
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border p-4 z-50">
                     <button
                       onClick={() => setIsFilterModalOpen(false)}
                       className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
@@ -432,7 +707,8 @@ export default function Restaurants() {
                         ))}
                       </div>
                     </div>
-                    <div>
+
+                    <div className="mb-4">
                       <h3 className="text-sm font-medium mb-2">카테고리</h3>
                       <div className="flex flex-wrap gap-2">
                         {CATEGORIES.map((category) => (
@@ -450,16 +726,26 @@ export default function Restaurants() {
                         ))}
                       </div>
                     </div>
-                    {/* 확인 버튼 */}
-                    <Button className="mt-4" onClick={applyFilters}>
-                      확인
-                    </Button>
+
+                    <div className="flex space-x-2">
+                      <Button className="flex-1" onClick={applyFilters}>
+                        적용하기
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        onClick={resetFilters}
+                      >
+                        초기화
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
             </div>
           </div>
         </div>
+
         <GoogleMapsProvider>
           <RestaurantMap
             mapRef={mapRef}
@@ -474,6 +760,7 @@ export default function Restaurants() {
             mode="list"
           />
         </GoogleMapsProvider>
+
         <Button
           onClick={handleCenterOnUser}
           variant="outline"
@@ -484,17 +771,105 @@ export default function Restaurants() {
         </Button>
       </div>
 
+      {/* 위치 모드 토글 */}
+      <div className="flex">
+        {/* 정렬 옵션 드롭다운 */}
+        <div className="relative" ref={sortDropdownRef}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowSortDropdown(!showSortDropdown)}
+            className="flex items-center"
+          >
+            {SORT_OPTIONS.find((o) => o.id === sortOption)?.label || "정렬"}
+            <ChevronDown className="ml-2 h-4 w-4" />
+          </Button>
+
+          {showSortDropdown && (
+            <div className="absolute right-0 mt-1 w-40 bg-white rounded-md shadow-lg z-50">
+              {SORT_OPTIONS.map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => handleSortChange(option.id)}
+                  className={`w-full text-left px-4 py-2 text-sm ${
+                    sortOption === option.id
+                      ? "bg-primary text-white"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <Tabs
+          value={locationMode}
+          onValueChange={handleLocationModeChange}
+          className="border rounded-md overflow-hidden"
+        >
+          <TabsList className="bg-white">
+            <TabsTrigger value="user" className="text-xs px-2 py-1">
+              현재위치
+            </TabsTrigger>
+            <TabsTrigger value="map" className="text-xs px-2 py-1">
+              지도위치
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <div className="flex space-x-2">
+          {["Discount", "Special Gift"].map((type) => (
+            <button
+              key={type}
+              onClick={() => toggleOfferType(type)}
+              className={`px-2 py-1.5 rounded-full text-sm font-medium transition-all duration-150
+                ${
+                  specialOfferTypes.includes(type)
+                    ? `text-white ${
+                        type === "Discount" ? "bg-orange-500" : "bg-pink-500"
+                      }`
+                    : "bg-white border border-gray-300 text-gray-600"
+                }`}
+            >
+              {type}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="mt-2 flex overflow-x-auto pb-2 -mx-2 px-2">
+        {TAG_FILTERS.map((tag) => (
+          <button
+            key={tag.id}
+            onClick={() => handleTagFilterClick(tag.id)}
+            className={`flex items-center px-3 py-1.5 rounded-full text-sm whitespace-nowrap mr-2 ${
+              selectedTags.includes(tag.id)
+                ? "bg-primary text-white"
+                : "bg-gray-100 hover:bg-gray-200"
+            }`}
+          >
+            <span className="mr-1">{tag.icon}</span>
+            {tag.label}
+            {/* 태그가 선택되었을 때 '태그순' 정렬 중임을 표시 */}
+            {selectedTags.includes(tag.id) &&
+              selectedTags.length === 1 &&
+              sortOption === "tag_count" && (
+                <span className="ml-1 text-xs bg-white bg-opacity-20 px-1 rounded">
+                  정렬중
+                </span>
+              )}
+          </button>
+        ))}
+      </div>
       <div>
         {isLoading && !isFetchingNextPage && (
-          <div className="container mx-auto py-2 pb-16">
-            <div className="flex justify-center items-center min-h-[400px]">
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                <span>장소를 불러오는 중...</span>
-              </div>
+          <div className="flex justify-center items-center min-h-[400px]">
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              <span>장소를 불러오는 중...</span>
             </div>
           </div>
         )}
+
         {!isLoading && filteredRestaurants.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16">
             <div className="text-center space-y-4">
@@ -519,6 +894,7 @@ export default function Restaurants() {
             imageLoading={imageLoading}
             onImageLoad={() => setImageLoading(false)}
             onImageError={() => setImageLoading(false)}
+            highlightedTags={selectedTags} // 선택된 태그를 하이라이트
           />
         ))}
 

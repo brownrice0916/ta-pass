@@ -3,10 +3,27 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { put } from "@vercel/blob";
 
-// GET /api/restaurants
-// GET /api/restaurants
+const tagIdToRealTagMap: Record<string, string> = {
+  만족도: "😍 완전 마음에 들었어요!",
+  가성비: "💰 가성비 최고였어요",
+  혜택만족: "🎁 혜택을 잘 받았어요",
+  위치편의성: "📍 찾기 쉬웠어요",
+  상품특색: "🛍️ 상품 구성이 독특했어요",
+  로컬감성: "✨ 진짜 로컬 느낌이에요",
+  사진맛집: "📸 사진 찍기 좋은 곳이었어요",
+  친절함: "😊 친절했어요",
+  재방문의사: "🔁 또 방문하고 싶어요",
+  추천의향: "📢 다른 사람에게도 추천하고 싶어요",
+};
+
+// BigInt를 JSON으로 직렬화하기 위한 함수
+function replaceBigInt(key: string, value: any) {
+  return typeof value === "bigint" ? Number(value) : value;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
+
   const lat = parseFloat(searchParams.get("latitude") || "0");
   const lng = parseFloat(searchParams.get("longitude") || "0");
   const query = searchParams.get("q");
@@ -17,167 +34,186 @@ export async function GET(request: Request) {
   const category = searchParams.get("category");
   const subCategory = searchParams.get("subCategory");
   const region = searchParams.get("region");
+  const rawTags = searchParams.get("tags")?.split(",") || [];
+  const tags = rawTags
+    .map((tag) => tagIdToRealTagMap[tag] || tag)
+    .filter(Boolean);
+  const sort = searchParams.get("sort") || "distance";
+  const locationMode = searchParams.get("mode") || "user";
+  const rawOfferTypes = searchParams.get("specialOfferType")?.split(",") || [];
+  const specialOfferType = rawOfferTypes.filter(Boolean);
 
   const neLat = parseFloat(searchParams.get("neLat") || "0");
   const neLng = parseFloat(searchParams.get("neLng") || "0");
   const swLat = parseFloat(searchParams.get("swLat") || "0");
   const swLng = parseFloat(searchParams.get("swLng") || "0");
 
+  const hasValidBounds =
+    neLat !== 0 && neLng !== 0 && swLat !== 0 && swLng !== 0;
+
   try {
-    const subCategoryFilter =
-      subCategory && subCategory !== "전체"
-        ? Prisma.sql`AND "subCategory" = ${subCategory}`
-        : Prisma.sql``;
+    const whereCondition: Prisma.RestaurantWhereInput = {
+      ...(category && category !== "전체" && category !== "all"
+        ? { category }
+        : {}),
+      ...(subCategory && subCategory !== "전체" && subCategory !== "all"
+        ? { subCategory }
+        : {}),
+      ...(region && region !== "전체"
+        ? {
+            OR: [
+              { region1: { contains: region, mode: "insensitive" } },
+              { region2: { contains: region, mode: "insensitive" } },
+              { region3: { contains: region, mode: "insensitive" } },
+              { address: { contains: region, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+      ...(query
+        ? {
+            OR: [
+              { name: { contains: query, mode: "insensitive" } },
+              { subCategory: { contains: query, mode: "insensitive" } },
+              { description: { contains: query, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+      ...(locationMode === "map" && hasValidBounds
+        ? {
+            latitude: { gte: swLat, lte: neLat },
+            longitude: { gte: swLng, lte: neLng },
+          }
+        : {}),
+    };
 
-    const categoryFilter =
-      category && category !== "전체"
-        ? Prisma.sql`AND "category" = ${category}`
-        : Prisma.sql``;
-
-    const queryFilter =
-      query && query.trim()
-        ? Prisma.sql`AND (name ILIKE ${`%${query}%`} OR "subCategory" ILIKE ${`%${query}%`})`
-        : Prisma.sql``;
-
-    // 수정된 지역 필터: region1, region2, region3 중 어느 하나라도
-    // 지정된 region을 포함하는 경우 결과에 포함
-    const regionFilter =
-      region && region !== "지역 전체"
-        ? Prisma.sql`AND (
-            region1 ILIKE ${`%${region}%`} OR 
-            region2 ILIKE ${`%${region}%`} OR 
-            region3 ILIKE ${`%${region}%`} OR
-            address ILIKE ${`%${region}%`}
-          )`
-        : Prisma.sql``;
-
-    let restaurants: any[];
-    let totalCount;
-
-    if (neLat && neLng && swLat && swLng) {
-      restaurants = await prisma.$queryRaw`
-        SELECT *,
-          (6371 * acos(
-            cos(radians(${lat})) * cos(radians(latitude)) *
-            cos(radians(longitude) - radians(${lng})) +
-            sin(radians(${lat})) * sin(radians(latitude))
-          )) AS distance
-        FROM "Restaurant"
-        WHERE latitude BETWEEN ${swLat} AND ${neLat}
-          AND longitude BETWEEN ${swLng} AND ${neLng}
-          ${categoryFilter}
-          ${subCategoryFilter}
-          ${queryFilter}
-          ${regionFilter}
-        ORDER BY distance
-        LIMIT ${limit}
-        OFFSET ${skip}
-      `;
-
-      totalCount = await prisma.restaurant.count({
-        where: {
-          latitude: { gte: swLat, lte: neLat },
-          longitude: { gte: swLng, lte: neLng },
-          ...(category && category !== "전체" ? { category } : {}),
-          ...(subCategory && subCategory !== "전체" ? { subCategory } : {}),
-          ...(region && region !== "지역 전체"
-            ? {
-                OR: [
-                  { region1: { contains: region, mode: "insensitive" } },
-                  { region2: { contains: region, mode: "insensitive" } },
-                  { region3: { contains: region, mode: "insensitive" } },
-                  { address: { contains: region, mode: "insensitive" } },
-                ],
-              }
-            : {}),
-          ...(query
-            ? {
-                OR: [
-                  { name: { contains: query, mode: "insensitive" } },
-                  { subCategory: { contains: query, mode: "insensitive" } },
-                ],
-              }
-            : {}),
-        },
-      });
-    } else {
-      restaurants = await prisma.$queryRaw`
-        SELECT *,
-          (6371 * acos(
-            cos(radians(${lat})) * cos(radians(latitude)) *
-            cos(radians(longitude) - radians(${lng})) +
-            sin(radians(${lat})) * sin(radians(latitude))
-          )) AS distance
-        FROM "Restaurant"
-        WHERE 1=1
-          ${categoryFilter}
-          ${subCategoryFilter}
-          ${queryFilter}
-          ${regionFilter}
-        ORDER BY distance
-        LIMIT ${limit}
-        OFFSET ${skip}
-      `;
-
-      totalCount = await prisma.restaurant.count({
-        where: {
-          ...(category && category !== "전체" ? { category } : {}),
-          ...(subCategory && subCategory !== "전체" ? { subCategory } : {}),
-          ...(region && region !== "지역 전체"
-            ? {
-                OR: [
-                  { region1: { contains: region, mode: "insensitive" } },
-                  { region2: { contains: region, mode: "insensitive" } },
-                  { region3: { contains: region, mode: "insensitive" } },
-                  { address: { contains: region, mode: "insensitive" } },
-                ],
-              }
-            : {}),
-          ...(query
-            ? {
-                OR: [
-                  { name: { contains: query, mode: "insensitive" } },
-                  { subCategory: { contains: query, mode: "insensitive" } },
-                ],
-              }
-            : {}),
-        },
-      });
-    }
-
-    const restaurantIds = restaurants.map((restaurant) => restaurant.id);
-    const reviewCounts = await prisma.review.groupBy({
-      by: ["restaurantId"],
-      _count: { id: true },
-      where: { restaurantId: { in: restaurantIds } },
-    });
-
-    restaurants = restaurants.map((restaurant) => {
-      const reviewCount = reviewCounts.find(
-        (count) => count.restaurantId === restaurant.id
-      );
-      return { ...restaurant, reviewCount: reviewCount?._count?.id || 0 };
-    });
-
-    return NextResponse.json({
-      restaurants,
-      metadata: {
-        currentPage: page,
-        totalPages: Math.ceil(totalCount / limit),
-        totalCount,
-        hasMore: skip + restaurants.length < totalCount,
+    const allMatchingRestaurants = await prisma.restaurant.findMany({
+      where: whereCondition,
+      include: {
+        bookmarks: { select: { id: true } },
+        reviews: { select: { tags: true } },
       },
     });
+
+    const filtered = allMatchingRestaurants.filter((restaurant) => {
+      const hasAllOfferTypes = specialOfferType.every((type) =>
+        restaurant.specialOfferType.includes(type)
+      );
+      const reviewTags = restaurant.reviews.flatMap((r) => r.tags);
+      const hasAllTags = tags.every((tag) => reviewTags.includes(tag));
+      return hasAllOfferTypes && hasAllTags;
+    });
+
+    const restaurantsWithTagCounts = filtered.map((restaurant) => {
+      const reviewTags = restaurant.reviews.flatMap((r) => r.tags);
+      const tagCount = tags.reduce(
+        (acc, tag) => acc + reviewTags.filter((t) => t === tag).length,
+        0
+      );
+      const distance = calculateDistance(
+        lat,
+        lng,
+        restaurant.latitude,
+        restaurant.longitude
+      );
+
+      return {
+        ...restaurant,
+        tagCount,
+        bookmarkCount: restaurant.bookmarks.length,
+        reviewCount: restaurant.reviews.length,
+        distance,
+        tags: reviewTags,
+      };
+    });
+
+    let sortedRestaurants;
+    switch (sort) {
+      case "rating":
+        sortedRestaurants = restaurantsWithTagCounts.sort(
+          (a, b) => (b.rating || 0) - (a.rating || 0)
+        );
+        break;
+      case "bookmark":
+        sortedRestaurants = restaurantsWithTagCounts.sort(
+          (a, b) => b.bookmarkCount - a.bookmarkCount
+        );
+        break;
+      case "review":
+        sortedRestaurants = restaurantsWithTagCounts.sort(
+          (a, b) => b.reviewCount - a.reviewCount
+        );
+        break;
+      case "latest":
+        sortedRestaurants = restaurantsWithTagCounts.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        break;
+      case "tag_count":
+        sortedRestaurants = restaurantsWithTagCounts.sort(
+          (a, b) => b.tagCount - a.tagCount || a.distance - b.distance
+        );
+        break;
+      default:
+        sortedRestaurants = restaurantsWithTagCounts.sort(
+          (a, b) => a.distance - b.distance
+        );
+        break;
+    }
+
+    const paginatedRestaurants = sortedRestaurants.slice(skip, skip + limit);
+
+    return new NextResponse(
+      JSON.stringify(
+        {
+          restaurants: paginatedRestaurants,
+          tagFilters: tags,
+          metadata: {
+            currentPage: page,
+            totalPages: Math.ceil(sortedRestaurants.length / limit),
+            totalCount: sortedRestaurants.length,
+            hasMore: skip + limit < sortedRestaurants.length,
+          },
+        },
+        replaceBigInt
+      ),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
   } catch (error) {
     console.error("Error fetching restaurants:", error);
     return NextResponse.json(
-      { error: "Failed to fetch restaurants" },
+      {
+        error: "Failed to fetch restaurants",
+        details: (error as Error).message,
+      },
       { status: 500 }
     );
   }
 }
 
+// 거리 계산 함수
+function calculateDistance(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
+  const R = 6371; // 지구 반경 (km)
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+// POST 함수는 변경 없음
 export async function POST(request: Request) {
+  // 기존 코드 유지
   try {
     const formData = await request.formData();
     const placeDataStr = formData.get("data") as string;
@@ -192,12 +228,68 @@ export async function POST(request: Request) {
 
     const placeData = JSON.parse(placeDataStr);
 
-    // 기존 placeData에서 region 정보를 직접 받도록 수정
-    const { region1, region2, region3, region4 } = placeData;
+    // Parse necessary fields
+    let tagsArray: string[] = [];
+    if (placeData.tags) {
+      if (Array.isArray(placeData.tags)) {
+        tagsArray = placeData.tags;
+      } else if (typeof placeData.tags === "string") {
+        tagsArray = placeData.tags
+          .split(",")
+          .map((item: string) => item.trim());
+      }
+    }
+
+    let specialOfferTypeArray: string[] = [];
+    if (placeData.specialOfferType) {
+      if (Array.isArray(placeData.specialOfferType)) {
+        specialOfferTypeArray = placeData.specialOfferType;
+      } else if (typeof placeData.specialOfferType === "string") {
+        specialOfferTypeArray = placeData.specialOfferType
+          .split(",")
+          .map((item: string) => item.trim());
+      }
+    }
+
+    let languagesArray: string[] = [];
+    if (placeData.languages) {
+      if (Array.isArray(placeData.languages)) {
+        languagesArray = placeData.languages;
+      } else if (typeof placeData.languages === "string") {
+        languagesArray = placeData.languages
+          .split(",")
+          .map((item: string) => item.trim());
+      }
+    }
+
+    // 소셜 링크 처리
+    let socialLinksObj: any;
+    if (placeData.socialLinks) {
+      try {
+        if (typeof placeData.socialLinks === "string") {
+          socialLinksObj = JSON.parse(placeData.socialLinks);
+        } else {
+          socialLinksObj = placeData.socialLinks;
+        }
+      } catch (e) {
+        console.error("Error parsing socialLinks:", e);
+        socialLinksObj = {};
+      }
+    } else {
+      socialLinksObj = {};
+    }
+
+    // 지역 정보 추출
+    const region1 = placeData.region1 || "";
+    const region2 = placeData.region2 || "";
+    const region3 = placeData.region3 || "";
+    const region4 = placeData.region4 || "";
 
     // Upload images
     const imageUrls = await Promise.all(
       imageFiles.map(async (file) => {
+        if (!(file instanceof File)) return null;
+
         const filename = `${Date.now()}_${file.name.replace(
           /[^a-zA-Z0-9.]/g,
           ""
@@ -207,28 +299,68 @@ export async function POST(request: Request) {
         });
         return blob.url;
       })
+    ).then((urls) => urls.filter((url) => url !== null) as string[]);
+
+    // 추가 태그 목록에 지역 정보 추가 (중복 제거)
+    const combinedTags = Array.from(
+      new Set([
+        ...tagsArray,
+        ...(region1 ? [region1] : []),
+        ...(region2 ? [region2] : []),
+        ...(region3 ? [region3] : []),
+      ])
     );
 
-    // Create restaurant with region information
+    // 만족도, 가성비 등 기본 태그 추가
+    if (placeData.satisfaction) combinedTags.push("만족도");
+    if (placeData.valueForMoney) combinedTags.push("가성비");
+    if (placeData.benefits) combinedTags.push("혜택만족");
+    if (placeData.locationConvenience) combinedTags.push("위치편의성");
+    if (placeData.productFeatures) combinedTags.push("상품특성");
+    if (placeData.recommendation) combinedTags.push("추천의향");
+
+    // Create restaurant with processed data
     const restaurant = await prisma.restaurant.create({
       data: {
-        ...placeData,
+        name: placeData.name,
+        description: placeData.description || "",
+        about: placeData.about || "",
+        address: placeData.address,
+        addressDetail: placeData.addressDetail || "",
+        latitude: parseFloat(placeData.latitude),
+        longitude: parseFloat(placeData.longitude),
+        category: placeData.category,
+        subCategory: placeData.subCategory || null,
+        rating: placeData.rating ? parseFloat(placeData.rating) : 0,
+        specialOfferText: placeData.specialOfferText || "",
+        specialOfferTextDetail: placeData.specialOfferTextDetail || "",
+        images: imageUrls,
+        languages: languagesArray,
+        socialLinks: socialLinksObj,
         region1,
         region2,
         region3,
         region4,
-        images: imageUrls,
-        languages: placeData.languages || [],
-        socialLinks: placeData.socialLinks || [],
-        tags: [...(placeData.tags || []), region1, region2, region3], // 지역 정보를 태그에도 추가
+        specialOfferType: specialOfferTypeArray,
+        tags: combinedTags,
+        openingHoursText: placeData.openingHoursText || null,
       },
     });
 
-    return NextResponse.json(restaurant);
+    // BigInt 처리를 위한 커스텀 직렬화 사용
+    return new NextResponse(JSON.stringify(restaurant, replaceBigInt), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
   } catch (error) {
     console.error("Error creating restaurant:", error);
     return NextResponse.json(
-      { error: "Failed to create restaurant" },
+      {
+        error: "Failed to create restaurant",
+        details: (error as Error).message,
+      },
       { status: 500 }
     );
   }

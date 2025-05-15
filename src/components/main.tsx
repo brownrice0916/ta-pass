@@ -82,7 +82,7 @@ export default function Main() {
 
     {
       icon: "🏛️",
-      label: "공연/전시",
+      label: "관광명소",
       color: "bg-[#EFFBF2]",
       tag: "궁, 박물관, 전시, 공연",
       href: "/category?category=Attraction",
