@@ -224,17 +224,17 @@ const Category = () => {
     router.push(`?${params.toString()}`);
     setShowCategoryDropdown(false);
   };
-  const handleSubcategoryClick = (name: string) => {
+
+  const handleSubcategoryClick = (name: any) => {
     setActiveSubcategory(name);
 
-    // 영문 subCategory value로 변환해서 전달
     if (activeMainCategory !== "전체") {
-      const engValue = subCategoryMap[activeMainCategory]?.[name];
-      if (engValue) {
-        updateQueryParams("subCategory", engValue);
-      } else {
-        updateQueryParams("subCategory", "all");
-      }
+      const engMainCategory = categoryMap[activeMainCategory];
+      const engSubCategory = subCategoryMap[engMainCategory]?.[name] || "all";
+
+      updateQueryParams("subCategory", engSubCategory);
+    } else {
+      updateQueryParams("subCategory", "all");
     }
   };
 
