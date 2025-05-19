@@ -95,11 +95,17 @@ export async function GET(request: Request) {
     });
 
     const filtered = allMatchingRestaurants.filter((restaurant) => {
-      const hasAllOfferTypes = specialOfferType.every((type) =>
-        restaurant.specialOfferType.includes(type)
-      );
+      const hasAllOfferTypes =
+        specialOfferType.length === 0 ||
+        (Array.isArray(restaurant.specialOfferType) &&
+          specialOfferType.every((type) =>
+            restaurant.specialOfferType.includes(type)
+          ));
+
       const reviewTags = restaurant.reviews.flatMap((r) => r.tags);
-      const hasAllTags = tags.every((tag) => reviewTags.includes(tag));
+      const hasAllTags =
+        tags.length === 0 || tags.every((tag) => reviewTags.includes(tag));
+
       return hasAllOfferTypes && hasAllTags;
     });
 

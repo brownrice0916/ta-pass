@@ -32,7 +32,8 @@ export function useRestaurants(
     neLng: number;
     swLat: number;
     swLng: number;
-  }
+  },
+  specialOfferTypes: string[] = [] // ✅ 추가!
 ) {
   const fetchRestaurants = useCallback(
     async ({ pageParam = 1 }) => {
@@ -65,6 +66,9 @@ export function useRestaurants(
         searchParams.append("region", region);
       }
 
+      if (specialOfferTypes && specialOfferTypes.length > 0) {
+        searchParams.append("specialOfferType", specialOfferTypes.join(","));
+      }
       // 태그 필터 추가
       if (tags && tags.length > 0) {
         searchParams.append("tags", tags.join(","));
@@ -115,6 +119,7 @@ export function useRestaurants(
       region,
       tags,
       mapBounds,
+      specialOfferTypes,
     ]
   );
 
@@ -130,8 +135,8 @@ export function useRestaurants(
       subCategory,
       region,
       tags,
-      // mapBounds도 쿼리 키에 포함시켜 지도 이동 시 다시 데이터를 가져옴
       mapBounds ? JSON.stringify(mapBounds) : null,
+      specialOfferTypes, // ✅ 여기에 추가
     ] as const,
     queryFn: fetchRestaurants,
     getNextPageParam: (lastPage, allPages) =>

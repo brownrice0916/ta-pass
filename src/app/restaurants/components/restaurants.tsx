@@ -16,7 +16,13 @@ import GoogleMapsProvider from "@/app/google-maps-provider";
 import RestaurantMap from "./restaurant-map";
 import { RestaurantCard } from "@/app/search/component/restaurant-card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 // 정렬 옵션
 const SORT_OPTIONS = [
   { id: "distance", label: "거리순" },
@@ -170,15 +176,13 @@ export default function Restaurants() {
   } | null>(null);
 
   const toggleOfferType = (type: string) => {
-    setSpecialOfferTypes((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
-    );
-
-    const params = new URLSearchParams(searchParams.toString());
     const newTypes = specialOfferTypes.includes(type)
       ? specialOfferTypes.filter((t) => t !== type)
       : [...specialOfferTypes, type];
 
+    setSpecialOfferTypes(newTypes); // 상태 먼저 업데이트
+
+    const params = new URLSearchParams(searchParams.toString());
     if (newTypes.length > 0) {
       params.set("specialOfferType", newTypes.join(","));
     } else {
@@ -188,7 +192,6 @@ export default function Restaurants() {
     router.push(`/restaurants?${params.toString()}`);
     refetch();
   };
-
   // Manually handle search params
   useEffect(() => {
     if (!searchParams) return;
@@ -232,7 +235,8 @@ export default function Restaurants() {
     undefined, // subCategory
     selectedLocation,
     selectedTags,
-    locationMode === "map" ? mapBounds || undefined : undefined
+    locationMode === "map" ? mapBounds || undefined : undefined,
+    specialOfferTypes // ✅ 이걸 추가!
   );
 
   // Force refetch when filters change
@@ -580,9 +584,12 @@ export default function Restaurants() {
     setIsFilterModalOpen(false);
   });
 
-  useOnClickOutside(sortDropdownRef || document.createElement("div"), () => {
-    setShowSortDropdown(false);
-  });
+  useOnClickOutside(
+    (sortDropdownRef as any) || document.createElement("div"),
+    () => {
+      setShowSortDropdown(false);
+    }
+  );
 
   const handleTagFilterClick = (tagId: string) => {
     const newTags = selectedTags.includes(tagId)
@@ -612,6 +619,15 @@ export default function Restaurants() {
     refetch();
   };
 
+  const locationDropdownRef = useRef<HTMLDivElement>(null);
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+
+  useOnClickOutside(
+    (locationDropdownRef as any) || document.createElement("div"),
+    () => {
+      setShowLocationDropdown(false);
+    }
+  );
   return (
     <div className="container mx-auto py-2 pb-16">
       <div className="flex justify-end mb-6">
@@ -666,7 +682,7 @@ export default function Restaurants() {
                 </div>
 
                 {/* 현재 선택된 태그를 기준으로 정렬 중임을 표시 */}
-                {selectedTags.length > 0 && sortOption === "tag_count" && (
+                {/* {selectedTags.length > 0 && sortOption === "tag_count" && (
                   <div className="mt-2 text-sm text-gray-600">
                     <span className="font-medium">
                       {selectedTags
@@ -677,7 +693,7 @@ export default function Restaurants() {
                       기준으로 정렬됨
                     </span>
                   </div>
-                )}
+                )} */}
 
                 {/* 필터 모달 */}
                 {isFilterModalOpen && (
@@ -803,37 +819,77 @@ export default function Restaurants() {
             </div>
           )}
         </div>
-        <Tabs
-          value={locationMode}
-          onValueChange={handleLocationModeChange}
-          className="border rounded-md overflow-hidden"
-        >
-          <TabsList className="bg-white">
-            <TabsTrigger value="user" className="text-xs px-2 py-1">
-              현재위치
-            </TabsTrigger>
-            <TabsTrigger value="map" className="text-xs px-2 py-1">
-              지도위치
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-        <div className="flex space-x-2">
-          {["Discount", "Special Gift"].map((type) => (
-            <button
-              key={type}
-              onClick={() => toggleOfferType(type)}
-              className={`px-2 py-1.5 rounded-full text-sm font-medium transition-all duration-150
-                ${
-                  specialOfferTypes.includes(type)
-                    ? `text-white ${
-                        type === "Discount" ? "bg-orange-500" : "bg-pink-500"
-                      }`
-                    : "bg-white border border-gray-300 text-gray-600"
+        {/* 위치 모드 드롭다운 */}
+        <div className="relative" ref={locationDropdownRef}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowLocationDropdown((prev) => !prev)}
+            className="flex items-center"
+          >
+            {locationMode === "user" ? "현재위치 기준" : "지도위치 기준"}
+            <ChevronDown className="ml-2 h-4 w-4" />
+          </Button>
+
+          {showLocationDropdown && (
+            <div className="absolute right-0 mt-1 w-40 bg-white rounded-md shadow-lg z-50">
+              <button
+                onClick={() => {
+                  handleLocationModeChange("user");
+                  setShowLocationDropdown(false); // 드롭다운 닫기
+                }}
+                className={`w-full text-left px-4 py-2 text-sm ${
+                  locationMode === "user"
+                    ? "bg-primary text-white"
+                    : "text-gray-700 hover:bg-gray-100"
                 }`}
-            >
-              {type}
-            </button>
-          ))}
+              >
+                현재위치 기준
+              </button>
+              <button
+                onClick={() => {
+                  handleLocationModeChange("map");
+                  setShowLocationDropdown(false); // 드롭다운 닫기
+                }}
+                className={`w-full text-left px-4 py-2 text-sm ${
+                  locationMode === "map"
+                    ? "bg-primary text-white"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                지도위치 기준
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="flex space-x-2">
+          {["Discount", "Special Gift"].map((type) => {
+            const isSelected = specialOfferTypes.includes(type);
+
+            const customStyle = !isSelected
+              ? type === "Discount"
+                ? { border: "1px solid #f97316", color: "#f97316" } // orange-500
+                : { border: "1px solid #ec4899", color: "#ec4899" } // pink-500
+              : { border: "1px solid #fff" };
+
+            return (
+              <button
+                key={type}
+                onClick={() => toggleOfferType(type)}
+                style={customStyle}
+                className={`px-2 py-1.5 rounded-full text-sm font-medium transition-all duration-150
+          ${
+            isSelected
+              ? `text-white ${
+                  type === "Discount" ? "bg-orange-500" : "bg-pink-500"
+                }`
+              : "bg-white"
+          }`}
+              >
+                {type}
+              </button>
+            );
+          })}
         </div>
       </div>
       <div className="mt-2 flex overflow-x-auto pb-2 -mx-2 px-2">
@@ -850,13 +906,13 @@ export default function Restaurants() {
             <span className="mr-1">{tag.icon}</span>
             {tag.label}
             {/* 태그가 선택되었을 때 '태그순' 정렬 중임을 표시 */}
-            {selectedTags.includes(tag.id) &&
+            {/* {selectedTags.includes(tag.id) &&
               selectedTags.length === 1 &&
               sortOption === "tag_count" && (
                 <span className="ml-1 text-xs bg-white bg-opacity-20 px-1 rounded">
                   정렬중
                 </span>
-              )}
+              )} */}
           </button>
         ))}
       </div>
@@ -894,7 +950,7 @@ export default function Restaurants() {
             imageLoading={imageLoading}
             onImageLoad={() => setImageLoading(false)}
             onImageError={() => setImageLoading(false)}
-            highlightedTags={selectedTags} // 선택된 태그를 하이라이트
+            // 선택된 태그를 하이라이트
           />
         ))}
 
