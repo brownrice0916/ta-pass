@@ -224,10 +224,18 @@ const Category = () => {
     router.push(`?${params.toString()}`);
     setShowCategoryDropdown(false);
   };
-
-  const handleSubcategoryClick = (name: any) => {
+  const handleSubcategoryClick = (name: string) => {
     setActiveSubcategory(name);
-    updateQueryParams("subCategory", name);
+
+    // 영문 subCategory value로 변환해서 전달
+    if (activeMainCategory !== "전체") {
+      const engValue = subCategoryMap[activeMainCategory]?.[name];
+      if (engValue) {
+        updateQueryParams("subCategory", engValue);
+      } else {
+        updateQueryParams("subCategory", "all");
+      }
+    }
   };
 
   const handleRegionClick = (name: any) => {
@@ -538,13 +546,6 @@ const Category = () => {
               </div>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* 채팅 버튼 */}
-      <div className="absolute bottom-6 right-6">
-        <div className="bg-blue-500 rounded-full w-14 h-14 flex items-center justify-center shadow-lg cursor-pointer hover:bg-blue-600">
-          <MessageCircle className="w-6 h-6 text-white" />
         </div>
       </div>
     </div>

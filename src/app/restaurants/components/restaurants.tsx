@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { regions } from "@/types/category";
+import { regions, subCategoryMap } from "@/types/category";
 // 정렬 옵션
 const SORT_OPTIONS = [
   { id: "distance", label: "거리순" },
@@ -151,12 +151,14 @@ export default function Restaurants() {
     lng: number;
   } | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedSubCategory, setSelectedSubCategory] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("전체");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMarker, setSelectedMarker] = useState<Restaurant | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [tempCategory, setTempCategory] = useState("all");
+  const [tempSubCategory, setTempSubCategory] = useState("all");
   const [tempLocation, setTempLocation] = useState("전체");
   const [forceRefetch, setForceRefetch] = useState(0);
 
@@ -204,6 +206,8 @@ export default function Restaurants() {
 
     const query = searchParams.get("q") || "";
     const category = searchParams.get("category") || "all";
+    const subCategory = searchParams.get("subCategory") || "all";
+
     const location = searchParams.get("location") || "전체";
     const sort = searchParams.get("sort") || "distance";
     const tags = searchParams.get("tags")?.split(",") || [];
@@ -213,6 +217,8 @@ export default function Restaurants() {
     setSelectedCategory(category);
     setSelectedLocation(location);
     setTempCategory(category);
+    setSelectedSubCategory(subCategory);
+    setTempSubCategory(subCategory);
     setTempLocation(location);
     setSortOption(sort);
     setLocationMode(mode);
@@ -238,7 +244,7 @@ export default function Restaurants() {
     sortOption,
     locationMode,
     selectedCategory,
-    undefined, // subCategory
+    selectedSubCategory, // ⬅️ 추가
     selectedLocation,
     selectedTags,
     locationMode === "map" ? mapBounds || undefined : undefined,
@@ -435,6 +441,9 @@ export default function Restaurants() {
     const params = new URLSearchParams();
     if (searchQuery) params.set("q", searchQuery);
     if (selectedCategory !== "all") params.set("category", selectedCategory);
+    if (selectedSubCategory !== "all") {
+      params.set("subCategory", selectedSubCategory);
+    }
     if (selectedLocation !== "전체") params.set("location", selectedLocation);
     if (selectedTags.length > 0) params.set("tags", selectedTags.join(","));
     if (sortOption !== "distance") params.set("sort", sortOption);
@@ -485,11 +494,13 @@ export default function Restaurants() {
     setSelectedCategory(tempCategory);
     setSelectedLocation(tempLocation);
     setSelectedTags(tempTags);
+    setSelectedSubCategory(tempSubCategory); // ✅ 이건 잘 되어 있음
     setIsFilterModalOpen(false);
 
     const params = new URLSearchParams();
     if (searchQuery) params.set("q", searchQuery);
     if (tempCategory !== "all") params.set("category", tempCategory);
+    if (tempSubCategory !== "all") params.set("subCategory", tempSubCategory); // ✅ 이거 빠졌었음!
     if (tempLocation !== "전체") params.set("location", tempLocation);
     if (tempTags.length > 0) params.set("tags", tempTags.join(","));
     if (sortOption !== "distance") params.set("sort", sortOption);
@@ -503,6 +514,8 @@ export default function Restaurants() {
   const resetFilters = () => {
     setSearchQuery("");
     setSelectedCategory("all");
+    setSelectedSubCategory("all");
+    setTempSubCategory("all");
     setSelectedLocation("전체");
     setSelectedTags([]);
     setTempCategory("all");
@@ -721,7 +734,10 @@ export default function Restaurants() {
                         {CATEGORIES.map((category) => (
                           <button
                             key={category.id}
-                            onClick={() => setTempCategory(category.value)}
+                            onClick={() => {
+                              setTempCategory(category.value);
+                              setTempSubCategory("all"); // ← 이거 꼭 필요함!
+                            }}
                             className={`px-3 py-1.5 rounded-full text-sm ${
                               tempCategory === category.value
                                 ? "bg-primary text-white"
@@ -734,6 +750,30 @@ export default function Restaurants() {
                       </div>
                     </div>
 
+                    {tempCategory !== "all" && subCategoryMap[tempCategory] && (
+                      <div className="mb-4">
+                        <h3 className="text-sm font-medium mb-2">
+                          세부 카테고리
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          {Object.entries(subCategoryMap[tempCategory]).map(
+                            ([label, value]) => (
+                              <button
+                                key={value as any}
+                                onClick={() => setTempSubCategory(value as any)}
+                                className={`px-3 py-1.5 rounded-full text-sm ${
+                                  tempSubCategory === value
+                                    ? "bg-primary text-white"
+                                    : "bg-gray-100 hover:bg-gray-200"
+                                }`}
+                              >
+                                {label}
+                              </button>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    )}
                     <div className="flex space-x-2">
                       <Button className="flex-1" onClick={applyFilters}>
                         적용하기

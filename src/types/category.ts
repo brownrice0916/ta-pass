@@ -9,7 +9,7 @@ export const categoryMap = {
 } as any;
 
 export const subCategoryMap = {
-  맛집: {
+  Food: {
     전체: "all",
     한식: "korean",
     분식: "snack",
@@ -21,21 +21,21 @@ export const subCategoryMap = {
     "다국적/퓨전": "fusion",
     패스트푸드: "fastfood",
   },
-  쇼핑: {
+  Shopping: {
     전체: "all",
     "패션/의류": "fashion",
     "화장품/뷰티": "beauty",
     "기념품/특산품": "souvenir",
     "백화점/쇼핑몰": "department",
   },
-  관광명소: {
+  Attraction: {
     전체: "all",
     "궁/왕궁": "palace",
     "박물관/미술관": "museum",
     "전망대/스카이뷰": "skyview",
     테마파크: "themepark",
   },
-  체험: {
+  Experience: {
     전체: "all",
     한복체험: "hanbok",
     클래스: "class",
@@ -44,13 +44,13 @@ export const subCategoryMap = {
     "야외 액티비티": "outdoor",
     케이팝: "kpop",
   },
-  웰니스: {
+  Wellness: {
     전체: "all",
     "스파/마사지": "spa",
     "요가/명상": "yoga",
     뷰티케어: "beautycare",
   },
-  나이트라이프: {
+  Nightlife: {
     전체: "all",
     클럽: "club",
     루프탑바: "rooftop",
