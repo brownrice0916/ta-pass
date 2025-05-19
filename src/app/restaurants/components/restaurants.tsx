@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { regions } from "@/types/category";
 // 정렬 옵션
 const SORT_OPTIONS = [
   { id: "distance", label: "거리순" },
@@ -33,53 +34,58 @@ const SORT_OPTIONS = [
 
 // 카테고리 목록
 const CATEGORIES = [
-  { id: "all", label: "All", value: "all" },
+  { id: "all", label: "전체", value: "all" },
   {
-    id: "fashion",
-    label: "Fashion",
-    value: "Fashion",
-    types: ["clothing_store", "shopping_mall"],
+    id: "Food",
+    label: "맛집",
+    value: "Food",
+    // types: ["clothing_store", "shopping_mall"],
   },
   {
-    id: "beauty",
-    label: "Beauty",
-    value: "Beauty",
-    types: ["beauty_salon", "hair_care"],
+    id: "Shopping",
+    label: "쇼핑",
+    value: "Shopping",
+    // types: ["beauty_salon", "hair_care"],
   },
   {
-    id: "luxury",
-    label: "Luxury",
-    value: "Luxury",
-    types: ["jewelry_store", "shopping_mall"],
+    id: "Attraction",
+    label: "관광명소",
+    value: "Attraction",
+    // types: ["jewelry_store", "shopping_mall"],
   },
   {
-    id: "activities",
-    label: "Activities",
-    value: "Activities",
-    types: ["gym", "park", "amusement_park"],
+    id: "Experience",
+    label: "체험",
+    value: "Experience",
+    // types: ["gym", "park", "amusement_park"],
   },
   {
-    id: "culture",
-    label: "Culture",
-    value: "Culture",
-    types: ["museum", "art_gallery", "movie_theater"],
+    id: "Wellness",
+    label: "웰니스",
+    value: "Wellness",
+    // types: ["museum", "art_gallery", "movie_theater"],
   },
-  { id: "food", label: "Food", value: "Food", types: ["restaurant", "cafe"] },
+  {
+    id: "Nightlife",
+    label: "나이트라이프",
+    value: "Nightlife",
+    types: ["restaurant", "cafe"],
+  },
 ];
 
 // 지역 목록
-const LOCATIONS = [
-  { id: "전체", label: "전체" },
-  { id: "홍대", label: "홍대" },
-  { id: "명동", label: "명동" },
-  { id: "인사동", label: "인사동" },
-  { id: "강남", label: "강남" },
-  { id: "이태원", label: "이태원" },
-  { id: "한남", label: "한남" },
-  { id: "합정", label: "합정" },
-  { id: "성수", label: "성수" },
-  { id: "여의도", label: "여의도" },
-];
+// const LOCATIONS = [
+//   { id: "전체", label: "전체" },
+//   { id: "홍대", label: "홍대" },
+//   { id: "명동", label: "명동" },
+//   { id: "인사동", label: "인사동" },
+//   { id: "강남", label: "강남" },
+//   { id: "이태원", label: "이태원" },
+//   { id: "한남", label: "한남" },
+//   { id: "합정", label: "합정" },
+//   { id: "성수", label: "성수" },
+//   { id: "여의도", label: "여의도" },
+// ];
 
 // emojiMap: 실제 저장된 태그 → 이모지
 const emojiMap: { [key: string]: string } = {
@@ -681,21 +687,6 @@ export default function Restaurants() {
                   </Button>
                 </div>
 
-                {/* 현재 선택된 태그를 기준으로 정렬 중임을 표시 */}
-                {/* {selectedTags.length > 0 && sortOption === "tag_count" && (
-                  <div className="mt-2 text-sm text-gray-600">
-                    <span className="font-medium">
-                      {selectedTags
-                        .map(
-                          (t) => TAG_FILTERS.find((tf) => tf.id === t)?.label
-                        )
-                        .join(", ")}
-                      기준으로 정렬됨
-                    </span>
-                  </div>
-                )} */}
-
-                {/* 필터 모달 */}
                 {isFilterModalOpen && (
                   <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg border p-4 z-50">
                     <button
@@ -708,7 +699,7 @@ export default function Restaurants() {
                     <div className="mb-4">
                       <h3 className="text-sm font-medium mb-2">지역</h3>
                       <div className="flex flex-wrap gap-2">
-                        {LOCATIONS.map((location) => (
+                        {regions.map((location) => (
                           <button
                             key={location.id}
                             onClick={() => setTempLocation(location.id)}
@@ -718,7 +709,7 @@ export default function Restaurants() {
                                 : "bg-gray-100 hover:bg-gray-200"
                             }`}
                           >
-                            {location.label}
+                            {location.name}
                           </button>
                         ))}
                       </div>

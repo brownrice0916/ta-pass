@@ -118,8 +118,6 @@ export const authOptions: NextAuthOptions = {
           };
         }
       }
-
-      console.log("Session updated:", session);
       return session;
     },
   },
