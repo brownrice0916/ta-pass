@@ -7,41 +7,138 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model SerialNumber {
-  id         String    @id @default(cuid())
-  code       String    @unique
-  isUsed     Boolean   @default(false)
-  usedAt     DateTime?
-  createdAt  DateTime  @default(now())
-  expiresAt  DateTime?
-  activatedUntil DateTime? // 👈 이거 추가해줘!
-  userId     Int?
-  user       User?     @relation(fields: [userId], references: [id])
-  
-  type       String    @default("standard")
-  metadata   Json?
-  
-  @@index([code])
+model User {
+  email          String              @unique
+  password       String
+  name           String
+  country        String              @default("")
+  gender         String              @default("")
+  birthYear      String              @default("")
+  birthMonth     String              @default("")
+  birthDay       String              @default("")
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  image          String              @default("")
+  membershipType String              @default("free")
+  id             Int                 @id @default(autoincrement())
+  role           String              @default("user")
+  bookmarks      Bookmark[]
+  ceoProfile     CEOProfile?
+  stores         Restaurant[]
+  reviews        Review[]
+  serialNumbers  SerialNumber[]
+  viewLogs       RestaurantViewLog[]
+  bookmarkLogs   BookmarkLog[]
+}
+
+model CEOProfile {
+  id                 String             @id @default(uuid())
+  userId             Int                @unique
+  businessName       String
+  businessNumber     String             @unique
+  verificationStatus VerificationStatus @default(pending)
+  registrationImage  String?
+  createdAt          DateTime           @default(now())
+  user               User               @relation(fields: [userId], references: [id])
+}
+
+model Bookmark {
+  id           String     @id @default(cuid())
+  userId       Int
+  restaurantId String
+  createdAt    DateTime   @default(now())
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  user         User       @relation(fields: [userId], references: [id])
+
+  @@unique([userId, restaurantId])
+  @@index([restaurantId])
   @@index([userId])
 }
 
-model User {
-  id             Int            @id @default(autoincrement())
-  email          String         @unique
-  password       String
-  name           String
-  image          String         @default("")
-  country        String         @default("")
-  gender         String         @default("")
-  birthYear      String         @default("")
-  birthMonth     String         @default("")
-  birthDay       String         @default("")
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  reviews        Review[]
-  serialNumbers  SerialNumber[]
-  membershipType String         @default("free")
-  bookmarks      Bookmark[]     // 추가: 북마크 관계
+model RestaurantViewLog {
+  id           String     @id @default(cuid())
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+  user         User?      @relation(fields: [userId], references: [id])
+  userId       Int?
+  viewedAt     DateTime   @default(now()) // 조회 시각
+  ipAddress    String? // 중복방지용
+  userAgent    String?
+}
+
+model BookmarkLog {
+  id           String     @id @default(cuid())
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+  user         User       @relation(fields: [userId], references: [id])
+  userId       Int
+  bookmarkedAt DateTime   @default(now()) // 북마크 추가 시각
+}
+
+model Restaurant {
+  id                     String              @id @default(cuid())
+  name                   String
+  description            String              @default("")
+  about                  String              @default("")
+  address                String
+  latitude               Float
+  longitude              Float
+  category               String?
+  rating                 Float?              @default(0)
+  specialOfferText       String              @default("")
+  images                 String[]            @default([])
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+  addressDetail          String              @default("")
+  languages              String[]            @default([])
+  region1                String?             @default("")
+  region2                String?             @default("")
+  region3                String?             @default("")
+  region4                String?
+  socialLinks            Json?
+  tags                   String[]            @default([])
+  specialOfferType       String[]            @default([])
+  specialOfferTextDetail String              @default("")
+  subCategory            String?
+  openingHoursText       String?
+  viewCount              Int                 @default(0)
+  ownerId                Int?
+  bookmarks              Bookmark[]
+  owner                  User?               @relation(fields: [ownerId], references: [id])
+  reviews                Review[]
+  viewLogs               RestaurantViewLog[]
+  bookmarkLogs           BookmarkLog[]
+}
+
+model Review {
+  id           String     @id @default(cuid())
+  content      String?
+  rating       Float
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  restaurantId String
+  images       String[]
+  userId       Int
+  tags         String[]   @default([])
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  user         User       @relation(fields: [userId], references: [id])
+}
+
+model SerialNumber {
+  id             String    @id @default(cuid())
+  code           String    @unique
+  isUsed         Boolean   @default(false)
+  usedAt         DateTime?
+  createdAt      DateTime  @default(now())
+  expiresAt      DateTime?
+  type           String    @default("standard")
+  metadata       Json?
+  userId         Int?
+  activatedUntil DateTime?
+  user           User?     @relation(fields: [userId], references: [id])
+
+  @@index([code])
+  @@index([userId])
 }
 
 model EmailVerification {
@@ -53,60 +150,8 @@ model EmailVerification {
   createdAt DateTime @default(now())
 }
 
-model Restaurant {
-  id                     String     @id @default(cuid())
-  name                   String
-  description            String     @default("")
-  about                  String     @default("")
-  address                String
-  latitude               Float
-  longitude              Float
-  category               String?
-  subCategory            String?
-  rating                 Float?     @default(0)
-  specialOfferText       String     @default("")
-  images                 String[]   @default([])
-  createdAt              DateTime   @default(now())
-  updatedAt              DateTime   @updatedAt
-  addressDetail          String     @default("")
-  languages              String[]   @default([])
-  region1                String?    @default("")
-  region2                String?    @default("")
-  region3                String?    @default("")
-  region4                String?
-  socialLinks            Json?
-  tags                   String[]   @default([])
-  specialOfferType       String[]   @default([])
-  specialOfferTextDetail String     @default("")
-  reviews                Review[]
-  bookmarks              Bookmark[] // 추가: 북마크 관계
-  openingHoursText       String?
-}
-
-model Review {
-  id           String     @id @default(cuid())
-  content      String?    // Changed from required to optional
-  rating       Float
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  userId       Int
-  restaurantId String
-  images       String[]
-  tags         String[]   @default([])
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
-  user         User       @relation(fields: [userId], references: [id])
-}
-
-// 추가: 북마크 모델
-model Bookmark {
-  id           String     @id @default(cuid())
-  userId       Int
-  restaurantId String
-  createdAt    DateTime   @default(now())
-  user         User       @relation(fields: [userId], references: [id])
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
-
-  @@unique([userId, restaurantId]) // 한 사용자가 같은 식당을 중복 북마크하지 않도록
-  @@index([userId])
-  @@index([restaurantId])
+enum VerificationStatus {
+  pending
+  approved
+  rejected
 }

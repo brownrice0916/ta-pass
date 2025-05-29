@@ -16,7 +16,7 @@ export const subCategoryMap = {
     "카페/디저트": "cafe",
     고기구이: "bbq",
     해산물: "seafood",
-    "채식/비건": "vegan",
+    "채식/비건": "vegan", 
     "바/펍": "bar",
     "다국적/퓨전": "fusion",
     패스트푸드: "fastfood",

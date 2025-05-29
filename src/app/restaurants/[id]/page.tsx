@@ -136,6 +136,14 @@ export default function RestaurantDetail() {
   }, [carouselApi, handleSlideChange]);
 
   useEffect(() => {
+    if (id) {
+      fetch(`/api/restaurants/${id}/view`, {
+        method: "POST",
+      }).catch((err) => console.error("Failed to increase view count", err));
+    }
+  }, [id]);
+
+  useEffect(() => {
     if (restaurant) {
       fetchNearbyRestaurants(restaurant.latitude, restaurant.longitude);
     }
@@ -211,6 +219,13 @@ export default function RestaurantDetail() {
       if (!isBookmarked) {
         const data = await response.json();
         setBookmarkId(data.bookmark.id);
+
+        // ✅ BookmarkLog 기록
+        await fetch("/api/bookmarks/log", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ restaurantId: currentId }),
+        });
       } else {
         setBookmarkId(null);
       }
