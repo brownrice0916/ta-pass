@@ -5,11 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const restaurantId = params.id;
+export async function POST(req: NextRequest, context: { params: any }) {
+  const restaurantId = context.params.id;
   if (!restaurantId) {
     return NextResponse.json(
       { error: "Missing restaurant ID" },
