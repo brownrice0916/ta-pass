@@ -63,21 +63,21 @@ export default function Main() {
       label: "맛집",
       color: "bg-[#FDF1F7]",
       tag: "맛집, 카페, 길거리 음식",
-      href: "/category?category=Food",
+      href: "/category?category=food",
     },
     {
       icon: "🛍️",
       label: "쇼핑",
       color: "bg-[#F9F4FD]",
       tag: "패션, 뷰티, 쇼핑몰",
-      href: "/category?category=Shopping",
+      href: "/category?category=shopping",
     },
     {
       icon: "🎨",
       label: "체험",
       color: "bg-[#FFFBEF]",
       tag: "한복, 쿠킹클래스, 레저",
-      href: "/category?category=Experience",
+      href: "/category?category=experience",
     },
 
     {
@@ -85,21 +85,21 @@ export default function Main() {
       label: "관광명소",
       color: "bg-[#EFFBF2]",
       tag: "궁, 박물관, 전시, 공연",
-      href: "/category?category=Attraction",
+      href: "/category?category=attraction",
     },
     {
       icon: "💆‍♀️",
       label: "웰니스",
       color: "bg-[#ECFEFE]",
       tag: "스파, 요가, 뷰티케어",
-      href: "/category?category=Wellness",
+      href: "/category?category=wellness",
     },
     {
       icon: "🌙",
       label: "나이트라이프",
       color: "bg-yellow-100",
       tag: "클럽, 바, 포장마차",
-      href: "/category?category=Nightlife",
+      href: "/category?category=nightlife",
     },
   ];
 

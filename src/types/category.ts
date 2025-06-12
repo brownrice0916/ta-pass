@@ -1,41 +1,41 @@
 // Category mappings
 export const categoryMap = {
-  맛집: "Food",
-  쇼핑: "Shopping",
-  관광명소: "Attraction",
-  체험: "Experience",
-  웰니스: "Wellness",
-  나이트라이프: "Nightlife",
+  맛집: "food",
+  쇼핑: "shopping",
+  관광명소: "attraction",
+  체험: "experience",
+  웰니스: "wellness",
+  나이트라이프: "nightlife",
 } as any;
 
 export const subCategoryMap = {
-  Food: {
+  food: {
     전체: "all",
     한식: "korean",
     분식: "snack",
     "카페/디저트": "cafe",
     고기구이: "bbq",
     해산물: "seafood",
-    "채식/비건": "vegan", 
+    "채식/비건": "vegan",
     "바/펍": "bar",
     "다국적/퓨전": "fusion",
     패스트푸드: "fastfood",
   },
-  Shopping: {
+  shopping: {
     전체: "all",
     "패션/의류": "fashion",
     "화장품/뷰티": "beauty",
     "기념품/특산품": "souvenir",
     "백화점/쇼핑몰": "department",
   },
-  Attraction: {
+  attraction: {
     전체: "all",
     "궁/왕궁": "palace",
     "박물관/미술관": "museum",
     "전망대/스카이뷰": "skyview",
     테마파크: "themepark",
   },
-  Experience: {
+  experience: {
     전체: "all",
     한복체험: "hanbok",
     클래스: "class",
@@ -44,13 +44,13 @@ export const subCategoryMap = {
     "야외 액티비티": "outdoor",
     케이팝: "kpop",
   },
-  Wellness: {
+  wellness: {
     전체: "all",
     "스파/마사지": "spa",
     "요가/명상": "yoga",
     뷰티케어: "beautycare",
   },
-  Nightlife: {
+  nightlife: {
     전체: "all",
     클럽: "club",
     루프탑바: "rooftop",

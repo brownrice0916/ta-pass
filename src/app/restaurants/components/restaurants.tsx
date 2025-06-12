@@ -36,40 +36,40 @@ const SORT_OPTIONS = [
 const CATEGORIES = [
   { id: "all", label: "전체", value: "all" },
   {
-    id: "Food",
+    id: "food",
     label: "맛집",
-    value: "Food",
+    value: "food",
     // types: ["clothing_store", "shopping_mall"],
   },
   {
-    id: "Shopping",
+    id: "shopping",
     label: "쇼핑",
-    value: "Shopping",
+    value: "shopping",
     // types: ["beauty_salon", "hair_care"],
   },
   {
-    id: "Attraction",
+    id: "attraction",
     label: "관광명소",
-    value: "Attraction",
+    value: "attraction",
     // types: ["jewelry_store", "shopping_mall"],
   },
   {
-    id: "Experience",
+    id: "experience",
     label: "체험",
-    value: "Experience",
+    value: "experience",
     // types: ["gym", "park", "amusement_park"],
   },
   {
-    id: "Wellness",
+    id: "wellness",
     label: "웰니스",
-    value: "Wellness",
+    value: "wellness",
     // types: ["museum", "art_gallery", "movie_theater"],
   },
   {
-    id: "Nightlife",
+    id: "nightlife",
     label: "나이트라이프",
     value: "Nightlife",
-    types: ["restaurant", "cafe"],
+    // types: ["restaurant", "cafe"],
   },
 ];
 
@@ -200,7 +200,7 @@ export default function Restaurants() {
     router.push(`/restaurants?${params.toString()}`);
     refetch();
   };
-  // Manually handle search params
+
   useEffect(() => {
     if (!searchParams) return;
 
