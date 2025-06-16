@@ -2,20 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Bookmark,
-  MapPin,
-  Clock,
-  Calendar,
-  Share2,
-  ChevronLeft,
-  ChevronRight,
-  X,
-  ExternalLink,
-  Phone,
-} from "lucide-react";
+import { Bookmark, Share2, ChevronLeft, ChevronRight, X } from "lucide-react";
 import {
   Carousel,
   CarouselApi,
@@ -32,13 +20,14 @@ import GoogleMapsProvider from "@/app/google-maps-provider";
 import RestaurantMap from "../components/restaurant-map";
 import { useSession } from "next-auth/react";
 import { toast } from "react-hot-toast";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { t } from "@/lib/i18n";
+import { useLanguage } from "@/context/LanguageContext";
 
 export interface Review {
   id: string;
@@ -231,7 +220,11 @@ export default function RestaurantDetail() {
       }
 
       setIsBookmarked(!isBookmarked);
-      toast.success(isBookmarked ? "북마크 해제됨" : "북마크 추가됨");
+      toast.success(
+        isBookmarked
+          ? t("bookmarkRemoved", language)
+          : t("bookmarkAdded", language)
+      );
     } catch (error) {
       toast.error("북마크 처리 중 오류 발생");
       console.error("Bookmark toggle error:", error);
@@ -286,6 +279,7 @@ export default function RestaurantDetail() {
   const [photoCarouselApi, setPhotoCarouselApi] = useState<CarouselApi | null>(
     null
   );
+  const { language } = useLanguage();
   useEffect(() => {
     if (id) fetchReviews();
   }, [id]);
@@ -345,8 +339,8 @@ export default function RestaurantDetail() {
   if (!restaurant) {
     return (
       <div className="flex flex-col items-center justify-center h-screen p-4">
-        <h2 className="text-xl font-medium mb-2">가게를 찾을 수 없습니다</h2>
-        <Button onClick={() => router.back()}>돌아가기</Button>
+        <h2 className="text-xl font-medium mb-2"> {t("notFound", language)}</h2>
+        <Button onClick={() => router.back()}>{t("goBack", language)}</Button>
       </div>
     );
   }
@@ -432,7 +426,7 @@ export default function RestaurantDetail() {
                     .catch((err) => console.error("Share failed:", err));
                 } else {
                   navigator.clipboard.writeText(window.location.href);
-                  toast.success("링크가 복사되었습니다");
+                  toast.success(t("linkCopied", language));
                 }
               }}
             >
@@ -501,7 +495,7 @@ export default function RestaurantDetail() {
               </span>
               <span className="mx-1 text-gray-300">|</span>
               <span className="text-sm text-gray-600">
-                리뷰 {reviews.length}개
+                {t("bookmarkAdded", language)} {reviews.length}
               </span>
             </div>
           </div>
@@ -589,7 +583,7 @@ export default function RestaurantDetail() {
             }}
             onClick={() => scrollToSection(photosSectionRef as any, "photos")}
           >
-            사진
+            {t("photos", language)}
           </button>
           <button
             className={`py-3 px-6 text-center text-sm font-medium ${
@@ -603,7 +597,7 @@ export default function RestaurantDetail() {
             }}
             onClick={() => scrollToSection(reviewsSectionRef as any, "reviews")}
           >
-            리뷰
+            {t("review", language)}
           </button>
           <button
             className={`py-3 px-6 text-center text-sm font-medium ${
@@ -619,7 +613,7 @@ export default function RestaurantDetail() {
               scrollToSection(benefitsSectionRef as any, "benefits")
             }
           >
-            혜택 안내
+            {t("benefit", language)}
           </button>
           <button
             className={`py-3 px-6 text-center text-sm font-medium ${
@@ -632,12 +626,12 @@ export default function RestaurantDetail() {
             }}
             onClick={() => scrollToSection(infoSectionRef as any, "info")}
           >
-            가게 소개
+            {t("description", language)}
           </button>
         </div>
       </div>
       <div ref={photosSectionRef} className="pl-4 py-6">
-        <h2 className="text-lg font-bold mb-4">사진</h2>
+        <h2 className="text-lg font-bold mb-4"> {t("photos", language)}</h2>
 
         <Carousel
           setApi={setPhotoCarouselApi}
@@ -666,7 +660,7 @@ export default function RestaurantDetail() {
                     >
                       <Image
                         src={image}
-                        alt={`리뷰 사진 ${imgIndex + 1}`}
+                        alt={`${t("photos", language)}} ${imgIndex + 1}`}
                         fill
                         className="object-cover"
                       />
@@ -751,7 +745,7 @@ export default function RestaurantDetail() {
       >
         {/* Review List */}
         <div className="mb-5">
-          <h2 className="text-lg font-bold mb-4">리뷰</h2>
+          <h2 className="text-lg font-bold mb-4">{t("review", language)}</h2>
           <ReviewSection
             onReviewsChange={fetchReviews}
             restaurant={restaurant}
@@ -777,7 +771,9 @@ export default function RestaurantDetail() {
           <>
             <div className="h-[1px] bg-[#ededed] w-full my-6"></div>{" "}
             <div className="mb-6">
-              <h2 className="text-lg font-bold mb-4">만족도 순위</h2>
+              <h2 className="text-lg font-bold mb-4">
+                {t("satisfactionRank", language)}
+              </h2>
               <TooltipProvider>
                 <div className="relative h-40 flex items-end justify-between">
                   {tagStats.map((stat, index) => {
@@ -852,7 +848,7 @@ export default function RestaurantDetail() {
       <div className="h-[1px] bg-[#ededed] w-full my-6"></div>
       {/* */}
       <div className="px-4" ref={benefitsSectionRef}>
-        <h2 className="text-lg font-semibold mb-7">혜택 안내</h2>
+        <h2 className="text-lg font-semibold mb-7">{t("benefit", language)}</h2>
 
         <pre className="text-sm whitespace-pre-wrap word-wrap break-words">
           {restaurant.specialOfferTextDetail}
@@ -864,9 +860,13 @@ export default function RestaurantDetail() {
       <div className="px-4">
         {/* About Section */}
         <div ref={infoSectionRef} className="mb-6 mt-4">
-          <h2 className="text-lg font-bold mb-2">가게 소개</h2>
+          <h2 className="text-lg font-bold mb-2">
+            {t("description", language)}
+          </h2>
 
-          <p className="text-sm">{restaurant?.description || "서비스 소개"}</p>
+          <p className="text-sm">
+            {restaurant?.description || t("description", language)}
+          </p>
           <div className="mt-10 text-gray-500 text-sm">
             {restaurant.tags.map((tag, index) => (
               <span key={index}>
@@ -882,7 +882,7 @@ export default function RestaurantDetail() {
         <div className="mb-6 mt-4 ">
           <div className="flex">
             <h2 className="text-lg font-semibold mb-2 mr-4 flex items-center">
-              <span className="mr-3">지도</span>{" "}
+              <span className="mr-3">{t("map", language)}</span>{" "}
               <p className="text-sm font-normal">{restaurant?.address}</p>
             </h2>{" "}
           </div>

@@ -304,7 +304,7 @@ export default function RestaurantForm({
         );
       }
 
-      router.push("/restaurants");
+      router.push("/explore");
       router.refresh();
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -829,7 +829,7 @@ export default function RestaurantForm({
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => router.push("/restaurants")}
+                  onClick={() => router.push("/explore")}
                   className="flex-1"
                 >
                   취소

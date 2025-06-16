@@ -4,11 +4,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { Language, useLanguage } from "@/context/LanguageContext";
 
 export function Header() {
   const { data: session, status } = useSession();
   const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [language, setLanguage] = useState<string>("");
+  const { language, setLanguage } = useLanguage();
 
   const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${
     session?.user?.email || "default"
@@ -24,23 +25,25 @@ export function Header() {
     }
   }, [session, status, avatarUrl]);
 
+  console.log("language:", language);
+
   return (
     <header className="sticky top-0 z-50 bg-[#1977F3] p-3 w-[393px] mx-auto">
       <div className="flex items-center justify-between">
         {/* Language Dropdown */}
         <div className="relative">
           <select
-            className="bg-transparent text-white text-sm py-0.5 px-2 rounded border border-white cursor-pointer"
             value={language}
-            onChange={(e) => setLanguage(e.target.value)}
+            onChange={(e) => {
+              console.log("Language changing to:", e.target.value);
+              setLanguage(e.target.value as Language);
+            }}
+            className="bg-white text-black px-2 py-1 rounded text-sm"
           >
-            <option value="" disabled hidden>
-              Language
-            </option>
-            <option value="한국어">Korean</option>
-            <option value="English">English</option>
-            <option value="日本語">Japanese</option>
-            <option value="中文">Chinese</option>
+            <option value="ko">한국어</option>
+            <option value="en">English</option>
+            <option value="ja">日本語</option>
+            <option value="zh">中文</option>
           </select>
         </div>
 

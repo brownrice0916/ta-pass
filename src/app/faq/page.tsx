@@ -18,6 +18,8 @@ import {
   ChevronDown,
 } from "lucide-react";
 import Image from "next/image";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/lib/i18n";
 
 export default function FAQPage() {
   const [activeTab, setActiveTab] = useState("passInfo");
@@ -32,6 +34,8 @@ export default function FAQPage() {
   const usageRef = useRef<HTMLDivElement>(null);
   const tabBarRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const { language } = useLanguage();
 
   // 컨테이너 너비 측정
   useEffect(() => {
@@ -198,46 +202,27 @@ export default function FAQPage() {
 
   const passInfoFAQ = [
     {
-      question: "TA PASS는 뭐예요?",
+      question: t("faq.passInfo.q1.question", language),
       answer: (
-        <p className="text-xs">
-          TA PASS는 호텔에서 쇼핑 패스를 받고, 제휴된 로컬 매장을 방문해 혜택을
-          받는 여행객 전용 서비스예요.,
+        <p className="text-xs whitespace-pre-line">
+          {t("faq.passInfo.q1.answer", language)}
         </p>
       ),
     },
     {
-      question: "쇼핑 패스는 어떻게 사용하나요?",
+      question: t("faq.passInfo.q2.question", language),
       answer: (
-        <div className="space-y-3 text-xs">
-          <p className="p-0 m-0">
-            호텔에서 받은 시리얼 번호를 웹 또는 앱에 등록하고,
-            <br />
-            제휴 매장에서 등록된 패스 화면을 보여주면 혜택이 적용돼요.
-          </p>
-
-          <div className="mt-2">
-            <p className="font-medium">【패스 등록 방법】</p>
-            <p>
-              → TA PASS 웹/앱 접속 → 로그인 → My Pass → 시리얼 번호 입력 및
-              활성화
-            </p>
-            <p>* 시리얼 번호는 호텔에서 받은 종이 패스에 있어요.</p>
-          </div>
-        </div>
+        <p className="text-xs whitespace-pre-line">
+          {t("faq.passInfo.q2.answer", language)}
+        </p>
       ),
     },
     {
-      question: "쇼핑 패스는 어떻게 발급할 수 있나요?",
+      question: t("faq.passInfo.q3.question", language),
       answer: (
-        <div className="space-y-2 text-xs">
-          <p>
-            TA PASS 제휴 호텔의 숙박 패키지 상품을 예약하고,
-            <br />
-            체크인 당일 프론트에서 종이 패스를 받아요.
-            <br />→ QR코드를 스캔하면 TA PASS 웹으로 바로 연결돼요!
-          </p>
-        </div>
+        <p className="text-xs whitespace-pre-line">
+          {t("faq.passInfo.q3.answer", language)}
+        </p>
       ),
     },
   ];
@@ -245,42 +230,27 @@ export default function FAQPage() {
   // 매장 이용 안내 FAQ
   const storeInfoFAQ = [
     {
-      question: "제휴 로컬 매장은 어디서 확인하나요?",
+      question: t("faq.storeInfo.q1.question", language),
       answer: (
-        <div className="space-y-3 text-xs">
-          <p>
-            TA PASS 앱 또는 웹의 '지도(Explore)' 탭에서 확인할 수 있어요.
-            <br />
-            위치 기반 탐색 + 다양한 필터 기능으로 원하는 매장을 쉽게 찾을 수
-            있어요.
-            <br />→ 매장 위치, 제공 혜택, 운영시간, 리뷰까지 한눈에 확인 가능!
-          </p>
-        </div>
+        <p className="text-xs whitespace-pre-line">
+          {t("faq.storeInfo.q1.answer", language)}
+        </p>
       ),
     },
     {
-      question: "어떤 혜택이 있어요?",
+      question: t("faq.storeInfo.q2.question", language),
       answer: (
-        <div className="space-y-3 text-xs">
-          <p>매장마다 다르지만 보통 아래와 같은 혜택을 제공해요:</p>
-          <ul className="list-disc ml-5 space-y-1 t">
-            <li>💸 할인</li>
-            <li>🎁 사은품 증정</li>
-            <li>☕ 1+1 이벤트</li>
-          </ul>
-          <br />→ 매장 상세 페이지에서 혜택 내용을 꼭 확인하세요!
-        </div>
+        <p className="text-xs whitespace-pre-line">
+          {t("faq.storeInfo.q2.answer", language)}
+        </p>
       ),
     },
     {
-      question: "리뷰는 어떻게 남기나요?",
+      question: t("faq.storeInfo.q3.question", language),
       answer: (
-        <div className="space-y-3 text-xs">
-          <p>
-            매장 방문 후 혜택 사용 페이지에서 리뷰 작성 버튼을 눌러주세요.
-            <br />→ 작성한 리뷰는 자동 번역되어 다른 여행자에게도 공유돼요!
-          </p>
-        </div>
+        <p className="text-xs whitespace-pre-line">
+          {t("faq.storeInfo.q3.answer", language)}
+        </p>
       ),
     },
   ];
@@ -288,51 +258,40 @@ export default function FAQPage() {
   // 사용 방법 및 조건 FAQ
   const usageFAQ = [
     {
-      question: "이용 요금이 있나요?",
+      question: t("faq.usage.q1.question", language),
       answer: (
-        <div className="space-y-3 text-xs">
-          <p>
-            없습니다!
-            <br />
-            TA PASS는 제휴 호텔을 이용하는 외국인 여행자에게 무료로 제공되는
-            서비스예요.
-          </p>
-        </div>
+        <p className="text-xs whitespace-pre-line">
+          {t("faq.usage.q1.answer", language)}
+        </p>
       ),
     },
     {
-      question: "앱을 꼭 설치해야 하나요?",
+      question: t("faq.usage.q2.question", language),
       answer: (
-        <div className="space-y-3 text-xs">
-          <p>
-            아니요.
-            <br />
-            호텔에서 받은 QR코드를 스캔하면 웹으로 바로 연결되며,
-            <br />앱 설치 없이도 모든 기능을 사용할 수 있어요.
-          </p>
-        </div>
+        <p className="text-xs whitespace-pre-line">
+          {t("faq.usage.q2.answer", language)}
+        </p>
       ),
     },
     {
-      question: "회원가입이 꼭 필요한가요?",
+      question: t("faq.usage.q3.question", language),
       answer: (
-        <div className="space-y-3 text-xs">
-          <p>
-            매장 정보는 회원가입 없이도 확인 가능해요.
-            <br />
-            하지만 혜택을 사용하려면 로그인 및 패스 등록이 필요해요.
-          </p>
-        </div>
+        <p className="text-xs whitespace-pre-line">
+          {t("faq.usage.q3.answer", language)}
+        </p>
       ),
     },
   ];
 
   const tabConfig = [
-    { id: "passInfo", name: "패스 안내", ref: passInfoRef },
-    { id: "storeInfo", name: "매장 이용 안내", ref: storeInfoRef },
-    { id: "usage", name: "사용 방법 및 조건", ref: usageRef },
+    { id: "passInfo", name: t("faq.tab.passInfo", language), ref: passInfoRef },
+    {
+      id: "storeInfo",
+      name: t("faq.tab.storeInfo", language),
+      ref: storeInfoRef,
+    },
+    { id: "usage", name: t("faq.tab.usage", language), ref: usageRef },
   ];
-
   // 고정 탭바 스타일
   const fixedTabBarStyle = {
     position: "sticky" as const,
@@ -350,11 +309,13 @@ export default function FAQPage() {
       <div>
         {/* FAQ 헤더 */}
         <div className="p-6">
-          <h1 className="text-3xl font-extrabold mb-1">FAQ</h1>
-          <h2 className="text-2xl mb-3 font-bold">자주 묻는 질문</h2>
-          <p className="text-lg mb-6 mt-8 ">
-            처음이시라면 여기를 먼저 확인해보세요! 🙋‍
-          </p>
+          <h1 className="text-3xl font-extrabold mb-1">
+            {t("faq.title", language)}
+          </h1>
+          <h2 className="text-2xl mb-3 font-bold">
+            {t("faq.subtitle", language)}
+          </h2>
+          <p className="text-lg mb-6 mt-8 ">{t("faq.guideText", language)}</p>
         </div>
 
         {/* 탭 네비게이션 - 모든 탭에 밑줄 추가 */}
@@ -398,7 +359,7 @@ export default function FAQPage() {
         <div className="p-4">
           <div id="passInfo" ref={passInfoRef} className="mb-8 scroll-mt-20">
             <h3 className="text-xl font-extrabold text-[#8d8d8d] mb-4">
-              🎫 패스 안내
+              🎫 {t("faq.tab.passInfo", language)}
             </h3>
 
             <div className="space-y-2">
@@ -436,7 +397,7 @@ export default function FAQPage() {
           {/* 매장 이용 안내 섹션 */}
           <div id="storeInfo" ref={storeInfoRef} className="mb-8 scroll-mt-20">
             <h3 className="text-xl font-extrabold text-[#8d8d8d] mb-4">
-              🛍️ 매장 이용 안내
+              🛍️ {t("faq.tab.storeInfo", language)}
             </h3>
 
             <div className="space-y-2">
@@ -474,7 +435,7 @@ export default function FAQPage() {
           {/* 사용 방법 및 조건 섹션 */}
           <div id="usage" ref={usageRef} className="mb-8 scroll-mt-20">
             <h3 className="text-xl font-extrabold text-[#8d8d8d] mb-4">
-              💡 사용 방법 및 조건
+              💡 {t("faq.tab.usage", language)}
             </h3>
 
             <div className="space-y-2">
@@ -524,23 +485,23 @@ export default function FAQPage() {
             </div>
 
             <h2 className="text-lg font-bold mb-4">
-              👂 더 궁금한 점이 있으신가요?
+              {t("faq.contactTitle", language)}
             </h2>
 
             <p className="text-gray-600 text-sm">
               <span className="block mb-6">
-                언제든 편하게 문의해주세요. <br />
-                이메일로 보내주시면 최대한 빠르게 답변드릴게요!
+                {t("faq.contactDesc", language)} <br />
+                {/* 이메일로 보내주시면 최대한 빠르게 답변드릴게요! */}
               </span>
 
               <span className="block font-medium text-gray-800 mb-6">
-                📧 이메일 : ta.pass.contact@gmail.com
+                {t("faq.contactEmail", language)}
               </span>
 
               <span className="block text-xs text-gray-500">
-                평균적으로 1-2일 이내에 답변드리고 있어요.
+                {t("faq.contactNote", language)}
                 <br />
-                FAQ에 없는 내용이라면, 편하게 문의해주세요!
+                {/* FAQ에 없는 내용이라면, 편하게 문의해주세요! */}
               </span>
             </p>
           </div>

@@ -9,11 +9,13 @@ import Link from "next/link";
 import GoogleMapsProvider from "@/app/google-maps-provider";
 import Image from "next/image";
 import SimplifiedMap from "./simplified-map"; // Make sure this points to your updated SimplifiedMap component
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/lib/i18n";
 
 export default function Main() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get("q") || "";
-
+  const { language } = useLanguage();
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [center, setCenter] = useState({ lat: 37.5665, lng: 126.978 }); // Seoul coordinates
   const [userLocation, setUserLocation] = useState<{
@@ -49,56 +51,55 @@ export default function Main() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/restaurants?q=${encodeURIComponent(searchQuery)}`);
+      router.push(`/explore?q=${encodeURIComponent(searchQuery)}`);
     }
   };
 
   const handleMapClick = () => {
-    router.push("/restaurants");
+    router.push("/explore");
   };
 
   const categories = [
     {
       icon: "🍽️",
-      label: "맛집",
+      label: t("categoryFood", language),
+      tag: t("categoryFoodTag", language),
       color: "bg-[#FDF1F7]",
-      tag: "맛집, 카페, 길거리 음식",
       href: "/category?category=food",
     },
     {
       icon: "🛍️",
-      label: "쇼핑",
+      label: t("categoryShopping", language),
+      tag: t("categoryShoppingTag", language),
       color: "bg-[#F9F4FD]",
-      tag: "패션, 뷰티, 쇼핑몰",
       href: "/category?category=shopping",
     },
     {
       icon: "🎨",
-      label: "체험",
+      label: t("categoryExperience", language),
+      tag: t("categoryExperienceTag", language),
       color: "bg-[#FFFBEF]",
-      tag: "한복, 쿠킹클래스, 레저",
       href: "/category?category=experience",
     },
-
     {
       icon: "🏛️",
-      label: "관광명소",
+      label: t("categoryAttraction", language),
+      tag: t("categoryAttractionTag", language),
       color: "bg-[#EFFBF2]",
-      tag: "궁, 박물관, 전시, 공연",
       href: "/category?category=attraction",
     },
     {
       icon: "💆‍♀️",
-      label: "웰니스",
+      label: t("categoryWellness", language),
+      tag: t("categoryWellnessTag", language),
       color: "bg-[#ECFEFE]",
-      tag: "스파, 요가, 뷰티케어",
       href: "/category?category=wellness",
     },
     {
       icon: "🌙",
-      label: "나이트라이프",
+      label: t("categoryNightlife", language),
+      tag: t("categoryNightlifeTag", language),
       color: "bg-yellow-100",
-      tag: "클럽, 바, 포장마차",
       href: "/category?category=nightlife",
     },
   ];
@@ -123,7 +124,7 @@ export default function Main() {
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Stay, shop, and save—where to?"
+              placeholder={t("searchPlaceholder", language)}
               className="w-full pl-4 pr-10 py-3 border rounded-full bg-white shadow-lg"
             />
             <button
@@ -138,7 +139,9 @@ export default function Main() {
 
       {/* Categories Section */}
       <div className="px-2 pt-6 pb-6">
-        <h2 className="text-2xl font-bold mb-4">카테고리</h2>
+        <h2 className="text-2xl font-bold mb-4">
+          {t("categoriesTitle", language)}
+        </h2>
         <div className="grid grid-cols-3 gap-2">
           {categories.map((category, index) => (
             <Link
@@ -159,15 +162,15 @@ export default function Main() {
         <Link href="/intro">
           <div className="bg-blue-500 p-5 text-center text-white shadow-lg">
             <h2 className="text-xl font-semibold mb-1">
-              Travel smarter with TA PASS.
+              {t("taPassTitle", language)}
             </h2>
             <p className="text-sm mb-2">
-              Tap to unlock local deals
+              {t("taPassDesc", language)}
               <br />
-              and experiences.
+              {/* and experiences. */}
             </p>
             <div className="inline-flex items-center gap-2 bg-white text-blue-600 px-4 py-2 rounded-full text-sm font-medium">
-              <span className="text-xs">Unlock My TA PASS</span>
+              <span>{t("unlockMyTaPass", language)}</span>
               <ArrowRight className="w-4 h-4" />
             </div>
           </div>
@@ -185,7 +188,7 @@ export default function Main() {
               <path d="M12 2L2 12h3v9h14v-9h3L12 2z" />
             </svg>
           </div>
-          <span className="text-xs mt-1">Home</span>
+          <span>{t("navHome", language)}</span>
         </Link>
         <Link
           href="/explore"
@@ -210,7 +213,7 @@ export default function Main() {
               />
             </svg>
           </div>
-          <span className="text-xs mt-1">Explore</span>
+          <span>{t("navExplore", language)}</span>
         </Link>
         <Link
           href="/saved"
@@ -229,7 +232,7 @@ export default function Main() {
               />
             </svg>
           </div>
-          <span className="text-xs mt-1">Saved</span>
+          <span>{t("navSaved", language)}</span>
         </Link>
         <Link
           href="/profile"
@@ -249,7 +252,7 @@ export default function Main() {
               <circle cx="12" cy="7" r="4" strokeWidth="2" />
             </svg>
           </div>
-          <span className="text-xs mt-1">My TA Pass</span>
+          <span>{t("navProfile", language)}</span>
         </Link>
       </div>
     </main>

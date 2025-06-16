@@ -1,9 +1,15 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { CheckCircle, Map, Gift, Smartphone } from "lucide-react";
 import Image from "next/image";
+import { t } from "@/lib/i18n";
+import { useLanguage } from "@/context/LanguageContext";
+import { useSession } from "next-auth/react";
 
 export default function IntroPage() {
+  const { language } = useLanguage();
+  const { status } = useSession();
   return (
     <main className="min-h-screen bg-white pb-16">
       <div className="mx-auto max-w-[393px] p-5 space-y-10">
@@ -19,18 +25,17 @@ export default function IntroPage() {
                 className="object-contain"
               />
             </h1>
-            <h2 className="text-lg font-bold">Your Trip Ambassador in Korea</h2>
+            <h2 className="text-lg font-bold">
+              {t("intro.subTitle", language)}
+            </h2>
           </div>
 
           <p className="text-m text-gray-700 pb-8">
-            Your shortcut to real local spots and exclusive travel perks.
-            Designed for travelers like you — to explore with confidence, like a
-            local.
+            {t("intro.description", language)}
           </p>
-
-          <Link href="/register">
+          <Link href={status === "authenticated" ? "/mypage" : "/login"}>
             <Button className="w-full bg-blue-500 mb-8 mt-5 hover:bg-blue-600 rounded-full py-3">
-              Sign up & Activate My TA PASS
+              {t("intro.cta", language)}
             </Button>
           </Link>
         </section>
@@ -38,24 +43,19 @@ export default function IntroPage() {
         {/* Why TA PASS Section */}
         <section className="space-y-8">
           <div className="space-y-1">
-            <h2 className="text-3xl font-extrabold">Why TA PASS?</h2>
+            <h2 className="text-3xl font-extrabold">
+              {t("intro.whyTitle", language)}
+            </h2>
             <p className="text-md font-semibold">
-              What makes this pass different —
-              <br />
-              and why it's worth having on your trip.
+              {t("intro.whyDesc", language)}
             </p>
           </div>
 
           {/* You get perks */}
           <div className="flex items-start gap-4">
             <div className="flex-1 space-y-1">
-              <h3 className="text-lg font-semibold text-[#D4DF00]">
-                You get perks
-              </h3>
-              <p className="text-sm text-gray-700">
-                Special gifts, discounts, and more. Check out each benefit in
-                advance through the Explore Map.
-              </p>
+              <h3>{t("intro.perkTitle", language)}</h3>
+              <p>{t("intro.perkDesc", language)}</p>
             </div>
             <div className="w-24 h-24 flex items-center justify-center">
               <Image
@@ -71,13 +71,8 @@ export default function IntroPage() {
           {/* You skip confusion */}
           <div className="flex items-start gap-4">
             <div className="flex-1 space-y-1">
-              <h3 className="text-lg font-semibold text-[#D4DF00]">
-                You skip confusion
-              </h3>
-              <p className="text-sm text-gray-700">
-                No reservations, no complicated steps. Just show your pass and
-                go.
-              </p>
+              <h3>{t("intro.skipTitle", language)}</h3>
+              <p>{t("intro.skipDesc", language)}</p>
             </div>
             <div className="w-24 h-24 flex items-center justify-center">
               <Image
@@ -93,13 +88,8 @@ export default function IntroPage() {
           {/* You explore smart */}
           <div className="flex items-start gap-4">
             <div className="flex-1 space-y-1">
-              <h3 className="text-lg font-semibold text-[#D4DF00]">
-                You explore smart
-              </h3>
-              <p className="text-sm text-gray-700">
-                Find local spots near you on the map, with filters by region,
-                category, and more.
-              </p>
+              <h3>{t("intro.exploreTitle", language)}</h3>
+              <p>{t("intro.exploreDesc", language)}</p>
             </div>
             <div className="w-24 h-24 flex items-center justify-center">
               <Image
@@ -115,12 +105,8 @@ export default function IntroPage() {
           {/* You travel light */}
           <div className="flex items-start gap-4">
             <div className="flex-1 space-y-1">
-              <h3 className="text-lg font-semibold text-[#D4DF00]">
-                You travel light
-              </h3>
-              <p className="text-sm text-gray-700">
-                All you need is one pass — right on your phone.
-              </p>
+              <h3>{t("intro.travelTitle", language)}</h3>
+              <p>{t("intro.travelDesc", language)}</p>
             </div>
             <div className="w-24 h-24 flex items-center justify-center">
               <Image
@@ -138,32 +124,28 @@ export default function IntroPage() {
         <section className="space-y-6 pt-4">
           <div className="space-y-1">
             <h2 className="text-3xl font-bold">TA PASS</h2>
-            <p className="text-md font-semibold">
-              helps you skip the guesswork —
-              <br />
-              and enjoy more of Korea
-            </p>
+            <p>{t("intro.finalDesc", language)}</p>
           </div>
 
           <div className="space-y-2">
             <p className="text-sm flex items-center gap-2">
               <span className="text-yellow-500">
                 <span className="text-m">🙋‍♀️</span>
-              </span>{" "}
-              Got a question?{" "}
+              </span>
+              {t("intro.question", language)}
               <Link href="/faq" className="text-blue-500">
-                [View FAQ]
+                {t("intro.faq", language)}
               </Link>
             </p>
             <p className="text-sm flex items-center gap-2">
-              <span className="text-yellow-500">👉</span> Ready to unlock your
-              TA PASS?
+              <span className="text-yellow-500">👉</span>{" "}
+              {t("intro.ready", language)}
             </p>
           </div>
 
-          <Link href="/register">
-            <Button className="mt-8 mb-8 w-full bg-blue-500 hover:bg-blue-600 rounded-full py-3">
-              Sign up & Activate My TA PASS
+          <Link href={status === "authenticated" ? "/mypage" : "/login"}>
+            <Button className="w-full bg-blue-500 mb-8 mt-5 hover:bg-blue-600 rounded-full py-3">
+              {t("intro.cta", language)}
             </Button>
           </Link>
         </section>

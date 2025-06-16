@@ -22,6 +22,8 @@ import { Review } from "../[id]/page";
 import { ReviewForm } from "@/components/review-form";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { t } from "@/lib/i18n";
+import { useLanguage } from "@/context/LanguageContext";
 
 // interface Review {
 //   id: string;
@@ -145,6 +147,7 @@ export function ReviewDetailDialog({
   const [prevReview, setPrevReview] = useState<Review | null>(null);
   const [nextReview, setNextReview] = useState<Review | null>(null);
   const { data: session } = useSession();
+  const { language } = useLanguage();
 
   const emojiMap: { [key: string]: string } = {
     "완전 마음에 들었어요!": "😍",
@@ -342,7 +345,7 @@ export function ReviewDetailDialog({
                   }, 100);
                 }}
               >
-                ← 이전 리뷰
+                {t("review.prevReview", language)}
               </button>
             ) : (
               <div />
@@ -363,7 +366,7 @@ export function ReviewDetailDialog({
                   }, 100);
                 }}
               >
-                다음 리뷰 →
+                {t("review.nextReview", language)}
               </button>
             ) : (
               <div />
@@ -395,6 +398,7 @@ export default function ReviewSection({
     // TODO: 리뷰 목록 새로고침 로직 추가
   };
 
+  const { language } = useLanguage();
   useEffect(() => {
     const handler = (e: any) => setSelectedReview(e.detail);
     document.addEventListener("open-review-dialog", handler);
@@ -405,16 +409,18 @@ export default function ReviewSection({
     <div className="p-1">
       <div className="flex justify-between items-center mb-4">
         {reviews.length > 0 ? (
-          <p className="text-lg font-semibold">95%의 고객이 만족했습니다</p>
+          <p className="text-lg font-semibold">
+            {t("review.satisfaction", language)}
+          </p>
         ) : (
           <p className="text-lg font-semibold text-gray-600">
-            아직 등록된 리뷰가 없습니다
+            {t("review.noReviews", language)}
           </p>
         )}
         <div
           onClick={() => {
             if (!session) {
-              if (confirm("로그인이 필요합니다. 로그인하시겠습니까?")) {
+              if (confirm(t("review.loginConfirm", language))) {
                 router.push("/login");
               }
             } else {
@@ -428,7 +434,7 @@ export default function ReviewSection({
             variant="outline"
             className="text-xs border-blue-500 text-blue-600"
           >
-            + 리뷰 작성
+            + {t("review.reviewDialogTitle", language)}
           </Button>
         </div>
       </div>
@@ -462,9 +468,11 @@ export default function ReviewSection({
       ) : (
         <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-lg">
           <MessageSquare className="h-12 w-12 text-gray-400 mb-4" />
-          <p className="text-gray-600 mb-2">첫 번째 리뷰를 작성해보세요!</p>
+          <p className="text-gray-600 mb-2">
+            {t("review.firstReviewTitle", language)}
+          </p>
           <p className="text-sm text-gray-400">
-            여러분의 소중한 경험을 공유해주세요.
+            {t("review.firstReviewDesc", language)}
           </p>
         </div>
       )}
@@ -481,7 +489,9 @@ export default function ReviewSection({
       {/* 리뷰 작성 Dialog */}
       <Dialog open={isReviewFormOpen} onOpenChange={setIsReviewFormOpen}>
         <DialogContent className="sm:max-w-[500px]">
-          <DialogTitle className="sr-only">리뷰 작성</DialogTitle>
+          <DialogTitle className="sr-only">
+            {t("review.reviewDialogTitle", language)}
+          </DialogTitle>
           <ReviewForm
             restaurantId={restaurant.id}
             onReviewAdded={handleReviewAdded}

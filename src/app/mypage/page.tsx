@@ -1,12 +1,12 @@
 "use client";
 
-import { Loader2, Camera } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState, useRef } from "react";
-import Image from "next/image";
-import SerialNumberInput from "./components/serial-number-input";
 import SerialNumberSection from "./components/serial-number-section";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/lib/i18n";
 
 const MyPage = () => {
   const { data: session, status, update } = useSession();
@@ -16,6 +16,7 @@ const MyPage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { language } = useLanguage();
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -113,64 +114,6 @@ const MyPage = () => {
     <div className="flex flex-col min-h-screen bg-gray-100">
       {/* Main Content */}
       <div className="flex flex-col items-center p-4">
-        {/* Profile Section */}
-        {/* 
-        <div className="flex items-center w-full bg-white p-4 rounded-lg shadow-md mb-4">
-          <div className="flex flex-col items-start">
-            <h2 className="text-lg font-bold">안녕하세요</h2>
-            <p className="text-2xl font-bold text-blue-600">
-              {session?.user.name}
-            </p>
-            <a href="/account" className="text-sm text-gray-500 mt-2">
-              계정 관리 &gt;
-            </a>
-          </div>
-
-          <div className="ml-auto">
-            <div
-              className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-200 cursor-pointer"
-              onClick={handleProfileClick}
-            >
-              {session?.user?.image ? (
-                <Image
-                  src={session.user.image}
-                  alt="프로필 이미지"
-                  fill
-                  className="object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = "https://via.placeholder.com/100?text=사용자";
-                  }}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-blue-100 text-blue-500 text-2xl font-semibold">
-                  {session?.user?.name?.charAt(0) || "U"}
-                </div>
-              )}
-              <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                <Camera className="text-white w-6 h-6" />
-              </div>
-              {isUploading && (
-                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                  <Loader2 className="w-6 h-6 text-white animate-spin" />
-                </div>
-              )}
-            </div>
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              accept="image/*"
-              onChange={handleFileChange}
-            />
-            {uploadError && (
-              <p className="text-red-500 text-xs mt-1 text-center">
-                {uploadError}
-              </p>
-            )}
-          </div>
-        </div> */}
-        
         {/* 시리얼 넘버 섹션 */}
         <SerialNumberSection />
 
@@ -180,7 +123,7 @@ const MyPage = () => {
             className="flex-1 bg-blue-500 text-white p-6 rounded-lg shadow-md text-center cursor-pointer"
             onClick={() => router.push("/reviews")}
           >
-            <h3 className="text-lg">나의 리뷰</h3>
+            <h3 className="text-lg">{t("mypage.myReviews", language)}</h3>
             {isLoading ? (
               <div className="flex justify-center items-center h-12">
                 <Loader2 className="w-6 h-6 animate-spin" />
@@ -193,20 +136,27 @@ const MyPage = () => {
 
         {/* Info Section */}
         <div className="w-full grid grid-cols-3 gap-4 bg-white p-4 rounded-lg shadow-md">
-          <ShortcutItem icon="🎧" label="고객센터" link="/faq" />
+          <ShortcutItem
+            icon="🎧"
+            label={t("mypage.support", language)}
+            link="/faq"
+            language={language}
+          />
           <ShortcutItem
             icon="⭐"
-            label="이벤트"
+            label={t("mypage.event", language)}
             link="#"
             onClick={handleComingSoonClick}
             comingSoon
+            language={language}
           />
           <ShortcutItem
             icon="📢"
-            label="공지사항"
+            label={t("mypage.notice", language)}
             link="/#"
             onClick={handleComingSoonClick}
             comingSoon
+            language={language}
           />
         </div>
 
@@ -217,7 +167,7 @@ const MyPage = () => {
           }}
           className="mt-6 bg-blue-600 text-white py-2 px-6 rounded-lg shadow-md"
         >
-          로그아웃
+          {t("mypage.logout", language)}
         </button>
       </div>
     </div>
@@ -230,6 +180,7 @@ interface ShortcutItemProps {
   link: string;
   comingSoon?: boolean;
   onClick?: (e: React.MouseEvent) => void;
+  language: any;
 }
 
 const ShortcutItem = ({
@@ -238,6 +189,7 @@ const ShortcutItem = ({
   link,
   comingSoon,
   onClick,
+  language,
 }: ShortcutItemProps) => (
   <a
     href={link}
@@ -251,7 +203,7 @@ const ShortcutItem = ({
     {comingSoon && (
       <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
         <span className="text-white text-sm font-medium px-2 py-1 bg-blue-600 rounded">
-          준비중
+          {t("mypage.comingSoon", language)}
         </span>
       </div>
     )}

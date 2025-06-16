@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Bookmark as BookmarkIcon } from "lucide-react";
+import { t } from "@/lib/i18n";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface BookmarkItem {
   id: string;
@@ -19,6 +21,7 @@ interface BookmarkItem {
 }
 
 export default function BookmarkPage() {
+  const { language } = useLanguage();
   const router = useRouter();
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,9 +59,12 @@ export default function BookmarkPage() {
 
   return (
     <div className="container mx-auto p-4 max-w-2xl mb-16">
-      <h1 className="text-2xl font-semibold mb-4">내 북마크</h1>
+      <h1 className="text-2xl font-semibold mb-4">
+        {" "}
+        {t("bookmark.title", language)}
+      </h1>
       {bookmarks.length === 0 ? (
-        <p className="text-gray-600">북마크한 식당이 없습니다.</p>
+        <p className="text-gray-600">{t("bookmark.empty", language)}</p>
       ) : (
         <div className="grid gap-4">
           {bookmarks.map((item) => (
@@ -66,9 +72,7 @@ export default function BookmarkPage() {
               <CardContent className="p-4 flex items-center gap-4">
                 <div
                   className="relative w-24 h-24 rounded-md overflow-hidden bg-gray-100 cursor-pointer"
-                  onClick={() =>
-                    router.push(`/restaurants/${item.restaurant.id}`)
-                  }
+                  onClick={() => router.push(`/explore/${item.restaurant.id}`)}
                 >
                   {item.restaurant.images?.[0] && (
                     <Image

@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, X } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { t } from "@/lib/i18n";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface ReviewFormProps {
   restaurantId: string;
@@ -25,6 +27,7 @@ export function ReviewForm({
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { data: session } = useSession();
+  const { language } = useLanguage();
 
   const handlePrevStep = () => {
     if (step > 1) {
@@ -110,13 +113,13 @@ export function ReviewForm({
     return (
       <div className="bg-white rounded-lg p-6 text-center">
         <h2 className="text-lg font-semibold mb-4">
-          리뷰를 작성하려면 로그인이 필요합니다
+          {t("reviewForm.loginRequired", language)}
         </h2>
         <Button
           onClick={() => (window.location.href = "/api/auth/signin")}
           className="w-full"
         >
-          로그인하기
+          {t("reviewForm.loginButton", language)}
         </Button>
       </div>
     );
@@ -127,7 +130,9 @@ export function ReviewForm({
       case 1:
         return (
           <div className="flex flex-col items-center p-6">
-            <h2 className="text-lg font-semibold mb-6">방문은 어떠셨나요?</h2>
+            <h2 className="text-lg font-semibold mb-6">
+              {t("reviewForm.step1.title", language)}
+            </h2>
             <div className="flex gap-4 mb-8">
               {[1, 2, 3, 4, 5].map((value) => (
                 <button
@@ -144,7 +149,7 @@ export function ReviewForm({
               ))}
             </div>
             <Button className="w-full" onClick={handleNextStep}>
-              다음
+              {t("reviewForm.step1.next", language)}
             </Button>
           </div>
         );
@@ -152,10 +157,12 @@ export function ReviewForm({
       case 2:
         return (
           <div className="flex flex-col p-6 text-center">
-            <h2 className="text-lg font-semibold mb-4">어떤 점이 좋았나요?</h2>
+            <h2 className="text-lg font-semibold mb-4">
+              {t("reviewForm.step2.title", language)}
+            </h2>
             <div className="text-sm text-gray-600 mb-6 center ">
-              더 많은 여행자에게 도움이 될 수 있도록, <br />
-              좋았던 점을 1개 이상 선택해 주세요.
+              {t("reviewForm.step2.desc", language)} <br />
+              {/* 좋았던 점을 1개 이상 선택해 주세요. */}
             </div>
 
             <div className="flex flex-wrap gap-2 mb-10 px-5 ">
@@ -212,7 +219,7 @@ export function ReviewForm({
               onClick={handleNextStep}
               disabled={selectedTags.length === 0}
             >
-              다음
+              {t("reviewForm.step1.next", language)} <br />
             </Button>
           </div>
         );
@@ -221,14 +228,14 @@ export function ReviewForm({
         return (
           <div className="flex flex-col p-6">
             <h2 className="text-lg font-semibold mb-4">
-              한 줄 리뷰를 작성해 주세요 (선택사항)
+              {t("reviewForm.step3.title", language)} <br />
             </h2>
 
             <Textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={6}
-              placeholder="여러분의 소중한 경험을 공유해주세요"
+              placeholder={t("reviewForm.step3.placeholder", language)}
               className="mb-4 resize-none"
               style={{
                 borderWidth: "1px",
@@ -240,7 +247,9 @@ export function ReviewForm({
               {content.length}/3000
             </div>
 
-            <h2 className="text-lg font-semibold mb-4">사진 추가 (선택사항)</h2>
+            <h2 className="text-lg font-semibold mb-4">
+              {t("reviewForm.step3.photosTitle", language)}
+            </h2>
             <input
               type="file"
               accept="image/*"
@@ -259,7 +268,7 @@ export function ReviewForm({
                     onClick={() => fileInputRef.current?.click()}
                     className="w-full h-32"
                   >
-                    사진 선택하기
+                    {t("reviewForm.step3.upload", language)}
                   </Button>
                 ) : (
                   <div className="grid grid-cols-3 gap-2">
@@ -293,7 +302,7 @@ export function ReviewForm({
                 )}
               </div>
               <p className="text-sm text-gray-500 text-right">
-                최대 5장까지 업로드 가능합니다
+                {t("reviewForm.step3.maxPhotos", language)}
               </p>
             </div>
 
@@ -302,7 +311,9 @@ export function ReviewForm({
               onClick={handleSubmit}
               disabled={isSubmitting}
             >
-              {isSubmitting ? "작성 중..." : "작성 완료"}
+              {isSubmitting
+                ? t("reviewForm.submitting", language)
+                : t("reviewForm.submit", language)}
             </Button>
           </div>
         );
@@ -325,7 +336,9 @@ export function ReviewForm({
               <ArrowLeft className="h-5 w-5 text-gray-600" />
             </Button>
           )}
-          <h1 className="text-xl font-bold">리뷰 작성</h1>
+          <h1 className="text-xl font-bold">
+            {t("reviewForm.title", language)}
+          </h1>
         </div>
         {onClose && (
           <button onClick={onClose} className="text-gray-500">
@@ -353,9 +366,12 @@ export function ReviewForm({
               </svg>
             </div>
             <h2 className="text-2xl font-bold text-blue-600">
-              리뷰 작성 완료!
+              {t("reviewForm.complete.title", language)}
             </h2>
-            <p className="text-gray-500">소중한 리뷰 감사합니다 :)</p>
+            <p className="text-gray-500">
+              {" "}
+              {t("reviewForm.complete.desc", language)}
+            </p>
           </div>
         </div>
       ) : (

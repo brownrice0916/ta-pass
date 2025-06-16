@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import type { Review } from "../restaurants/[id]/page";
+import type { Review } from "../explore/[id]/page";
 import { Card } from "@/components/ui/card";
 
 const ReviewsPage = () => {

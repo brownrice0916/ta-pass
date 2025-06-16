@@ -1,4 +1,8 @@
 // Category mappings
+
+import { t } from "@/lib/i18n";
+import { useLanguage } from "@/context/LanguageContext";
+
 export const categoryMap = {
   맛집: "food",
   쇼핑: "shopping",
@@ -7,6 +11,23 @@ export const categoryMap = {
   웰니스: "wellness",
   나이트라이프: "nightlife",
 } as any;
+
+export const getCategoryList = (language: string) => [
+  { id: "맛집", name: t("explore.category.맛집", language) },
+  { id: "쇼핑", name: t("explore.category.쇼핑", language) },
+  { id: "관광명소", name: t("explore.category.관광명소", language) },
+  { id: "체험", name: t("explore.category.체험", language) },
+  { id: "웰니스", name: t("explore.category.웰니스", language) },
+  { id: "나이트라이프", name: t("explore.category.나이트라이프", language) },
+];
+export const getSubCategoryList = (category: string, language: string) => {
+  const map = subCategoryMap[category];
+  return Object.entries(map).map(([korLabel, code]) => ({
+    id: korLabel,
+    code: code,
+    name: t(`explore.subCategory.${korLabel}`, language),
+  }));
+};
 
 export const subCategoryMap = {
   food: {
@@ -78,4 +99,25 @@ export const regions = [
   { id: "여의도", name: "여의도" },
   { id: "잠실", name: "잠실" },
   { id: "기타", name: "기타" },
+];
+
+export const getRegions = (language: string) => [
+  { id: "지역 전체", name: t("explore.region.지역 전체", language) },
+  { id: "명동", name: t("explore.region.명동", language) },
+  { id: "강남", name: t("explore.region.강남", language) },
+  { id: "종로/인사동", name: t("explore.region.종로/인사동", language) },
+  { id: "경복궁/북촌", name: t("explore.region.경복궁/북촌", language) },
+  { id: "삼청동", name: t("explore.region.삼청동", language) },
+  { id: "서촌", name: t("explore.region.서촌", language) },
+  { id: "이태원", name: t("explore.region.이태원", language) },
+  { id: "한남동", name: t("explore.region.한남동", language) },
+  { id: "압구정/청담", name: t("explore.region.압구정/청담", language) },
+  { id: "홍대", name: t("explore.region.홍대", language) },
+  { id: "연남", name: t("explore.region.연남", language) },
+  { id: "합정", name: t("explore.region.합정", language) },
+  { id: "망원", name: t("explore.region.망원", language) },
+  { id: "성수", name: t("explore.region.성수", language) },
+  { id: "여의도", name: t("explore.region.여의도", language) },
+  { id: "잠실", name: t("explore.region.잠실", language) },
+  { id: "기타", name: t("explore.region.기타", language) },
 ];

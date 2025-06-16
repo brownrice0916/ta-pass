@@ -2,7 +2,7 @@
 import { memo } from "react";
 import Image from "next/image";
 import { Card } from "@/components/ui/card";
-import { Restaurant } from "@/app/restaurants/components/restaurants";
+import { Restaurant } from "@/app/explore/components/restaurants";
 
 // 타입은 공통으로 사용할 수 있게 별도 파일로 분리하면 좋습니다
 
