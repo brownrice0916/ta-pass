@@ -24,6 +24,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { t } from "@/lib/i18n";
 import { useLanguage } from "@/context/LanguageContext";
+import { emojiMap } from "@/lib/tags";
 
 // interface Review {
 //   id: string;
@@ -148,19 +149,6 @@ export function ReviewDetailDialog({
   const [nextReview, setNextReview] = useState<Review | null>(null);
   const { data: session } = useSession();
   const { language } = useLanguage();
-
-  const emojiMap: { [key: string]: string } = {
-    "완전 마음에 들었어요!": "😍",
-    친절했어요: "😊",
-    "가성비 최고였어요": "💰",
-    "찾기 쉬웠어요": "📍",
-    "진짜 로컬 느낌이에요": "✨",
-    "또 방문하고 싶어요": "🔁",
-    "혜택을 잘 받았어요": "🎁",
-    "상품 구성이 독특했어요": "🛍️",
-    "사진 찍기 좋은 곳이었어요": "📸",
-    "다른 사람에게도 추천하고 싶어요": "📢",
-  };
 
   const avatarUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${
     session?.user?.email || "default"

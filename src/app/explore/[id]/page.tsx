@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/tooltip";
 import { t } from "@/lib/i18n";
 import { useLanguage } from "@/context/LanguageContext";
+import { emojiMap } from "@/lib/tags";
 
 export interface Review {
   id: string;
@@ -39,19 +40,6 @@ export interface Review {
   tags: string[];
   restaurant?: Restaurant;
 }
-
-const emojiMap: { [key: string]: string } = {
-  "완전 마음에 들었어요!": "😍",
-  친절했어요: "😊",
-  "가성비 최고였어요": "💰",
-  "찾기 쉬웠어요": "📍",
-  "진짜 로컬 느낌이에요": "✨",
-  "또 방문하고 싶어요": "🔁",
-  "혜택을 잘 받았어요": "🎁",
-  "상품 구성이 독특했어요": "🛍️",
-  "사진 찍기 좋은 곳이었어요": "📸",
-  "다른 사람에게도 추천하고 싶어요": "📢",
-};
 
 export default function RestaurantDetail() {
   const params = useParams();
@@ -815,10 +803,8 @@ export default function RestaurantDetail() {
                           style={{ border: "1px solid #ededed" }}
                         >
                           <span className="font-medium">
-                            <span className="mr-1">
-                              {emojiMap[stat.tag as string] || ""}
-                            </span>
-                            {stat.tag}
+                            <span className="mr-1">{emojiMap[stat.tag]}</span>
+                            {t(stat.tag, language)}
                           </span>
                           : {stat.count}명
                         </TooltipContent>
@@ -826,19 +812,6 @@ export default function RestaurantDetail() {
                     );
                   })}
                 </div>
-
-                {/* X-axis Labels */}
-                {/* <div className="flex justify-between mt-2">
-                  {tagStats.map((stat, index) => (
-                    <div key={index} className="w-8 text-center">
-                      <span className="text-xs text-gray-500 truncate block">
-                        {stat.tag.length > 5
-                          ? `${stat.tag.substring(0, 4)}...`
-                          : stat.tag}
-                      </span>
-                    </div>
-                  ))}
-                </div> */}
               </TooltipProvider>
             </div>
           </>

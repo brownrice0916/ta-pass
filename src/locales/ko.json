@@ -267,5 +267,16 @@
   "reviewForm.submitting": "작성 중...",
   "reviewForm.complete.title": "리뷰 작성 완료!",
   "reviewForm.complete.desc": "소중한 리뷰 감사합니다 :)",
-  "reviewForm.loginConfirm": "로그인이 필요합니다. 로그인하시겠습니까?"
+  "reviewForm.loginConfirm": "로그인이 필요합니다. 로그인하시겠습니까?",
+
+  "tag_satisfaction": "완전 마음에 들었어요!",
+  "tag_kindness": "친절했어요",
+  "tag_value": "가성비 최고였어요",
+  "tag_easyToFind": "찾기 쉬웠어요",
+  "tag_localVibe": "진짜 로컬 느낌이에요",
+  "tag_revisit": "또 방문하고 싶어요",
+  "tag_benefit": "혜택을 잘 받았어요",
+  "tag_unique": "상품 구성이 독특했어요",
+  "tag_photoSpot": "사진 찍기 좋은 곳이었어요",
+  "tag_recommend": "다른 사람에게도 추천하고 싶어요"
 }

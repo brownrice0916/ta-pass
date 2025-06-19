@@ -267,5 +267,16 @@
   "reviewForm.submitting": "送信中...",
   "reviewForm.complete.title": "レビュー完了！",
   "reviewForm.complete.desc": "貴重なレビューありがとうございます :)",
-  "reviewForm.loginConfirm": "ログインが必要です。ログインしますか？"
+  "reviewForm.loginConfirm": "ログインが必要です。ログインしますか？",
+
+  "tag_satisfaction": "とても気に入りました！",
+  "tag_kindness": "親切でした",
+  "tag_value": "コスパ最高でした",
+  "tag_easyToFind": "見つけやすかったです",
+  "tag_localVibe": "本当にローカルな雰囲気でした",
+  "tag_revisit": "また行きたいです",
+  "tag_benefit": "特典をしっかり受けました",
+  "tag_unique": "ユニークな商品構成でした",
+  "tag_photoSpot": "写真映えするスポットでした",
+  "tag_recommend": "他の人にもおすすめしたいです"
 }

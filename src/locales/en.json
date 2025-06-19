@@ -267,5 +267,16 @@
   "reviewForm.submitting": "Submitting...",
   "reviewForm.complete.title": "Review Submitted!",
   "reviewForm.complete.desc": "Thank you for your valuable review :)",
-  "reviewForm.loginConfirm": "Login is required. Would you like to log in?"
+  "reviewForm.loginConfirm": "Login is required. Would you like to log in?",
+
+  "tag_satisfaction": "I absolutely loved it!",
+  "tag_kindness": "They were kind",
+  "tag_value": "Great value for money",
+  "tag_easyToFind": "Easy to find",
+  "tag_localVibe": "Truly local vibes",
+  "tag_revisit": "I'd visit again",
+  "tag_benefit": "Enjoyed the benefits",
+  "tag_unique": "Unique product selection",
+  "tag_photoSpot": "Great photo spot",
+  "tag_recommend": "Would recommend to others"
 }

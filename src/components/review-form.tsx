@@ -5,6 +5,8 @@ import { ArrowLeft, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { t } from "@/lib/i18n";
 import { useLanguage } from "@/context/LanguageContext";
+import { emojiMap } from "@/lib/tags";
+import { TAG_KEYS } from "@/lib/constants";
 
 interface ReviewFormProps {
   restaurantId: string;
@@ -164,51 +166,27 @@ export function ReviewForm({
               {t("reviewForm.step2.desc", language)} <br />
               {/* 좋았던 점을 1개 이상 선택해 주세요. */}
             </div>
-
             <div className="flex flex-wrap gap-2 mb-10 px-5 ">
-              {[
-                { text: "😍 완전 마음에 들었어요!" },
-                { text: "😊 친절했어요" },
-                { text: "💰 가성비 최고였어요" },
-                { text: "📍 찾기 쉬웠어요" },
-                { text: "✨ 진짜 로컬 느낌이에요" },
-                { text: "🔁 또 방문하고 싶어요" },
-                { text: "🎁 혜택을 잘 받았어요" },
-                { text: "🛍️ 상품 구성이 독특했어요" },
-                { text: "📸 사진 찍기 좋은 곳이었어요" },
-                { text: "📢 다른 사람에게도 추천하고 싶어요" },
-              ].map((tag) => {
-                // 글자수에 따라 레이아웃 결정 (이모지 제외하고 계산)
-                const textWithoutEmoji = tag.text
-                  .replace(/\p{Emoji}/gu, "")
-                  .trim();
-                const isLongText = textWithoutEmoji.length > 14;
-
+              {TAG_KEYS.map((key) => {
+                const isSelected = selectedTags.includes(key);
                 return (
                   <button
-                    key={tag.text}
+                    key={key}
                     type="button"
-                    style={{
-                      borderWidth: "1px",
-                      borderStyle: "solid",
-                      borderColor: selectedTags.includes(tag.text)
-                        ? "#60a5fa"
-                        : "#e5e7eb",
-                    }}
                     className={`py-2 px-3 rounded-full border text-sm ${
-                      selectedTags.includes(tag.text)
+                      isSelected
                         ? "bg-blue-50 border-blue-400 text-blue-600"
                         : "border-gray-200 text-gray-700"
-                    } ${isLongText ? "" : ""}`}
-                    onClick={() => {
+                    }`}
+                    onClick={() =>
                       setSelectedTags((prev) =>
-                        prev.includes(tag.text)
-                          ? prev.filter((t) => t !== tag.text)
-                          : [...prev, tag.text]
-                      );
-                    }}
+                        isSelected
+                          ? prev.filter((t) => t !== key)
+                          : [...prev, key]
+                      )
+                    }
                   >
-                    {tag.text}
+                    {emojiMap[key]} {t(key, language)}
                   </button>
                 );
               })}

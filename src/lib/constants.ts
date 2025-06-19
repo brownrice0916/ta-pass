@@ -32,3 +32,15 @@ export const CATEGORIES = [
   },
   { id: "food", label: "food", value: "food", types: ["restaurant", "cafe"] },
 ];
+export const TAG_KEYS = [
+  "tag_satisfaction",
+  "tag_kindness",
+  "tag_value",
+  "tag_easyToFind",
+  "tag_localVibe",
+  "tag_revisit",
+  "tag_benefit",
+  "tag_unique",
+  "tag_photoSpot",
+  "tag_recommend",
+] as const;

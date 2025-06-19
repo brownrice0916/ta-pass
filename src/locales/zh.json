@@ -267,5 +267,16 @@
   "reviewForm.submitting": "提交中...",
   "reviewForm.complete.title": "评论提交成功！",
   "reviewForm.complete.desc": "感谢您的宝贵评论 :)",
-  "reviewForm.loginConfirm": "需要登录。是否要登录？"
+  "reviewForm.loginConfirm": "需要登录。是否要登录？",
+
+  "tag_satisfaction": "とても気に入りました！",
+  "tag_kindness": "親切でした",
+  "tag_value": "コスパ最高でした",
+  "tag_easyToFind": "見つけやすかったです",
+  "tag_localVibe": "本当にローカルな雰囲気でした",
+  "tag_revisit": "また行きたいです",
+  "tag_benefit": "特典をしっかり受けました",
+  "tag_unique": "ユニークな商品構成でした",
+  "tag_photoSpot": "写真映えするスポットでした",
+  "tag_recommend": "他の人にもおすすめしたいです"
 }

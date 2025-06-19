@@ -15,6 +15,8 @@ import { RestaurantCard } from "@/app/search/component/restaurant-card";
 import { t } from "@/lib/i18n";
 import { getRegions, regions, subCategoryMap } from "@/types/category";
 import { useLanguage } from "@/context/LanguageContext";
+import { TAG_KEYS } from "@/lib/constants";
+import { emojiMap } from "@/lib/tags";
 
 // 지역 목록
 // const LOCATIONS = [
@@ -29,20 +31,6 @@ import { useLanguage } from "@/context/LanguageContext";
 //   { id: "성수", label: "성수" },
 //   { id: "여의도", label: "여의도" },
 // ];
-
-// emojiMap: 실제 저장된 태그 → 이모지
-const emojiMap: { [key: string]: string } = {
-  "완전 마음에 들었어요!": "😍",
-  친절했어요: "😊",
-  "가성비 최고였어요": "💰",
-  "찾기 쉬웠어요": "📍",
-  "진짜 로컬 느낌이에요": "✨",
-  "또 방문하고 싶어요": "🔁",
-  "혜택을 잘 받았어요": "🎁",
-  "상품 구성이 독특했어요": "🛍️",
-  "사진 찍기 좋은 곳이었어요": "📸",
-  "다른 사람에게도 추천하고 싶어요": "📢",
-};
 
 export interface Restaurant {
   id: string;
@@ -71,6 +59,7 @@ export interface Restaurant {
   bookmarkCount?: number;
   createdAt?: Date;
 }
+// 태그 i18n
 
 export default function Restaurants() {
   const { language } = useLanguage();
@@ -105,6 +94,11 @@ export default function Restaurants() {
   const sortDropdownRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
 
+  const TAG_FILTERS = TAG_KEYS.map((key) => ({
+    id: key, // 필터 클릭 시 이 key가 URL에 들어감
+    icon: emojiMap[key],
+    label: t(key, language),
+  }));
   // 정렬 옵션 번역적용
   const SORT_OPTIONS = [
     { id: "distance", label: t("explore.sort.distance", language) },
@@ -142,28 +136,6 @@ export default function Restaurants() {
       label: t("explore.category.nightlife", language),
       value: "nightlife",
     },
-  ];
-
-  // 태그 i18n
-  const TAG_FILTERS = [
-    {
-      id: "만족도",
-      label: t("explore.tag.satisfaction", language),
-      icon: "😍",
-    },
-    { id: "가성비", label: t("explore.tag.value", language), icon: "💰" },
-    { id: "혜택만족", label: t("explore.tag.benefit", language), icon: "🎁" },
-    {
-      id: "위치편의성",
-      label: t("explore.tag.location", language),
-      icon: "📍",
-    },
-    { id: "상품특색", label: t("explore.tag.product", language), icon: "🛍️" },
-    { id: "로컬감성", label: t("explore.tag.local", language), icon: "✨" },
-    { id: "사진맛집", label: t("explore.tag.photo", language), icon: "📸" },
-    { id: "친절함", label: t("explore.tag.kindness", language), icon: "😊" },
-    { id: "재방문의사", label: t("explore.tag.revisit", language), icon: "🔁" },
-    { id: "추천의향", label: t("explore.tag.recommend", language), icon: "📢" },
   ];
 
   // 지도 경계 상태 추가

@@ -7,6 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { emojiMap } from "@/lib/tags";
 
 interface ReviewData {
   id: string;
@@ -28,19 +29,6 @@ interface ReviewData {
   };
   createdAt: string;
 }
-
-const emojiMap: { [key: string]: string } = {
-  "완전 마음에 들었어요!": "😍",
-  친절했어요: "😊",
-  "가성비 최고였어요": "💰",
-  "찾기 쉬웠어요": "📍",
-  "진짜 로컬 느낌이에요": "✨",
-  "또 방문하고 싶어요": "🔁",
-  "혜택을 잘 받았어요": "🎁",
-  "상품 구성이 독특했어요": "🛍️",
-  "사진 찍기 좋은 곳이었어요": "📸",
-  "다른 사람에게도 추천하고 싶어요": "📢",
-};
 
 const ReviewDetailPage = () => {
   const { data: session } = useSession();

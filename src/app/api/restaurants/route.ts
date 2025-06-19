@@ -3,19 +3,6 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { put } from "@vercel/blob";
 
-const tagIdToRealTagMap: Record<string, string> = {
-  만족도: "😍 완전 마음에 들었어요!",
-  가성비: "💰 가성비 최고였어요",
-  혜택만족: "🎁 혜택을 잘 받았어요",
-  위치편의성: "📍 찾기 쉬웠어요",
-  상품특색: "🛍️ 상품 구성이 독특했어요",
-  로컬감성: "✨ 진짜 로컬 느낌이에요",
-  사진맛집: "📸 사진 찍기 좋은 곳이었어요",
-  친절함: "😊 친절했어요",
-  재방문의사: "🔁 또 방문하고 싶어요",
-  추천의향: "📢 다른 사람에게도 추천하고 싶어요",
-};
-
 // BigInt를 JSON으로 직렬화하기 위한 함수
 function replaceBigInt(key: string, value: any) {
   return typeof value === "bigint" ? Number(value) : value;
@@ -35,9 +22,7 @@ export async function GET(request: Request) {
   const subCategory = searchParams.get("subCategory");
   const region = searchParams.get("region");
   const rawTags = searchParams.get("tags")?.split(",") || [];
-  const tags = rawTags
-    .map((tag) => tagIdToRealTagMap[tag] || tag)
-    .filter(Boolean);
+  const tags = searchParams.get("tags")?.split(",") || [];
   const sort = searchParams.get("sort") || "distance";
   const locationMode = searchParams.get("mode") || "user";
   const rawOfferTypes = searchParams.get("specialOfferType")?.split(",") || [];
