@@ -359,5 +359,21 @@
   "login.forgotPassword": "Forgot password",
   "login.error.generic": "Login failed.",
   "login.error.unknown": "An error occurred during login.",
-  "signup.title": "Sign Up"
+  "signup.title": "Sign Up",
+
+  "category.all": "All",
+  "category.food": "Food",
+  "category.shopping": "Shopping",
+  "category.attraction": "Attraction",
+  "category.experience": "Experience",
+  "category.wellness": "Wellness",
+  "category.nightlife": "Nightlife",
+  "subcategory.all": "All",
+  "sort.distance": "Distance",
+  "sort.rating": "Rating",
+  "sort.bookmark": "Bookmarks",
+  "sort.review": "Reviews",
+  "search.placeholder": "Search",
+  "search.noResult": "No results found.",
+  "region.all": "All regions"
 }

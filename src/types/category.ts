@@ -1,7 +1,4 @@
-// Category mappings
-
 import { t } from "@/lib/i18n";
-import { useLanguage } from "@/context/LanguageContext";
 
 export const categoryMap = {
   맛집: "food",
@@ -13,24 +10,40 @@ export const categoryMap = {
 } as any;
 
 export const getCategoryList = (language: string) => [
-  { id: "맛집", name: t("explore.category.맛집", language) },
-  { id: "쇼핑", name: t("explore.category.쇼핑", language) },
-  { id: "관광명소", name: t("explore.category.관광명소", language) },
-  { id: "체험", name: t("explore.category.체험", language) },
-  { id: "웰니스", name: t("explore.category.웰니스", language) },
-  { id: "나이트라이프", name: t("explore.category.나이트라이프", language) },
+  { id: "전체", label: t("explore.category.all", language) },
+  { id: "맛집", label: t("explore.category.food", language) },
+  { id: "쇼핑", label: t("explore.category.shopping", language) },
+  { id: "관광명소", label: t("explore.category.attraction", language) },
+  { id: "체험", label: t("explore.category.experience", language) },
+  { id: "웰니스", label: t("explore.category.wellness", language) },
+  { id: "나이트라이프", label: t("explore.category.nightlife", language) },
 ];
-export const getSubCategoryList = (category: string, language: string) => {
-  const map = subCategoryMap[category];
-  return Object.entries(map).map(([korLabel, code]) => ({
-    id: korLabel,
-    code: code,
-    name: t(`explore.subCategory.${korLabel}`, language),
-  }));
+
+export const getSubCategoryList = (korMain: string, lang: string) => {
+  // Always include "전체" (All) as first option
+  const allOption = { id: "전체", label: t("explore.subCategory.전체", lang) };
+
+  // If main category is "전체", only return the "전체" option
+  if (korMain === "전체") {
+    return [allOption];
+  }
+
+  const map = subCategoryMap[korMain];
+  if (!map) return [allOption]; // Fallback to just "전체" if mapping not found
+
+  const subCategories = Object.keys(map)
+    .filter((key) => key !== "전체") // Exclude "전체" from mapping since we add it manually
+    .map((korLabel) => ({
+      id: korLabel,
+      code: map[korLabel],
+      label: t(`explore.subCategory.${korLabel}`, lang),
+    }));
+
+  return [allOption, ...subCategories];
 };
 
 export const subCategoryMap = {
-  food: {
+  맛집: {
     전체: "all",
     한식: "korean",
     분식: "snack",
@@ -42,21 +55,21 @@ export const subCategoryMap = {
     "다국적/퓨전": "fusion",
     패스트푸드: "fastfood",
   },
-  shopping: {
+  쇼핑: {
     전체: "all",
     "패션/의류": "fashion",
     "화장품/뷰티": "beauty",
     "기념품/특산품": "souvenir",
     "백화점/쇼핑몰": "department",
   },
-  attraction: {
+  관광명소: {
     전체: "all",
     "궁/왕궁": "palace",
     "박물관/미술관": "museum",
     "전망대/스카이뷰": "skyview",
     테마파크: "themepark",
   },
-  experience: {
+  체험: {
     전체: "all",
     한복체험: "hanbok",
     클래스: "class",
@@ -65,13 +78,13 @@ export const subCategoryMap = {
     "야외 액티비티": "outdoor",
     케이팝: "kpop",
   },
-  wellness: {
+  웰니스: {
     전체: "all",
     "스파/마사지": "spa",
     "요가/명상": "yoga",
     뷰티케어: "beautycare",
   },
-  nightlife: {
+  나이트라이프: {
     전체: "all",
     클럽: "club",
     루프탑바: "rooftop",
@@ -79,7 +92,6 @@ export const subCategoryMap = {
     "포장마차/포차": "pocha",
   },
 } as any;
-
 export const regions = [
   { id: "지역 전체", name: "지역 전체" },
   { id: "명동", name: "명동" },

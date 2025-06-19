@@ -1,17 +1,20 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import {
-  ChevronLeft,
-  Search,
-  ChevronDown,
-  Bookmark,
-  MessageCircle,
-} from "lucide-react";
+import { ChevronLeft, Search, ChevronDown, Bookmark } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Restaurant } from "@prisma/client";
 import { Star, MessageSquare } from "lucide-react";
-import { categoryMap, regions, subCategoryMap } from "@/types/category";
+import {
+  categoryMap,
+  getCategoryList,
+  getRegions,
+  getSubCategoryList,
+  subCategoryMap,
+} from "@/types/category";
+import { useLanguage } from "@/context/LanguageContext";
+import { cx } from "class-variance-authority";
+import { t } from "@/lib/i18n";
+
 const Category = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -27,10 +30,12 @@ const Category = () => {
   const [hasMore, setHasMore] = useState(true);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [sort, setSort] = useState("distance");
 
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const searchRef = useRef<HTMLDivElement | null>(null);
   const isFirstLoad = useRef(true);
+  const { language } = useLanguage();
 
   // 컴포넌트 마운트 시 URL 파라미터 처리
   useEffect(() => {
@@ -206,18 +211,18 @@ const Category = () => {
   };
 
   // 카테고리 변경 핸들러
-  const handleMainCategoryClick = (name: any) => {
-    setActiveMainCategory(name);
+  const handleMainCategoryClick = (categoryId: string) => {
+    setActiveMainCategory(categoryId);
     setActiveSubcategory("전체");
 
     // URL 파라미터 업데이트 (메인 카테고리와 서브카테고리 동시에)
     const params = new URLSearchParams(searchParams.toString());
 
-    if (name === "전체") {
+    if (categoryId === "전체") {
       params.delete("category");
       params.delete("subCategory"); // 메인 카테고리가 '전체'면 서브카테고리도 제거
     } else {
-      params.set("category", categoryMap[name] || name);
+      params.set("category", categoryMap[categoryId] || categoryId);
       params.set("subCategory", "all"); // 서브카테고리를 항상 'all'로 설정
     }
 
@@ -225,13 +230,12 @@ const Category = () => {
     setShowCategoryDropdown(false);
   };
 
-  const handleSubcategoryClick = (name: any) => {
-    setActiveSubcategory(name);
+  const handleSubcategoryClick = (subCategoryId: string) => {
+    setActiveSubcategory(subCategoryId);
 
     if (activeMainCategory !== "전체") {
-      const engMainCategory = categoryMap[activeMainCategory];
-      const engSubCategory = subCategoryMap[engMainCategory]?.[name] || "all";
-
+      const engSubCategory =
+        subCategoryMap[activeMainCategory]?.[subCategoryId] || "all";
       updateQueryParams("subCategory", engSubCategory);
     } else {
       updateQueryParams("subCategory", "all");
@@ -280,69 +284,14 @@ const Category = () => {
     };
   }, []);
 
-  // UI 상수
-  const mainCategories = [
-    { id: 1, name: "전체" },
-    { id: 2, name: "맛집" },
-    { id: 3, name: "쇼핑" },
-    { id: 4, name: "관광명소" },
-    { id: 5, name: "체험" },
-    { id: 6, name: "웰니스" },
-    { id: 7, name: "나이트라이프" },
-  ];
-
-  const subcategoriesMap = {
-    맛집: [
-      { id: 1, name: "전체" },
-      { id: 2, name: "한식" },
-      { id: 3, name: "분식" },
-      { id: 4, name: "카페/디저트" },
-      { id: 5, name: "고기구이" },
-      { id: 6, name: "해산물" },
-      { id: 7, name: "채식/비건" },
-      { id: 8, name: "바/펍" },
-      { id: 9, name: "다국적/퓨전" },
-      { id: 10, name: "패스트푸드" },
-    ],
-    쇼핑: [
-      { id: 1, name: "전체" },
-      { id: 2, name: "패션/의류" },
-      { id: 3, name: "화장품/뷰티" },
-      { id: 4, name: "기념품/특산품" },
-      { id: 5, name: "백화점/쇼핑몰" },
-    ],
-    관광명소: [
-      { id: 1, name: "전체" },
-      { id: 2, name: "궁/왕궁" },
-      { id: 3, name: "박물관/미술관" },
-      { id: 4, name: "전망대/스카이뷰" },
-      { id: 5, name: "테마파크" },
-    ],
-    체험: [
-      { id: 1, name: "전체" },
-      { id: 2, name: "한복체험" },
-      { id: 3, name: "클래스" },
-      { id: 4, name: "공예체험" },
-      { id: 5, name: "콘서트 & 공연" },
-      { id: 6, name: "야외 액티비티" },
-      { id: 7, name: "케이팝" },
-    ],
-    웰니스: [
-      { id: 1, name: "전체" },
-      { id: 2, name: "스파/마사지" },
-      { id: 3, name: "요가/명상" },
-      { id: 4, name: "뷰티케어" },
-    ],
-    나이트라이프: [
-      { id: 1, name: "전체" },
-      { id: 2, name: "클럽" },
-      { id: 3, name: "루프탑바" },
-      { id: 4, name: "재즈바/공연바" },
-      { id: 5, name: "포장마차/포차" },
-    ],
-  } as any;
-
-  const [sort, setSort] = useState("distance");
+  // Get current category display name
+  const getCurrentCategoryDisplayName = () => {
+    const categoryList = getCategoryList(language);
+    const currentCategory = categoryList.find(
+      (cat) => cat.id === activeMainCategory
+    );
+    return currentCategory ? currentCategory.label : activeMainCategory;
+  };
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
@@ -359,23 +308,23 @@ const Category = () => {
             ref={dropdownRef}
           >
             <span className="font-medium text-lg leading-none">
-              {activeMainCategory}
+              {getCurrentCategoryDisplayName()}
             </span>
             <ChevronDown className="w-5 h-5" />
             {/* 카테고리 드롭다운 */}
             {showCategoryDropdown && (
               <div className="absolute top-12 left-1/2 -translate-x-1/2 z-50 bg-white rounded-md shadow-lg py-2 w-40">
-                {mainCategories.map((category) => (
+                {getCategoryList(language).map((cat) => (
                   <div
-                    key={category.id}
-                    className={`px-4 py-2 cursor-pointer center ${
-                      activeMainCategory === category.name
-                        ? "bg-blue-50 text-blue-500"
-                        : "text-gray-700 hover:bg-gray-50"
-                    }`}
-                    onClick={() => handleMainCategoryClick(category.name)}
+                    key={cat.id}
+                    onClick={() => handleMainCategoryClick(cat.id)}
+                    className={cx("px-4 py-2 cursor-pointer", {
+                      "bg-blue-50 text-blue-500": activeMainCategory === cat.id,
+                      "text-gray-700 hover:bg-gray-50":
+                        activeMainCategory !== cat.id,
+                    })}
                   >
-                    {category.name}
+                    {cat.label}
                   </div>
                 ))}
               </div>
@@ -407,33 +356,32 @@ const Category = () => {
       </div>
 
       {/* 하위 카테고리 탭 */}
-      {activeMainCategory !== "전체" &&
-        subcategoriesMap[activeMainCategory] && (
-          <div className="bg-white overflow-x-auto border-b border-gray-200">
-            <div className="flex space-x-6 px-4 py-2 min-w-max">
-              {subcategoriesMap[activeMainCategory].map((subcategory: any) => (
-                <div
-                  key={subcategory.id}
-                  className={`px-1 py-1 whitespace-nowrap cursor-pointer ${
-                    activeSubcategory === subcategory.name
-                      ? "text-blue-500 border-b-2 border-blue-500 font-medium"
-                      : "text-gray-700 hover:text-gray-900"
-                  }`}
-                  onClick={() => handleSubcategoryClick(subcategory.name)}
-                >
-                  {subcategory.name}
-                </div>
-              ))}
-            </div>
+      <div className="bg-white px-4 py-2 flex space-x-4 overflow-x-auto border-b">
+        {getSubCategoryList(activeMainCategory, language).map((sub: any) => (
+          <div
+            key={sub.id}
+            onClick={() => handleSubcategoryClick(sub.id)}
+            className={cx(
+              "px-3 py-1 whitespace-nowrap cursor-pointer text-sm",
+              {
+                "text-blue-500 border-b-2 border-blue-500 font-medium":
+                  activeSubcategory === sub.id,
+                "text-gray-700 hover:text-gray-900":
+                  activeSubcategory !== sub.id,
+              }
+            )}
+          >
+            {sub.label}
           </div>
-        )}
+        ))}
+      </div>
 
       {/* 메인 컨텐츠 */}
       <div className="flex flex-1 overflow-hidden">
         {/* 왼쪽 지역 사이드바 */}
-        <div className="w-100 bg-white border-r overflow-y-auto">
+        <div className="w-32 bg-white border-r overflow-y-auto">
           <div>
-            {regions.map((region) => (
+            {getRegions(language).map((region) => (
               <div
                 key={region.id}
                 className={`py-3 px-4 cursor-pointer ${
@@ -451,23 +399,25 @@ const Category = () => {
 
         {/* 오른쪽 컨텐츠 영역 */}
         <div className="flex-1 flex flex-col">
-          {/* 장소 목록 */}
+          {/* 정렬 옵션 */}
           <div className="bg-white px-4 py-2 border-b flex justify-end">
             <select
               value={sort}
               onChange={(e) => {
                 const newSort = e.target.value;
                 setSort(newSort);
-                updateQueryParams("sort", newSort); // ✅ URL에도 반영
+                updateQueryParams("sort", newSort);
               }}
               className="text-sm border rounded px-2 py-1"
             >
-              <option value="distance">거리순</option>
-              <option value="rating">평점순</option>
-              <option value="bookmark">북마크순</option>
-              <option value="review">리뷰순</option>
+              <option value="distance">{t("sort.distance", language)}</option>
+              <option value="rating">{t("sort.rating", language)}</option>
+              <option value="bookmark">{t("sort.bookmark", language)}</option>
+              <option value="review">{t("sort.review", language)}</option>
             </select>
           </div>
+
+          {/* 장소 목록 */}
           <div
             className="flex-1 overflow-y-auto p-2 bg-gray-100"
             onScroll={(e) => {
@@ -505,10 +455,10 @@ const Category = () => {
                         <p className="text-gray-600 text-xs mt-1">
                           {location.address}
                         </p>
-                        <span className="px-1 text-xs py-0.5 bg-gray-100 text-blue-800 rounded-full">
+                        <span className="px-2 text-xs py-0.5 bg-gray-100 text-blue-800 rounded-full">
                           {location.category}
                         </span>
-                        <p className="text-sm text-gray-700 flex items-center space-x-4">
+                        <p className="text-sm text-gray-700 flex items-center space-x-4 mt-2">
                           <span className="flex items-center space-x-1">
                             <Star className="w-4 h-4 text-yellow-400" />
                             <span>{location.rating?.toFixed(1) ?? "0.0"}</span>
@@ -523,7 +473,6 @@ const Category = () => {
                           </span>
                         </p>
                       </div>
-                      {/* {location.bookmarks.length} */}
                       <Bookmark className="w-5 h-5 text-blue-500" />
                     </div>
                   </div>
@@ -535,7 +484,9 @@ const Category = () => {
               </div>
             ) : (
               <div className="flex justify-center items-center h-32">
-                <p className="text-gray-500">검색 결과가 없습니다.</p>
+                <p className="text-gray-500">
+                  {t("search.noResult", language)}
+                </p>
               </div>
             )}
 

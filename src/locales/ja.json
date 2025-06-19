@@ -359,5 +359,21 @@
   "login.forgotPassword": "パスワードをお忘れですか？",
   "login.error.generic": "ログインに失敗しました。",
   "login.error.unknown": "ログイン中にエラーが発生しました。",
-  "signup.title": "新規登録"
+  "signup.title": "新規登録",
+
+  "category.all": "すべて",
+  "category.food": "グルメ",
+  "category.shopping": "ショッピング",
+  "category.attraction": "観光地",
+  "category.experience": "体験",
+  "category.wellness": "ウェルネス",
+  "category.nightlife": "ナイトライフ",
+  "subcategory.all": "すべて",
+  "sort.distance": "距離順",
+  "sort.rating": "評価順",
+  "sort.bookmark": "ブックマーク順",
+  "sort.review": "レビュー順",
+  "search.placeholder": "検索",
+  "search.noResult": "検索結果がありません。",
+  "region.all": "すべての地域"
 }

@@ -357,5 +357,26 @@
   "login.forgotPassword": "비밀번호 찾기",
   "login.error.generic": "로그인에 실패했습니다.",
   "login.error.unknown": "로그인 중 오류가 발생했습니다.",
-  "signup.title": "회원가입"
+  "signup.title": "회원가입",
+
+  "category.all": "전체",
+  "category.food": "맛집",
+  "category.shopping": "쇼핑",
+  "category.attraction": "관광명소",
+  "category.experience": "체험",
+  "category.wellness": "웰니스",
+  "category.nightlife": "나이트라이프",
+  "subcategory.all": "전체",
+  "sort.distance": "거리순",
+  "sort.rating": "평점순",
+  "sort.bookmark": "북마크순",
+  "sort.review": "리뷰순",
+  "search.placeholder": "검색",
+  "search.noResult": "검색 결과가 없습니다.",
+  "region.all": "지역 전체",
+
+  "sort.distance": "거리순",
+  "sort.rating": "평점순",
+  "sort.bookmark": "북마크순",
+  "sort.review": "리뷰순"
 }

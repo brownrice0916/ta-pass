@@ -359,5 +359,21 @@
   "login.forgotPassword": "找回密码",
   "login.error.generic": "登录失败。",
   "login.error.unknown": "登录过程中发生错误。",
-  "signup.title": "注册"
+  "signup.title": "注册",
+
+  "category.all": "全部",
+  "category.food": "美食",
+  "category.shopping": "购物",
+  "category.attraction": "景点",
+  "category.experience": "体验",
+  "category.wellness": "养生",
+  "category.nightlife": "夜生活",
+  "subcategory.all": "全部",
+  "sort.distance": "距离",
+  "sort.rating": "评分",
+  "sort.bookmark": "收藏",
+  "sort.review": "评论",
+  "search.placeholder": "搜索",
+  "search.noResult": "未找到结果。",
+  "region.all": "全部地区"
 }
