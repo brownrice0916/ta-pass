@@ -10,8 +10,22 @@ const translations: Record<string, Record<string, string>> = {
   zh: zh as Record<string, string>,
 };
 
-export function t(key: string, lang: string): string {
-  return translations[lang]?.[key] || key;
+export function t(
+  key: string,
+  language: string,
+  vars?: Record<string, string | number>
+): string {
+  const langData = translations[language] || translations["ko"];
+  let text = langData?.[key] || key;
+
+  if (vars) {
+    Object.keys(vars).forEach((varKey) => {
+      const regex = new RegExp(`{{\\s*${varKey}\\s*}}`, "g");
+      text = text.replace(regex, String(vars[varKey]));
+    });
+  }
+
+  return text;
 }
 async function autoTranslate(
   text: string,

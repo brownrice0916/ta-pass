@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import AuthLayout from "@/components/layout/AuthLayout";
 import { useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
+import { t } from "@/lib/i18n";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function LoginPage() {
   const { data: session } = useSession();
@@ -62,6 +64,7 @@ export default function LoginPage() {
     }
   };
 
+  const { language } = useLanguage();
   return (
     <AuthLayout activeTab="login">
       {/* Login Form */}
@@ -73,7 +76,7 @@ export default function LoginPage() {
         )}
         <div>
           <label className="block mb-1 text-sm font-medium text-gray-700">
-            이메일
+            {t("login.email", language)}
           </label>
           <Input
             type="email"
@@ -85,11 +88,11 @@ export default function LoginPage() {
         </div>
         <div>
           <label className="block mb-1 text-sm font-medium text-gray-700">
-            비밀번호
+            {t("login.password", language)}
           </label>
           <Input
             type="password"
-            placeholder="비밀번호"
+            placeholder={t("login.password", language)}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={isLoading}
@@ -104,7 +107,7 @@ export default function LoginPage() {
             disabled={isLoading}
           />
           <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-700">
-            로그인 정보 기억하기
+            {t("login.rememberMe", language)}
           </label>
         </div>
         <Button
@@ -112,7 +115,9 @@ export default function LoginPage() {
           className="w-full bg-blue-600 text-white hover:bg-blue-700"
           disabled={isLoading}
         >
-          {isLoading ? "로그인 중..." : "로그인"}
+          {isLoading
+            ? t("login.loading", language)
+            : t("login.submit", language)}
         </Button>
       </form>
 
@@ -125,7 +130,7 @@ export default function LoginPage() {
 
       {/* Additional Links */}
       <div className="flex justify-between mt-4 text-sm text-gray-500">
-        <Link href="/forgot-id">비밀번호 찾기</Link>
+        <Link href="/forgot-id"> {t("login.forgotPassword", language)}</Link>
         {/* <Link href="/forgot-password"></Link> */}
       </div>
     </AuthLayout>

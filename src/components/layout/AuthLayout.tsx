@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/lib/i18n";
 import Link from "next/link";
 import { ReactNode } from "react";
 
@@ -9,6 +11,7 @@ interface AuthLayoutProps {
 }
 
 export default function AuthLayout({ children, activeTab }: AuthLayoutProps) {
+  const { language } = useLanguage();
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-md p-4">
@@ -21,7 +24,7 @@ export default function AuthLayout({ children, activeTab }: AuthLayoutProps) {
                 activeTab === "login" ? "border-blue-600" : "text-gray-500"
               }`}
             >
-              로그인
+              {t("login.submit", language)}
             </Link>
             <Link
               href="/signup"
@@ -29,7 +32,7 @@ export default function AuthLayout({ children, activeTab }: AuthLayoutProps) {
                 activeTab === "signup" ? "border-blue-600" : "text-gray-500"
               }`}
             >
-              회원가입
+              {t("signup.title", language)}
             </Link>
           </div>
           {/* Content */}

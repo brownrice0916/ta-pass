@@ -35,6 +35,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { t } from "@/lib/i18n";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface UserFormProps {
   form: UseFormReturn<FormValues>;
@@ -68,6 +70,7 @@ export function UserForm({ form, onSubmit, isLoading, mode }: UserFormProps) {
     label: country.name,
   }));
   countryOptions.sort((a, b) => a.label.localeCompare(b.label));
+  const { language } = useLanguage();
 
   return (
     <Form {...form}>
@@ -76,7 +79,7 @@ export function UserForm({ form, onSubmit, isLoading, mode }: UserFormProps) {
         <div className="flex gap-2">
           <Input
             type="email"
-            placeholder="이메일 입력"
+            placeholder={t("form.email", language)}
             {...form.register("email")}
             disabled={isEmailVerified}
             className="text-black"
@@ -86,7 +89,7 @@ export function UserForm({ form, onSubmit, isLoading, mode }: UserFormProps) {
             onClick={async () => {
               const email = form.getValues("email");
               if (!email || !email.includes("@")) {
-                alert("유효한 이메일을 입력해주세요.");
+                alert(t("form.invalidEmail", language));
                 return;
               }
 
@@ -97,7 +100,7 @@ export function UserForm({ form, onSubmit, isLoading, mode }: UserFormProps) {
                 );
                 const check = await res.json();
                 if (check.exists) {
-                  alert("이미 사용 중인 이메일입니다.");
+                  alert(t("form.emailExists", language));
                   return;
                 }
 
@@ -109,27 +112,27 @@ export function UserForm({ form, onSubmit, isLoading, mode }: UserFormProps) {
                 const data = await response.json();
                 if (data.success) {
                   setIsCodeInputEnabled(true);
-                  alert("인증 코드가 전송되었습니다.");
+                  alert(t("form.sendCode", language));
                 } else {
-                  alert(data.error || "인증 코드 전송 실패");
+                  alert(data.error || t("form.codeSendFail", language));
                 }
               } catch (error) {
                 console.error(error);
-                alert("요청 중 오류가 발생했습니다.");
+                alert(t("common.error", language));
               } finally {
                 setIsVerifying(false);
               }
             }}
             disabled={isEmailVerified || isVerifying}
           >
-            인증번호 전송
+            {t("form.sendCode", language)}
           </Button>
         </div>
         {/* 2줄: 인증번호 입력 + 확인 */}
         <div className="flex gap-2 items-center mt-2">
           <Input
             type="text"
-            placeholder="인증 코드 입력"
+            placeholder={t("form.code", language)}
             value={verificationCode}
             onChange={(e) => setVerificationCode(e.target.value)}
             className="text-black flex-1"
@@ -142,7 +145,7 @@ export function UserForm({ form, onSubmit, isLoading, mode }: UserFormProps) {
                 disabled
                 className="bg-green-600 cursor-default"
               >
-                인증완료
+                {t("form.verified", language)}
               </Button>
             ) : (
               <Button
@@ -161,13 +164,13 @@ export function UserForm({ form, onSubmit, isLoading, mode }: UserFormProps) {
                     const data = await response.json();
                     if (data.success) {
                       setIsEmailVerified(true);
-                      alert("이메일 인증이 완료되었습니다.");
+                      alert(t("form.verifySuccess", language));
                     } else {
-                      alert(data.error || "인증 코드가 유효하지 않습니다.");
+                      alert(data.error || t("form.verifyFail", language));
                     }
                   } catch (error) {
                     console.error(error);
-                    alert("인증 확인 중 오류가 발생했습니다.");
+                    alert(t("common.error", language));
                   } finally {
                     setIsVerifying(false);
                   }
@@ -178,7 +181,7 @@ export function UserForm({ form, onSubmit, isLoading, mode }: UserFormProps) {
                   !isCodeInputEnabled
                 }
               >
-                인증확인
+                {t("form.verify", language)}
               </Button>
             )}
           </div>
@@ -191,13 +194,14 @@ export function UserForm({ form, onSubmit, isLoading, mode }: UserFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                비밀번호<span className="text-red-500">*</span>
+                {t("form.password", language)}
+                <span className="text-red-500">*</span>
               </FormLabel>
               <FormControl>
                 <Input
                   {...field}
                   type="password"
-                  placeholder="비밀번호 입력"
+                  placeholder={t("form.password", language)}
                   className="text-black"
                   required
                 />
@@ -214,13 +218,14 @@ export function UserForm({ form, onSubmit, isLoading, mode }: UserFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                비밀번호 확인<span className="text-red-500">*</span>
+                {t("form.confirmPassword", language)}
+                <span className="text-red-500">*</span>
               </FormLabel>
               <FormControl>
                 <Input
                   {...field}
                   type="password"
-                  placeholder="비밀번호 재입력"
+                  placeholder={t("form.confirmPassword", language)}
                   className="text-black"
                   required
                 />
@@ -237,12 +242,13 @@ export function UserForm({ form, onSubmit, isLoading, mode }: UserFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                닉네임<span className="text-red-500">*</span>
+                {t("form.nickname", language)}
+                <span className="text-red-500">*</span>
               </FormLabel>
               <FormControl>
                 <Input
                   {...field}
-                  placeholder="닉네임 입력"
+                  placeholder={t("form.nickname", language)}
                   className="text-black"
                   required
                 />
@@ -259,7 +265,8 @@ export function UserForm({ form, onSubmit, isLoading, mode }: UserFormProps) {
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormLabel>
-                국적<span className="text-red-500">*</span>
+                {t("form.country", language)}
+                <span className="text-red-500">*</span>
               </FormLabel>
               <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
@@ -275,8 +282,8 @@ export function UserForm({ form, onSubmit, isLoading, mode }: UserFormProps) {
                     >
                       {field.value
                         ? countryOptions.find((c) => c.value === field.value)
-                            ?.label || "국적 선택"
-                        : "국적 선택"}
+                            ?.label || t("form.selectCountry", language)
+                        : t("form.selectCountry", language)}
                       <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
                     </Button>
                   </FormControl>
@@ -287,9 +294,11 @@ export function UserForm({ form, onSubmit, isLoading, mode }: UserFormProps) {
                   sideOffset={5}
                 >
                   <Command className="rounded-lg border shadow-md">
-                    <CommandInput placeholder="국가 검색..." />
+                    <CommandInput
+                      placeholder={t("form.searchCountry", language)}
+                    />
                     <CommandEmpty className="py-3 text-center text-sm">
-                      검색 결과 없음
+                      {t("form.noResult", language)}
                     </CommandEmpty>
                     <CommandGroup className="max-h-60 overflow-y-auto">
                       {countryOptions.map((country) => (
@@ -329,7 +338,8 @@ export function UserForm({ form, onSubmit, isLoading, mode }: UserFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                성별<span className="text-red-500">*</span>
+                {t("form.gender", language)}
+                <span className="text-red-500">*</span>
               </FormLabel>
               <Select
                 onValueChange={field.onChange}
@@ -338,14 +348,20 @@ export function UserForm({ form, onSubmit, isLoading, mode }: UserFormProps) {
               >
                 <SelectTrigger className="bg-white text-black">
                   <SelectValue
-                    placeholder="성별 선택"
+                    placeholder={t("form.gender", language)}
                     className="text-gray-500"
                   />
                 </SelectTrigger>
                 <SelectContent className="bg-white text-black">
-                  <SelectItem value="male">남성</SelectItem>
-                  <SelectItem value="female">여성</SelectItem>
-                  <SelectItem value="other">기타</SelectItem>
+                  <SelectItem value="male">
+                    {t("form.gender.male", language)}
+                  </SelectItem>
+                  <SelectItem value="female">
+                    {t("form.gender.female", language)}
+                  </SelectItem>
+                  <SelectItem value="other">
+                    {t("form.gender.other", language)}
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -356,7 +372,8 @@ export function UserForm({ form, onSubmit, isLoading, mode }: UserFormProps) {
         {/* 생년월일 */}
         <FormItem>
           <FormLabel>
-            생년월일<span className="text-red-500">*</span>
+            {t("form.birthdate", language)}
+            <span className="text-red-500">*</span>
           </FormLabel>
           <div className="grid grid-cols-3 gap-2">
             <FormField
@@ -407,7 +424,11 @@ export function UserForm({ form, onSubmit, isLoading, mode }: UserFormProps) {
 
         {/* 제출 버튼 */}
         <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? "처리중..." : mode === "signup" ? "가입하기" : "저장"}
+          {isLoading
+            ? t("common.loading", language)
+            : mode === "signup"
+            ? t("form.submit.signup", language)
+            : t("reviewDetail.save", language)}
         </Button>
       </form>
     </Form>

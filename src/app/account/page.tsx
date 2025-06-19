@@ -1,4 +1,3 @@
-// app/account/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,11 +6,14 @@ import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { UserForm } from "../signup/component/user-form";
 import ProfileImageUploader from "../mypage/components/profile-image-uploader";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/lib/i18n";
 
 export default function AccountPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const { data: session, update: updateSession } = useSession();
+  const { language } = useLanguage();
 
   const form = useForm({
     defaultValues: {
@@ -45,7 +47,7 @@ export default function AccountPage() {
           });
         }
       } catch (error) {
-        console.error("사용자 정보 로딩 실패:", error);
+        console.error("fail load:", error);
       }
     };
 
@@ -69,8 +71,7 @@ export default function AccountPage() {
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
     try {
-      const { ...updateData } = data as FormData;
-
+      const { ...updateData } = data;
       delete updateData.confirmPassword;
 
       const response = await fetch("/api/account", {
@@ -84,10 +85,11 @@ export default function AccountPage() {
       const responseData = await response.json();
 
       if (!response.ok) {
-        throw new Error(responseData.error || "정보 수정에 실패했습니다.");
+        throw new Error(
+          responseData.error || t("accountPage.errorMessage", language)
+        );
       }
 
-      // 세션 업데이트
       await updateSession({
         ...session,
         user: {
@@ -96,7 +98,7 @@ export default function AccountPage() {
         },
       });
 
-      alert("정보가 성공적으로 수정되었습니다.");
+      alert(t("accountPage.successMessage", language));
       router.push("/");
       router.refresh();
     } catch (err) {
@@ -111,22 +113,23 @@ export default function AccountPage() {
       <div className="mx-auto max-w-lg p-4">
         <div className="bg-gradient-to-br from-white to-gray-50 shadow-lg rounded-xl p-6 border border-gray-100">
           <h1 className="text-xl font-semibold text-gray-800 mb-4 text-center">
-            ✨ 프로필 수정
+            ✨ {t("accountPage.editProfile", language)}
           </h1>
 
           <div className="flex justify-center mb-6">
             <ProfileImageUploader />
           </div>
 
-          {/* 추가 콘텐츠가 있다면 여기에 삽입 */}
           <div className="text-center text-sm text-gray-500">
-            이미지를 클릭해서 프로필 사진을 변경하세요
+            {t("accountPage.clickToChangeImage", language)}
           </div>
         </div>
       </div>
       <div className="mx-auto max-w-md p-4 pt-0">
         <main className="bg-white shadow-md rounded-xl p-6">
-          <h1 className="text-2xl font-bold mb-6">계정 관리</h1>
+          <h1 className="text-2xl font-bold mb-6">
+            {t("accountPage.accountTitle", language)}
+          </h1>
 
           <UserForm
             form={form}

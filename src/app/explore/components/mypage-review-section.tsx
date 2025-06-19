@@ -5,6 +5,8 @@ import { MessageSquare, Loader2 } from "lucide-react";
 import { ReviewCard, ReviewDetailDialog } from "./review-section";
 import type { Restaurant } from "@prisma/client";
 import { Review } from "../[id]/page";
+import { useLanguage } from "@/context/LanguageContext";
+import { t } from "@/lib/i18n";
 
 interface MyPageReviewSectionProps {
   reviews: Review[] | null;
@@ -18,13 +20,14 @@ export default function MyPageReviewSection({
   isLoading,
 }: MyPageReviewSectionProps) {
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+  const { language } = useLanguage(); // 언어 가져오기
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
         <Loader2 className="h-8 w-8 text-primary animate-spin" />
         <span className="ml-2 text-lg text-gray-600">
-          리뷰를 불러오는 중...
+          {t("myPageReview.loading", language)}
         </span>
       </div>
     );
@@ -35,16 +38,18 @@ export default function MyPageReviewSection({
   }
 
   if (reviews === null) {
-    return null; // 데이터가 아직 로드되지 않았으면 아무것도 렌더링하지 않음
+    return null;
   }
 
   if (reviews.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-lg">
         <MessageSquare className="h-12 w-12 text-gray-400 mb-4" />
-        <p className="text-gray-600 mb-2">아직 작성한 리뷰가 없습니다.</p>
+        <p className="text-gray-600 mb-2">
+          {t("myPageReview.noReviews.title", language)}
+        </p>
         <p className="text-sm text-gray-400">
-          방문한 식당에 대한 리뷰를 작성해보세요!
+          {t("myPageReview.noReviews.subtitle", language)}
         </p>
       </div>
     );
