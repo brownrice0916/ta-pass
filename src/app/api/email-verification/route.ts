@@ -1,22 +1,24 @@
-// /app/api/email-verification/route.ts
+// Edge 런타임에서 Prisma가 안 돌아가므로 Node.js 런타임을 명시
+export const runtime = "nodejs";
+
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-// 인증 코드 생성 함수
+// 인증 코드 생성
 function generateVerificationCode() {
-  return Math.floor(100000 + Math.random() * 900000).toString(); // 6자리 코드
+  return Math.floor(100000 + Math.random() * 900000).toString(); // 6자리
 }
 
+// ─────────────────────────────────────────
+// POST /api/email-verification  (코드 발송)
+// ─────────────────────────────────────────
 export async function POST(request: Request) {
   try {
     const { email } = await request.json();
 
-    // 이메일 중복 확인
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
-
+    // 이메일 중복 여부
+    const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       return NextResponse.json(
         { success: false, error: "이미 사용 중인 이메일입니다." },
@@ -24,78 +26,73 @@ export async function POST(request: Request) {
       );
     }
 
-    // 인증 코드 생성
-    const verificationCode = generateVerificationCode();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10분 후 만료
+    // 인증 코드 저장(10분 유효)
+    const code = generateVerificationCode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1_000);
 
-    // 기존 인증 코드가 있다면 삭제
-    await prisma.emailVerification.deleteMany({
-      where: { email },
-    });
-
-    // 새 인증 코드 저장
+    await prisma.emailVerification.deleteMany({ where: { email } });
     await prisma.emailVerification.create({
-      data: {
-        email,
-        code: verificationCode,
-        expiresAt,
-      },
+      data: { email, code, expiresAt },
     });
 
-    // 이메일 전송
-    const transporter = nodemailer.createTransport({
-      service: "gmail", // 이메일 서비스 제공자
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+    // ── Resend로 메일 발송
+    const resend = new Resend(process.env.RESEND_API_KEY!);
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
+    console.log("메일 발송 시도:", {
+      from: process.env.RESEND_FROM,
       to: email,
+      apiKey: process.env.RESEND_API_KEY ? "존재함" : "없음",
+    });
+
+    const { data, error } = await resend.emails.send({
+      from: process.env.RESEND_FROM || "onboarding@resend.dev",
+      to: [email],
       subject: "회원가입 이메일 인증",
-      text: `회원가입을 완료하려면 다음 인증 코드를 입력하세요: ${verificationCode}`,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
           <h2>회원가입 이메일 인증</h2>
-          <p>회원가입을 완료하려면 다음 인증 코드를 입력하세요:</p>
-          <div style="background-color: #f4f4f4; padding: 10px; font-size: 24px; font-weight: bold; text-align: center; letter-spacing: 5px;">
-            ${verificationCode}
+          <p>다음 인증 코드를 입력하세요.</p>
+          <div style="background:#f4f4f4;padding:10px;font-size:24px;font-weight:bold;text-align:center;letter-spacing:5px">
+            ${code}
           </div>
-          <p>이 코드는 10분 후에 만료됩니다.</p>
+          <p>코드는 10분 후 만료됩니다.</p>
         </div>
       `,
-    };
+    });
 
-    await transporter.sendMail(mailOptions);
+    // 🔥 중요: Resend 에러 확인
+    if (error) {
+      console.error("Resend 에러:", error);
+      return NextResponse.json(
+        { success: false, error: `메일 발송 실패: ${error.message}` },
+        { status: 500 }
+      );
+    }
+
+    console.log("메일 발송 성공:", data);
 
     return NextResponse.json({
       success: true,
       message: "인증 코드가 이메일로 전송되었습니다.",
     });
-  } catch (error) {
-    console.error("이메일 인증 오류:", error);
+  } catch (err) {
+    console.error("이메일 인증 오류:", err);
     return NextResponse.json(
-      { success: false, error: "이메일 인증 중 오류가 발생했습니다." },
+      { success: false, error: "이메일 전송 중 오류가 발생했습니다." },
       { status: 500 }
     );
   }
 }
 
-// 인증 코드 확인 API
+// ─────────────────────────────────────────
+// PUT /api/email-verification  (코드 검증)
+// ─────────────────────────────────────────
 export async function PUT(request: Request) {
   try {
     const { email, code } = await request.json();
 
     const verification = await prisma.emailVerification.findFirst({
-      where: {
-        email,
-        code,
-        expiresAt: {
-          gt: new Date(), // 만료 시간이 현재 시간보다 이후인지 확인
-        },
-      },
+      where: { email, code, expiresAt: { gt: new Date() } },
     });
 
     if (!verification) {
@@ -105,7 +102,6 @@ export async function PUT(request: Request) {
       );
     }
 
-    // 인증 상태 업데이트
     await prisma.emailVerification.update({
       where: { id: verification.id },
       data: { verified: true },
@@ -115,8 +111,8 @@ export async function PUT(request: Request) {
       success: true,
       message: "이메일 인증이 완료되었습니다.",
     });
-  } catch (error) {
-    console.error("인증 코드 확인 오류:", error);
+  } catch (err) {
+    console.error("인증 코드 확인 오류:", err);
     return NextResponse.json(
       { success: false, error: "인증 코드 확인 중 오류가 발생했습니다." },
       { status: 500 }

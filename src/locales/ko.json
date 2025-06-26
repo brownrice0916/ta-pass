@@ -87,7 +87,7 @@
   "explore.category.food": "맛집",
   "explore.category.shopping": "쇼핑",
   "explore.category.attraction": "관광명소",
-  "explore.category.experience": "체험",
+  "explore.category.activities": "체험",
   "explore.category.wellness": "웰니스",
   "explore.category.nightlife": "나이트라이프",
   "explore.region.지역 전체": "지역 전체",
@@ -373,10 +373,5 @@
   "sort.review": "리뷰순",
   "search.placeholder": "검색",
   "search.noResult": "검색 결과가 없습니다.",
-  "region.all": "지역 전체",
-
-  "sort.distance": "거리순",
-  "sort.rating": "평점순",
-  "sort.bookmark": "북마크순",
-  "sort.review": "리뷰순"
+  "region.all": "지역 전체"
 }

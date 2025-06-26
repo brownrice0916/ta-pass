@@ -79,15 +79,9 @@ export default function Main() {
       label: t("categoryExperience", language),
       tag: t("categoryExperienceTag", language),
       color: "bg-[#FFFBEF]",
-      href: "/category?category=experience",
+      href: "/category?category=activities",
     },
-    {
-      icon: "🏛️",
-      label: t("categoryAttraction", language),
-      tag: t("categoryAttractionTag", language),
-      color: "bg-[#EFFBF2]",
-      href: "/category?category=attraction",
-    },
+
     {
       icon: "💆‍♀️",
       label: t("categoryWellness", language),
@@ -136,28 +130,39 @@ export default function Main() {
           </form>
         </div>
       </div>
-
       {/* Categories Section */}
       <div className="px-2 pt-6 pb-6">
         <h2 className="text-2xl font-bold mb-4">
           {t("categoriesTitle", language)}
         </h2>
+
         <div className="grid grid-cols-3 gap-2">
           {categories.map((category, index) => (
             <Link
               key={index}
               href={category.href}
-              className={`flex flex-col items-center justify-center pt-3 pb-4 rounded-xl ${category.color}`}
+              className={`w-full aspect-square flex flex-col items-center justify-center rounded-xl text-center p-3 ${category.color}`}
             >
               <span className="text-3xl mb-2">{category.icon}</span>
-              <span className="text-lg  font-bold text-gray-700">
+              <span className="text-lg font-bold text-gray-700 whitespace-nowrap">
                 {category.label}
               </span>
               <span className="text-[10px]">{category.tag}</span>
             </Link>
           ))}
+
+          {/* ────────────── 🔑 여기가 핵심 ────────────── */}
+          {(() => {
+            // 3의 배수가 아니면, 빈 셀(invisible) 추가해서 정렬 보정
+            const remain = categories.length % 3; // 0, 1, 2 중 하나
+            const need = (3 - remain) % 3; // 0 → 0칸, 1 → 2칸, 2 → 1칸
+            return Array.from({ length: need }).map((_, i) => (
+              <div key={`dummy-${i}`} className="invisible" /> // 보이지 않는 자리맞춤 셀
+            ));
+          })()}
         </div>
       </div>
+
       <div className="pb-20">
         <Link href="/intro">
           <div className="bg-blue-500 p-5 text-center text-white shadow-lg">

@@ -3,8 +3,7 @@ import { t } from "@/lib/i18n";
 export const categoryMap = {
   맛집: "food",
   쇼핑: "shopping",
-  관광명소: "attraction",
-  체험: "experience",
+  체험: "activities",
   웰니스: "wellness",
   나이트라이프: "nightlife",
 } as any;
@@ -13,8 +12,7 @@ export const getCategoryList = (language: string) => [
   { id: "전체", label: t("explore.category.all", language) },
   { id: "맛집", label: t("explore.category.food", language) },
   { id: "쇼핑", label: t("explore.category.shopping", language) },
-  { id: "관광명소", label: t("explore.category.attraction", language) },
-  { id: "체험", label: t("explore.category.experience", language) },
+  { id: "체험", label: t("explore.category.activities", language) },
   { id: "웰니스", label: t("explore.category.wellness", language) },
   { id: "나이트라이프", label: t("explore.category.nightlife", language) },
 ];
@@ -62,13 +60,6 @@ export const subCategoryMap = {
     "기념품/특산품": "souvenir",
     "백화점/쇼핑몰": "department",
   },
-  관광명소: {
-    전체: "all",
-    "궁/왕궁": "palace",
-    "박물관/미술관": "museum",
-    "전망대/스카이뷰": "skyview",
-    테마파크: "themepark",
-  },
   체험: {
     전체: "all",
     한복체험: "hanbok",
@@ -77,6 +68,10 @@ export const subCategoryMap = {
     "콘서트 & 공연": "concert",
     "야외 액티비티": "outdoor",
     케이팝: "kpop",
+    "궁/왕궁": "palace",
+    "박물관/미술관": "museum",
+    "전망대/스카이뷰": "skyview",
+    테마파크: "themepark",
   },
   웰니스: {
     전체: "all",

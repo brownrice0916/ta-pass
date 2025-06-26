@@ -30,8 +30,8 @@ export const RestaurantCard = memo(
         <div className="p-4">
           <div className="flex items-center gap-3 mb-3">
             <div className="flex-1">
-              <div className="flex items-center">
-                <h3 className="font-semibold text-lg mr-3 text-primary">
+              <div className="">
+                <h3 className="font-semibold text-lg mr-3 mb-2 text-primary">
                   {restaurant.name}
                 </h3>
                 <p className="text-sm text-orange-500">
@@ -63,12 +63,12 @@ export const RestaurantCard = memo(
           )}
 
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-            <span
+            {/* <span
               className={restaurant.isOpen ? "text-green-600" : "text-red-600"}
             >
               {restaurant.isOpen ? "영업중" : "영업종료"}
-            </span>
-            <span>|</span>
+            </span> */}
+            {/* <span>|</span> */}
             <span>리뷰 {restaurant.reviewCount || 0}</span>
             <span>|</span>
             <span className="line-clamp-1">

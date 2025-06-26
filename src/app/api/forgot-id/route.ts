@@ -1,7 +1,9 @@
 // /app/api/forgot-id/route.ts
+export const runtime = "nodejs";
+
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import nodemailer from "nodemailer"; // 이메일 전송을 위한 모듈
+import { Resend } from "resend";
 
 export async function POST(request: Request) {
   try {
@@ -19,25 +21,39 @@ export async function POST(request: Request) {
       );
     }
 
-    // 이메일 전송 (비밀번호 재설정 링크 등)
-    const transporter = nodemailer.createTransport({
-      service: "gmail", // 이메일 서비스 제공자 (예시: Gmail)
-      auth: {
-        user: process.env.EMAIL_USER, // .env에 설정한 이메일 계정
-        pass: process.env.EMAIL_PASS, // .env에 설정한 이메일 비밀번호
-      },
-    });
-
+    // Resend로 이메일 전송
+    const resend = new Resend(process.env.RESEND_API_KEY!);
     const resetLink = `https://ta-pass.vercel.app/reset-password?token=${user.id}`;
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: user.email,
+    const { data, error } = await resend.emails.send({
+      from: "onboarding@resend.dev", // 기본 도메인 사용
+      to: [email],
       subject: "비밀번호 재설정 요청",
-      text: `비밀번호를 재설정하려면 아래 링크를 클릭하세요: ${resetLink}`,
-    };
+      html: `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
+          <h2>비밀번호 재설정 요청</h2>
+          <p>비밀번호를 재설정하려면 아래 버튼을 클릭하세요:</p>
+          <div style="text-align:center;margin:20px 0">
+            <a href="${resetLink}" 
+               style="background:#007bff;color:white;padding:12px 24px;text-decoration:none;border-radius:5px;display:inline-block">
+              비밀번호 재설정
+            </a>
+          </div>
+          <p style="color:#666;font-size:14px">
+            링크가 작동하지 않으면 다음 주소를 복사해서 브라우저에 붙여넣으세요:<br>
+            <code>${resetLink}</code>
+          </p>
+        </div>
+      `,
+    });
 
-    await transporter.sendMail(mailOptions);
+    if (error) {
+      console.error("Resend 에러:", error);
+      return NextResponse.json(
+        { success: false, error: `메일 발송 실패: ${error.message}` },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
