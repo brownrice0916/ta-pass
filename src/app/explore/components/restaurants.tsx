@@ -18,20 +18,6 @@ import { useLanguage } from "@/context/LanguageContext";
 import { TAG_KEYS } from "@/lib/constants";
 import { emojiMap } from "@/lib/tags";
 
-// 지역 목록
-// const LOCATIONS = [
-//   { id: "전체", label: "전체" },
-//   { id: "홍대", label: "홍대" },
-//   { id: "명동", label: "명동" },
-//   { id: "인사동", label: "인사동" },
-//   { id: "강남", label: "강남" },
-//   { id: "이태원", label: "이태원" },
-//   { id: "한남", label: "한남" },
-//   { id: "합정", label: "합정" },
-//   { id: "성수", label: "성수" },
-//   { id: "여의도", label: "여의도" },
-// ];
-
 export interface Restaurant {
   id: string;
   name: string;
@@ -109,28 +95,28 @@ export default function Restaurants() {
 
   // 카테고리 i18n
   const CATEGORIES = [
-    { id: "all", label: t("explore.category.all", language), value: "all" },
-    { id: "food", label: t("explore.category.food", language), value: "food" },
+    { id: "all", label: t("explore.category.all", language), value: "전체" },
+    { id: "food", label: t("explore.category.food", language), value: "맛집" },
     {
       id: "shopping",
       label: t("explore.category.shopping", language),
-      value: "shopping",
+      value: "쇼핑",
     },
 
     {
-      id: "experience",
+      id: "activities",
       label: t("explore.category.activities", language),
-      value: "experience",
+      value: "체험",
     },
     {
       id: "wellness",
       label: t("explore.category.wellness", language),
-      value: "wellness",
+      value: "웰니스",
     },
     {
       id: "nightlife",
       label: t("explore.category.nightlife", language),
-      value: "nightlife",
+      value: "나이트라이프",
     },
   ];
 
@@ -330,7 +316,6 @@ export default function Restaurants() {
   // 지도 경계 변경 이벤트 리스너 추가
   useEffect(() => {
     if (mapRef.current) {
-      // 이벤트 리스너 설정
       const listener = mapRef.current.addListener("idle", () => {
         const bounds = mapRef.current?.getBounds();
         if (bounds) {
@@ -350,7 +335,6 @@ export default function Restaurants() {
   // locationMode 변경 감지 및 처리
   useEffect(() => {
     if (locationMode === "map" && mapBounds) {
-      // map 모드로 변경되었고 지도 경계 정보가 있을 경우, 데이터 다시 가져오기
       refetch();
     }
   }, [locationMode]);
@@ -387,13 +371,6 @@ export default function Restaurants() {
       updateUrlWithFilters();
     }
   }, [userLocation]);
-
-  const handleCenterOnMap = useCallback(() => {
-    if (mapRef.current) {
-      setLocationMode("map");
-      updateUrlWithFilters();
-    }
-  }, []);
 
   // Update URL when filters change and trigger a refetch
   const updateUrlWithFilters = useCallback(() => {
@@ -439,13 +416,6 @@ export default function Restaurants() {
 
     router.push(`/explore?${params.toString()}`);
     refetch();
-  };
-
-  // Tag filter toggle
-  const toggleTag = (tagId: string) => {
-    setTempTags((prev) =>
-      prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId]
-    );
   };
 
   // Apply filters
@@ -713,6 +683,7 @@ export default function Restaurants() {
                       </div>
                     </div>
 
+                    {console.log("temp", subCategoryMap[tempCategory])}
                     {tempCategory !== "all" && subCategoryMap[tempCategory] && (
                       <div className="mb-4">
                         <h3 className="text-sm font-medium mb-2">

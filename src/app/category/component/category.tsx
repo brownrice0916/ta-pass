@@ -430,6 +430,9 @@ const Category = () => {
             {locations.length > 0 ? (
               locations.map((location: any) => (
                 <div
+                  onClick={() => {
+                    router.push(`/explore/${location.id}`);
+                  }}
                   key={location.id}
                   className="bg-white rounded-lg mb-2 p-4 flex"
                 >
