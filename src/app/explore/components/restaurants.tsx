@@ -116,14 +116,10 @@ export default function Restaurants() {
       label: t("explore.category.shopping", language),
       value: "shopping",
     },
-    {
-      id: "attraction",
-      label: t("explore.category.attraction", language),
-      value: "attraction",
-    },
+
     {
       id: "experience",
-      label: t("explore.category.experience", language),
+      label: t("explore.category.activities", language),
       value: "experience",
     },
     {
