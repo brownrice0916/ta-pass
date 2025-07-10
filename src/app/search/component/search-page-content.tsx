@@ -104,7 +104,7 @@ export default function SearchPageContent() {
               ref={index === restaurants.length - 1 ? LoaderRef : null}
             >
               <RestaurantCard
-                restaurant={restaurant}
+                restaurant={restaurant as any}
                 onClick={() => router.push(`/explore/${restaurant.id}`)}
               />
             </div>
