@@ -6,7 +6,6 @@ import { Prisma, Restaurant } from "@prisma/client";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
-  // 기본 필터링 매개변수
   const lat = parseFloat(searchParams.get("latitude") || "0");
   const lng = parseFloat(searchParams.get("longitude") || "0");
   const query = searchParams.get("q");
@@ -14,22 +13,20 @@ export async function GET(request: Request) {
   const limit = parseInt(searchParams.get("limit") || "10");
   const skip = (page - 1) * limit;
 
-  // 카테고리 필터링 매개변수
-  const category = searchParams.get("category");
-  const subCategory = searchParams.get("subCategory");
+  const categoryKey = searchParams.get("category");
+  const subCategoryKey = searchParams.get("subCategory");
   const region = searchParams.get("region");
 
-  // 지도 경계값 (사용하는 경우)
   const neLat = parseFloat(searchParams.get("neLat") || "0");
   const neLng = parseFloat(searchParams.get("neLng") || "0");
   const swLat = parseFloat(searchParams.get("swLat") || "0");
   const swLng = parseFloat(searchParams.get("swLng") || "0");
 
-  const sort = searchParams.get("sort") || "distance"; // 기본값은 거리순
+  const sort = searchParams.get("sort") || "distance";
 
   console.log("Category API Parameters:", {
-    category,
-    subCategory,
+    categoryKey,
+    subCategoryKey,
     region,
     query,
     page,
@@ -38,30 +35,40 @@ export async function GET(request: Request) {
   });
 
   try {
-    // 1. 기본 where 조건 구성
     const whereCondition: Prisma.RestaurantWhereInput = {};
 
-    // 2. 카테고리 필터
-    if (category && category !== "") {
-      whereCondition.category = category;
+    // 카테고리 key → id 조회
+    if (categoryKey && categoryKey !== "") {
+      const found = await prisma.category.findUnique({
+        where: { key: categoryKey },
+        select: { id: true },
+      });
+      if (found?.id) {
+        whereCondition.categoryId = found.id;
+      }
     }
 
-    // 3. 서브카테고리 필터
-    if (subCategory && subCategory !== "all") {
-      whereCondition.subCategory = subCategory;
+    // 서브카테고리 key → id 조회
+    if (subCategoryKey && subCategoryKey !== "all") {
+      const found = await prisma.subCategory.findUnique({
+        where: { key: subCategoryKey },
+        select: { id: true },
+      });
+      if (found?.id) {
+        whereCondition.subCategoryId = found.id;
+      }
     }
 
-    // 4. 검색어 필터
+    // 검색어 필터
     if (query && query.trim()) {
       whereCondition.OR = [
         { name: { contains: query, mode: "insensitive" } },
-        { subCategory: { contains: query, mode: "insensitive" } },
+        { description: { contains: query, mode: "insensitive" } },
       ] as Prisma.RestaurantWhereInput[];
     }
 
-    // 5. 지역 필터
+    // 지역 필터
     if (region && region !== "지역 전체") {
-      // 타입 명시
       const regionCondition: Prisma.RestaurantWhereInput[] = [
         {
           region1: {
@@ -89,34 +96,28 @@ export async function GET(request: Request) {
         },
       ];
 
-      // OR 조건이 이미 있는 경우 처리
       if (whereCondition.OR) {
-        // 기존 OR 조건을 저장
         const existingOR = whereCondition.OR;
-        // AND 조건으로 변환 (하나는 기존 OR, 하나는 지역 OR)
         whereCondition.AND = [
           { OR: existingOR },
           { OR: regionCondition },
         ] as Prisma.RestaurantWhereInput[];
-        // 원래 OR 삭제
         delete whereCondition.OR;
       } else {
         whereCondition.OR = regionCondition;
       }
     }
 
-    // 6. 지도 경계 필터
+    // 지도 범위 필터
     if (neLat && neLng && swLat && swLng) {
       whereCondition.latitude = { gte: swLat, lte: neLat };
       whereCondition.longitude = { gte: swLng, lte: neLng };
     }
 
-    // 총 개수 계산
     const totalCount = await prisma.restaurant.count({
       where: whereCondition,
     });
 
-    // 일단 필요한 모든 레스토랑 ID를 먼저 가져오기
     const allRestaurants = await prisma.restaurant.findMany({
       where: whereCondition,
       select: { id: true },
@@ -124,7 +125,6 @@ export async function GET(request: Request) {
 
     const restaurantIds = allRestaurants.map((r) => r.id);
 
-    // 북마크 및 리뷰 수 가져오기
     const bookmarkCounts = await prisma.bookmark.groupBy({
       by: ["restaurantId"],
       _count: { id: true },
@@ -137,7 +137,6 @@ export async function GET(request: Request) {
       where: { restaurantId: { in: restaurantIds } },
     });
 
-    // 데이터 매핑
     const bookmarkMap = new Map<string, number>();
     bookmarkCounts.forEach((bc) => {
       bookmarkMap.set(bc.restaurantId, Number(bc._count.id));
@@ -148,14 +147,13 @@ export async function GET(request: Request) {
       reviewMap.set(rc.restaurantId, Number(rc._count.id));
     });
 
-    // 거리 계산 함수
-    function calculateDistance(
+    const calculateDistance = (
       lat1: number,
       lon1: number,
       lat2: number,
       lon2: number
-    ): number {
-      const R = 6371; // 지구 반경 (km)
+    ): number => {
+      const R = 6371;
       const dLat = ((lat2 - lat1) * Math.PI) / 180;
       const dLon = ((lon2 - lon1) * Math.PI) / 180;
       const a =
@@ -166,21 +164,18 @@ export async function GET(request: Request) {
           Math.sin(dLon / 2);
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       return R * c;
-    }
+    };
 
-    // 모든 레스토랑 상세 정보 가져오기
     const restaurantsDetails = await prisma.restaurant.findMany({
       where: { id: { in: restaurantIds } },
     });
 
-    // 확장된 레스토랑 인터페이스 정의
     interface EnrichedRestaurant extends Restaurant {
       bookmarkCount: number;
       reviewCount: number;
       distance: number;
     }
 
-    // 모든 레스토랑에 북마크/리뷰 수 및 거리 추가
     const enrichedRestaurants: EnrichedRestaurant[] = restaurantsDetails.map(
       (restaurant) => {
         const distance = calculateDistance(
@@ -198,9 +193,7 @@ export async function GET(request: Request) {
       }
     );
 
-    // 전체 데이터 정렬
     let sortedRestaurants = [...enrichedRestaurants];
-
     switch (sort) {
       case "rating":
         sortedRestaurants.sort((a, b) => (b.rating || 0) - (a.rating || 0));
@@ -211,22 +204,17 @@ export async function GET(request: Request) {
       case "review":
         sortedRestaurants.sort((a, b) => b.reviewCount - a.reviewCount);
         break;
-      default: // distance
+      default:
         sortedRestaurants.sort((a, b) => a.distance - b.distance);
     }
 
-    // 페이지네이션 적용
     const paginatedResults = sortedRestaurants.slice(skip, skip + limit);
 
-    // JSON 직렬화 전에 모든 BigInt 값을 Number로 변환하는 함수
     function replaceBigInt(key: string, value: any): any {
-      if (typeof value === "bigint") {
-        return Number(value);
-      }
+      if (typeof value === "bigint") return Number(value);
       return value;
     }
 
-    // BigInt를 Number로 변환하여 JSON 직렬화
     return new NextResponse(
       JSON.stringify(
         {
@@ -248,7 +236,6 @@ export async function GET(request: Request) {
       }
     );
   } catch (error: any) {
-    // 타입 지정
     console.error("Error fetching category data:", error);
     return NextResponse.json(
       {

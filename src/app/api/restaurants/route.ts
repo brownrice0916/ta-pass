@@ -18,15 +18,14 @@ export async function GET(request: Request) {
   const limit = parseInt(searchParams.get("limit") || "10");
   const skip = (page - 1) * limit;
 
-  const category = searchParams.get("category");
-  const subCategory = searchParams.get("subCategory");
+  const categoryKey = searchParams.get("category");
+  const subCategoryKey = searchParams.get("subCategory");
   const region = searchParams.get("region");
-  const rawTags = searchParams.get("tags")?.split(",") || [];
   const tags = searchParams.get("tags")?.split(",") || [];
   const sort = searchParams.get("sort") || "distance";
   const locationMode = searchParams.get("mode") || "user";
-  const rawOfferTypes = searchParams.get("specialOfferType")?.split(",") || [];
-  const specialOfferType = rawOfferTypes.filter(Boolean);
+  const specialOfferType =
+    searchParams.get("specialOfferType")?.split(",").filter(Boolean) || [];
 
   const neLat = parseFloat(searchParams.get("neLat") || "0");
   const neLng = parseFloat(searchParams.get("neLng") || "0");
@@ -37,13 +36,33 @@ export async function GET(request: Request) {
     neLat !== 0 && neLng !== 0 && swLat !== 0 && swLng !== 0;
 
   try {
+    // categoryId / subCategoryId 변환
+    let categoryId: string | undefined;
+    let subCategoryId: string | undefined;
+
+    if (categoryKey && categoryKey !== "전체" && categoryKey !== "all") {
+      const found = await prisma.category.findUnique({
+        where: { key: categoryKey },
+        select: { id: true },
+      });
+      categoryId = found?.id;
+    }
+
+    if (
+      subCategoryKey &&
+      subCategoryKey !== "전체" &&
+      subCategoryKey !== "all"
+    ) {
+      const found = await prisma.subCategory.findUnique({
+        where: { key: subCategoryKey },
+        select: { id: true },
+      });
+      subCategoryId = found?.id;
+    }
+
     const whereCondition: Prisma.RestaurantWhereInput = {
-      ...(category && category !== "전체" && category !== "all"
-        ? { category }
-        : {}),
-      ...(subCategory && subCategory !== "전체" && subCategory !== "all"
-        ? { subCategory }
-        : {}),
+      ...(categoryId ? { categoryId } : {}),
+      ...(subCategoryId ? { subCategoryId } : {}),
       ...(region && region !== "전체"
         ? {
             OR: [
@@ -58,7 +77,6 @@ export async function GET(request: Request) {
         ? {
             OR: [
               { name: { contains: query, mode: "insensitive" } },
-              { subCategory: { contains: query, mode: "insensitive" } },
               { description: { contains: query, mode: "insensitive" } },
             ],
           }

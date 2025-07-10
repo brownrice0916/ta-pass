@@ -23,12 +23,12 @@ model User {
   id             Int                 @id @default(autoincrement())
   role           String              @default("user")
   bookmarks      Bookmark[]
+  bookmarkLogs   BookmarkLog[]
   ceoProfile     CEOProfile?
   stores         Restaurant[]
+  viewLogs       RestaurantViewLog[]
   reviews        Review[]
   serialNumbers  SerialNumber[]
-  viewLogs       RestaurantViewLog[]
-  bookmarkLogs   BookmarkLog[]
 }
 
 model CEOProfile {
@@ -57,22 +57,22 @@ model Bookmark {
 
 model RestaurantViewLog {
   id           String     @id @default(cuid())
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
   restaurantId String
-  user         User?      @relation(fields: [userId], references: [id])
   userId       Int?
-  viewedAt     DateTime   @default(now()) // 조회 시각
-  ipAddress    String? // 중복방지용
+  viewedAt     DateTime   @default(now())
+  ipAddress    String?
   userAgent    String?
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  user         User?      @relation(fields: [userId], references: [id])
 }
 
 model BookmarkLog {
   id           String     @id @default(cuid())
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
   restaurantId String
-  user         User       @relation(fields: [userId], references: [id])
   userId       Int
-  bookmarkedAt DateTime   @default(now()) // 북마크 추가 시각
+  bookmarkedAt DateTime   @default(now())
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  user         User       @relation(fields: [userId], references: [id])
 }
 
 model Restaurant {
@@ -83,7 +83,6 @@ model Restaurant {
   address                String
   latitude               Float
   longitude              Float
-  category               String?
   rating                 Float?              @default(0)
   specialOfferText       String              @default("")
   images                 String[]            @default([])
@@ -99,15 +98,18 @@ model Restaurant {
   tags                   String[]            @default([])
   specialOfferType       String[]            @default([])
   specialOfferTextDetail String              @default("")
-  subCategory            String?
   openingHoursText       String?
   viewCount              Int                 @default(0)
   ownerId                Int?
+  categoryId             String?
+  subCategoryId          String?
   bookmarks              Bookmark[]
-  owner                  User?               @relation(fields: [ownerId], references: [id])
-  reviews                Review[]
-  viewLogs               RestaurantViewLog[]
   bookmarkLogs           BookmarkLog[]
+  category               Category?           @relation(fields: [categoryId], references: [id])
+  owner                  User?               @relation(fields: [ownerId], references: [id])
+  subCategory            SubCategory?        @relation(fields: [subCategoryId], references: [id])
+  viewLogs               RestaurantViewLog[]
+  reviews                Review[]
 }
 
 model Review {
@@ -135,10 +137,12 @@ model SerialNumber {
   metadata       Json?
   userId         Int?
   activatedUntil DateTime?
+  disposedAt     DateTime?
   user           User?     @relation(fields: [userId], references: [id])
 
   @@index([code])
   @@index([userId])
+  @@index([disposedAt])
 }
 
 model EmailVerification {
@@ -148,6 +152,27 @@ model EmailVerification {
   verified  Boolean  @default(false)
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+model Category {
+  id          String        @id @default(uuid())
+  name        String        @unique
+  key         String        @unique
+  createdAt   DateTime      @default(now())
+  Restaurant  Restaurant[]
+  SubCategory SubCategory[]
+}
+
+model SubCategory {
+  id         String       @id @default(uuid())
+  name       String
+  key        String
+  categoryId String
+  createdAt  DateTime     @default(now())
+  Restaurant Restaurant[]
+  Category   Category     @relation(fields: [categoryId], references: [id])
+
+  @@unique([categoryId, name])
 }
 
 enum VerificationStatus {
