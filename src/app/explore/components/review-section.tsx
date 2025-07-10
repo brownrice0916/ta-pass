@@ -221,7 +221,9 @@ export function ReviewDetailDialog({
         <div className="absolute z-10 text-white ml-4 top-4 left-0 drop-shadow-md">
           <span className="font-medium">{restaurant.name}</span>
           <span className="mx-2 opacity-70">|</span>
-          <span className="opacity-90">{restaurant.category}</span>
+          <span className="opacity-90">
+            {(restaurant as any).category?.name}
+          </span>
         </div>
 
         {/* 이미지 캐러셀 */}
