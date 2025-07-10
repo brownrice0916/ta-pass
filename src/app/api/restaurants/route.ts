@@ -53,7 +53,7 @@ export async function GET(request: Request) {
       subCategoryKey !== "전체" &&
       subCategoryKey !== "all"
     ) {
-      const found = await prisma.subCategory.findUnique({
+      const found = await prisma.subCategory.findFirst({
         where: { key: subCategoryKey },
         select: { id: true },
       });

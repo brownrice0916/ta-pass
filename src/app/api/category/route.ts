@@ -50,7 +50,7 @@ export async function GET(request: Request) {
 
     // 서브카테고리 key → id 조회
     if (subCategoryKey && subCategoryKey !== "all") {
-      const found = await prisma.subCategory.findUnique({
+      const found = await prisma.subCategory.findFirst({
         where: { key: subCategoryKey },
         select: { id: true },
       });
