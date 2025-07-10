@@ -18,6 +18,9 @@ export async function GET(request: Request) {
   try {
     const restaurant = await prisma.restaurant.findUnique({
       where: { id },
+      include: {
+        category: true, // 이 줄 추가!
+      },
     });
 
     if (!restaurant) {

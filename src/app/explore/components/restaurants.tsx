@@ -26,7 +26,7 @@ export interface Restaurant {
   address: string;
   latitude: number;
   longitude: number;
-  category: string | null;
+  category: any;
   rating: number | null;
   images: string[];
   distance?: number;
@@ -272,7 +272,7 @@ export default function Restaurants() {
   };
 
   const filteredRestaurants = useMemo(() => {
-    return listRestaurants.filter((restaurant: Restaurant) => {
+    return listRestaurants.filter((restaurant: any) => {
       // 카테고리 매칭
       const matchesCategory =
         selectedCategory === "all" ||
@@ -913,7 +913,7 @@ export default function Restaurants() {
         {filteredRestaurants.map((restaurant) => (
           <RestaurantCard
             key={`restaurant-${restaurant.id}`}
-            restaurant={restaurant}
+            restaurant={restaurant as any}
             onClick={() => router.push(`/explore/${restaurant.id}`)}
             imageLoading={imageLoading}
             onImageLoad={() => setImageLoading(false)}

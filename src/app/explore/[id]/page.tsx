@@ -462,7 +462,7 @@ export default function RestaurantDetail() {
                 </span>
               )}
               <span className="ml-2 px-2 text-xs py-0.5 bg-blue-100 text-blue-800 rounded-full">
-                {restaurant.category}
+                {(restaurant as any).category.name}
               </span>
             </h1>
             <div className="flex items-center mt-2">
@@ -867,7 +867,7 @@ export default function RestaurantDetail() {
                   lng: restaurant.longitude,
                 }}
                 userLocation={null}
-                mapRestaurants={restaurants}
+                mapRestaurants={restaurants as any}
                 selectedMarker={null}
                 onMarkerClick={() => {}}
                 onUserLocationClick={() => {}}

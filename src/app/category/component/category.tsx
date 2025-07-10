@@ -459,7 +459,7 @@ const Category = () => {
                           {location.address}
                         </p>
                         <span className="px-2 text-xs py-0.5 bg-gray-100 text-blue-800 rounded-full">
-                          {location.category}
+                          {activeMainCategory}
                         </span>
                         <p className="text-sm text-gray-700 flex items-center space-x-4 mt-2">
                           <span className="flex items-center space-x-1">
