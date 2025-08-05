@@ -260,6 +260,64 @@ export default function Main() {
           <span>{t("navProfile", language)}</span>
         </Link>
       </div>
+      <footer className="bg-blue-500 text-white text-sm px-4 py-6 space-y-4">
+        <div className="flex flex-col space-y-2">
+          <a href="/faq" className="font-semibold">
+            Customer Support
+          </a>
+          <div className="space-x-2 underline underline-offset-2">
+            <Link
+              href="https://docs.google.com/document/d/1dH207KnrACggst0eV8PxyjZU1tOV226Q/edit"
+              className="hover:opacity-80 font-bold"
+            >
+              Terms of Use
+            </Link>
+            <span>|</span>
+            <Link
+              href="https://docs.google.com/document/d/1NPS93L2LiQ2NVHfunj4Yn_Eo3oSUM-Yo/edit"
+              className="hover:opacity-80 font-bold"
+            >
+              Privacy Policy
+            </Link>
+            <span>|</span>
+            <Link
+              href="https://docs.google.com/document/d/1PGuSdSCENx8QC1P7hW1EfFzVc8RfDY8q/edit"
+              className="hover:opacity-80 font-bold"
+            >
+              Cookies & Location
+            </Link>
+          </div>
+        </div>
+
+        <div className="leading-relaxed">
+          <p>Business Name : TA PASS</p>
+          <p>Business Registration No.: 291-12-03120</p>
+          <p>Representative: Hayoung Hwang</p>
+          <p>
+            Address: 7, Imjeong-ro 21-gil, Mapo-gu, Seoul, Republic of Korea
+          </p>
+          <p>
+            E-mail :{" "}
+            <a href="mailto:ta.pass.contact@gmail.com" className="underline">
+              ta.pass.contact@gmail.com
+            </a>
+          </p>
+          <p>Hosting Provider: Vercel Inc.</p>
+          <p className="mt-2">© 2025 TA PASS. All rights reserved.</p>
+        </div>
+      </footer>
+      <div className="text-xs mt-1 p-2 text-gray-400 pt-4 border-t border-white/20">
+        <p>
+          TA PASS is not a party to the sales transaction. All offers and
+          services are provided directly by the respective stores, which bear
+          full responsibility for their content, usage, and refund policies.
+        </p>
+        <p className="mt-2">
+          TA PASS는 통신판매 중개자로서 통신판매의 당사자가 아니며, 각 매장에서
+          제공하는 혜택 및 서비스의 내용, 조건, 이용, 환불 등에 대한 책임은 해당
+          매장에 있습니다.
+        </p>
+      </div>
     </main>
   );
 }

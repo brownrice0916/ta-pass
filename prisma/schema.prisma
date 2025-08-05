@@ -34,8 +34,8 @@ model User {
 model CEOProfile {
   id                 String             @id @default(uuid())
   userId             Int                @unique
-  businessName       String
-  businessNumber     String             @unique
+  businessName       String?
+  businessNumber     String?             @unique
   verificationStatus VerificationStatus @default(pending)
   registrationImage  String?
   createdAt          DateTime           @default(now())
